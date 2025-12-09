@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Mate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        [v-cloak] { display: none; }
+        .completed-task { text-decoration: line-through; color: #9ca3af; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        .tutorial-highlight { 
+            position: relative; z-index: 50; 
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.7); 
+            background-color: white; pointer-events: none;
+        }
+        @keyframes ring {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .animate-ring { animation: ring 0.3s infinite; }
+        .modal-enter-active, .modal-leave-active { transition: opacity 0.3s; }
+        .modal-enter-from, .modal-leave-to { opacity: 0; }
+        
+        /* 点滅アニメーション（一時停止用） */
+        @keyframes blink { 50% { opacity: 0.5; } }
+        .animate-blink { animation: blink 1.5s infinite; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans h-screen overflow-hidden">
+    <div id="app" v-cloak class="h-full flex flex-col md:flex-row relative">
+        
+        <!-- ================= Login / Guest Landing ================= -->
+        <div v-if="!user && !isGuestMode" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 p-6 z-50 absolute inset-0">
+            <h1 class="text-5xl font-bold mb-2 text-blue-600 tracking-tighter">Study Mate</h1>
+            <p class="text-gray-500 mb-10">勉強も、休憩も、これひとつで。</p>
+            
+            <div class="space-y-4 w-full max-w-sm">
+                <button @click="login" class="w-full px-8 py-4 bg-white border border-gray-300 rounded-xl shadow-lg hover:bg-blue-50 flex items-center justify-center gap-4 font-bold text-gray-700 transition transform hover:scale-105">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6">
+                    <span>Googleでログイン</span>
+                </button>
+                <button @click="startGuest" class="w-full px-8 py-4 bg-gray-800 text-white rounded-xl shadow-lg hover:bg-gray-700 flex items-center justify-center gap-4 font-bold transition transform hover:scale-105">
+                    <i class="fa-solid fa-user-secret"></i>
+                    <span>ゲストとして利用する</span>
+                </button>
+            </div>
+            <p class="mt-8 text-xs text-gray-400 max-w-sm text-center">
+                ※ゲストモードの記録は、あとでログインした際にアカウントへ統合されます。
+            </p>
+            <!-- 緊急リセット -->
+            <div class="absolute bottom-4 right-4">
+                <button @click="hardReset" class="text-xs text-gray-400 underline hover:text-red-500">
+                    アプリが動かない場合はこちら（データリセット）
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= Main App ================= -->
+        <template v-else>
+            
+            <!-- Navigation -->
+            <nav class="md:w-64 bg-white border-r border-gray-200 flex flex-col md:h-full flex-shrink-0 order-2 md:order-1 fixed md:relative bottom-0 w-full md:w-auto z-40 h-16 md:h-auto shadow-inner md:shadow-none">
+                <div class="hidden md:flex items-center gap-2 p-6 border-b border-gray-100">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">S</div>
+                    <span class="font-bold text-xl tracking-tight">Study Mate</span>
+                </div>
+
+                <div class="flex md:flex-col justify-around md:justify-start h-full md:p-4 md:gap-2">
+                    <button @click="currentTab = 'timer'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" :class="currentTab === 'timer' ? 'text-blue-600 md:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'">
+                        <i class="fa-solid fa-stopwatch text-xl md:text-lg"></i>
+                        <span class="text-[10px] md:text-sm font-bold">記録</span>
+                    </button>
+                    <button @click="currentTab = 'tasks'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" :class="currentTab === 'tasks' ? 'text-blue-600 md:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'">
+                        <i class="fa-solid fa-list-check text-xl md:text-lg"></i>
+                        <span class="text-[10px] md:text-sm font-bold">Todo</span>
+                    </button>
+                    <button @click="loadWeeklyReport(); currentTab = 'report'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" :class="currentTab === 'report' ? 'text-blue-600 md:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'">
+                        <i class="fa-solid fa-chart-simple text-xl md:text-lg"></i>
+                        <span class="text-[10px] md:text-sm font-bold">レポート</span>
+                    </button>
+                    <button @click="currentTab = 'settings'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" :class="currentTab === 'settings' ? 'text-blue-600 md:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'">
+                        <i class="fa-solid fa-gear text-xl md:text-lg"></i>
+                        <span class="text-[10px] md:text-sm font-bold">設定</span>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <main class="flex-1 h-full overflow-y-auto bg-gray-50 p-4 md:p-8 pb-24 md:pb-8 order-1 md:order-2 relative">
+                
+                <!-- 1. TIMER TAB -->
+                <div v-if="currentTab === 'timer'" class="max-w-4xl mx-auto h-full flex flex-col">
+                    <header class="mb-6 md:mb-10 flex justify-between items-center">
+                        <h2 class="text-2xl font-bold">今日の学習</h2>
+                        <div class="flex items-center gap-2">
+                             <div class="text-sm font-mono text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm">
+                                {{ new Date().toLocaleDateString() }}
+                            </div>
+                        </div>
+                    </header>
+                    <div class="flex-1 flex flex-col md:flex-row gap-6 md:gap-12 items-center md:items-start justify-center">
+                        <!-- Left: Display -->
+                        <div class="w-full md:w-1/2 flex flex-col items-center justify-center py-6 bg-white md:bg-transparent rounded-3xl md:rounded-none shadow-sm md:shadow-none border md:border-none border-gray-100 relative">
+                            <!-- Status Indicator -->
+                            <div v-if="breakMode && isTimerRunning" class="absolute top-0 text-green-500 font-bold bg-green-50 px-3 py-1 rounded-full text-sm animate-pulse">
+                                <i class="fa-solid fa-mug-hot mr-1"></i>休憩中
+                            </div>
+                            <div v-else-if="timerMode === 'countdown' && isTimerRunning" class="absolute top-0 text-blue-500 font-bold bg-blue-50 px-3 py-1 rounded-full text-sm">
+                                <i class="fa-solid fa-hourglass-half mr-1"></i>カウントダウン
+                            </div>
+                            <div v-else-if="isPaused" class="absolute top-0 text-yellow-500 font-bold bg-yellow-50 px-3 py-1 rounded-full text-sm animate-blink">
+                                <i class="fa-solid fa-pause mr-1"></i>一時停止中
+                            </div>
+
+                            <p class="text-sm text-gray-500 mb-2 font-bold">
+                                {{ isTimerRunning || isPaused ? (breakMode ? 'Rest Time' : currentSubject + ' 中') : 'Study Total (Excl. Break)' }}
+                            </p>
+                            
+                            <div class="text-7xl md:text-8xl font-mono font-bold tracking-tighter mb-6" 
+                                 :class="breakMode ? 'text-green-500' : (isPaused ? 'text-yellow-500' : 'text-blue-600')">
+                                {{ formattedTime }}
+                            </div>
+                            
+                            <!-- Timer Controls (STOP / PAUSE) -->
+                            <div v-if="isTimerRunning || isPaused" class="w-full max-w-sm flex gap-3">
+                                <!-- STOP Button -->
+                                <button @click="stopTimer(false)" class="flex-1 py-6 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
+                                    :class="breakMode ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'">
+                                    <i class="fa-solid fa-stop"></i> STOP
+                                </button>
+
+                                <!-- PAUSE/RESUME Button -->
+                                <button v-if="!isPaused" @click="pauseTimer" class="flex-1 py-6 bg-yellow-400 hover:bg-yellow-500 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-pause"></i> PAUSE
+                                </button>
+                                <button v-else @click="resumeTimer" class="flex-1 py-6 bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-play"></i> RESUME
+                                </button>
+                            </div>
+                            <p v-if="isTimerRunning" class="text-center mt-3 text-gray-400 text-sm animate-pulse">{{ breakMode ? 'リラックス中...' : (timerMode === 'countdown' ? '集中...' : 'Focus...') }}</p>
+
+                        </div>
+
+                        <!-- Right: Buttons -->
+                        <div class="w-full md:w-1/2" v-if="!isTimerRunning && !isPaused">
+                            <!-- Subject Buttons -->
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4">
+                                <button v-for="sub in subjects" :key="sub" @click="handleSubjectClick(sub)"
+                                    class="h-16 md:h-24 bg-white border-2 border-blue-50 hover:border-blue-400 hover:bg-blue-50 rounded-2xl font-bold text-gray-700 shadow-sm transition active:scale-95 flex flex-col items-center justify-center">
+                                    <span class="text-lg">{{ sub }}</span>
+                                    <span class="text-[10px] text-gray-400 font-normal md:mt-1">{{ timerMode === 'countdown' ? 'SET' : 'START' }}</span>
+                                </button>
+                            </div>
+
+                            <!-- Break Button -->
+                            <button @click="openCountdownModal('休憩')" class="w-full mb-8 py-3 bg-green-50 border border-green-200 hover:bg-green-100 text-green-600 font-bold rounded-xl flex items-center justify-center gap-2 transition">
+                                <i class="fa-solid fa-mug-hot"></i> 休憩タイマーをセット
+                            </button>
+
+                            <!-- Daily Detail -->
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div class="bg-gray-50 px-5 py-3 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase flex justify-between items-center">
+                                    <span>本日の内訳</span>
+                                    <button @click="currentTab='settings'; showEditLog=true" class="text-blue-500 hover:text-blue-700">
+                                        <i class="fa-solid fa-pen"></i> 修正
+                                    </button>
+                                </div>
+                                <div class="p-2 max-h-60 overflow-y-auto">
+                                    <div v-if="Object.keys(todayLog.subjects).length === 0" class="text-center py-6 text-gray-400 text-sm">記録なし</div>
+                                    <div v-for="(time, sub) in todayLog.subjects" :key="sub">
+                                        <div v-if="time > 0" class="flex justify-between items-center text-sm border-b border-gray-100 last:border-0 p-3 hover:bg-gray-50">
+                                            <span class="font-medium text-gray-700">{{ sub }}</span>
+                                            <span class="font-mono font-bold px-2 py-0.5 rounded" :class="sub==='休憩'?'text-green-600 bg-green-50':'text-blue-600 bg-blue-50'">{{ formatSeconds(time) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. TODO TAB -->
+                <div v-if="currentTab === 'tasks'" class="max-w-2xl mx-auto">
+                    <div v-if="isGuestMode" class="text-center py-20">
+                        <i class="fa-solid fa-lock text-6xl text-gray-200 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-600">ゲストモードです</h3>
+                        <p class="text-gray-400 mb-6">Todoリスト（Google Tasks）を使用するにはログインが必要です。</p>
+                        <button @click="login" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold shadow hover:bg-blue-700">ログインする</button>
+                    </div>
+                    <div v-else>
+                        <header class="mb-6 flex flex-wrap gap-4 justify-between items-end">
+                            <h2 class="text-2xl font-bold">Todoリスト</h2>
+                            <div class="flex gap-2">
+                                <button @click="login" class="text-xs bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition">
+                                    <i class="fa-solid fa-rotate mr-1"></i>再接続
+                                </button>
+                                <label class="flex items-center gap-2 text-xs text-gray-500 cursor-pointer bg-white px-3 py-1.5 rounded border">
+                                    <input type="checkbox" v-model="showCompletedTasks" class="rounded text-blue-500">
+                                    完了済み
+                                </label>
+                            </div>
+                        </header>
+                        <div class="flex gap-2 mb-6">
+                            <div class="relative flex-1">
+                                <span class="absolute left-4 top-3.5 text-gray-400"><i class="fa-solid fa-plus"></i></span>
+                                <input type="text" v-model="newTaskTitle" placeholder="タスクを入力..." 
+                                       class="w-full border-none rounded-xl px-10 py-3.5 shadow-sm outline-none ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-400 transition"
+                                       @keydown.enter="createTask">
+                            </div>
+                            <button @click="createTask({isComposing:false})" class="bg-blue-600 text-white px-4 rounded-xl shadow hover:bg-blue-700 font-bold">追加</button>
+                        </div>
+                        <div class="space-y-3">
+                            <div v-if="filteredTasks.length === 0" class="text-center py-12 text-gray-400 bg-white rounded-xl border border-dashed border-gray-300">
+                                タスクはありません
+                            </div>
+                            <div v-for="task in filteredTasks" :key="task.id" 
+                                 class="group bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-start gap-3 transition hover:shadow-md">
+                                <input type="checkbox" :checked="task.status === 'completed'" @change="toggleTaskStatus(task)" class="mt-1.5 w-5 h-5 cursor-pointer accent-blue-500">
+                                <input v-model="task.title" @blur="updateTaskTitle(task)" @keydown.enter="$event.target.blur()" class="flex-1 bg-transparent border-none outline-none text-sm p-0 focus:ring-0" :class="{ 'completed-task': task.status === 'completed' }">
+                                <button @click="deleteTask(task.id)" class="text-gray-300 hover:text-red-400 px-2 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. REPORT TAB -->
+                <div v-if="currentTab === 'report'" class="max-w-4xl mx-auto h-full flex flex-col">
+                    <header class="mb-6 flex justify-between items-center">
+                        <h2 class="text-2xl font-bold">週間レポート</h2>
+                        <div class="flex items-center bg-white rounded-lg shadow-sm border p-1">
+                            <button @click="shiftWeek(-7)" class="p-2 hover:bg-gray-100 rounded text-gray-500"><i class="fa-solid fa-chevron-left"></i></button>
+                            <span class="px-4 text-sm font-bold">{{ weekRangeLabel }}</span>
+                            <button @click="shiftWeek(7)" class="p-2 hover:bg-gray-100 rounded text-gray-500"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </header>
+                    <div class="flex flex-col md:flex-row gap-6 h-full">
+                        <div class="w-full md:w-2/3 flex flex-col gap-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
+                                    <div class="text-xs text-blue-400 font-bold mb-1">Total Study</div>
+                                    <div class="text-2xl font-bold text-gray-800">{{ formatHours(weeklyTotal) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
+                                </div>
+                                <div class="bg-white p-4 rounded-xl shadow-sm border border-green-100">
+                                    <div class="text-xs text-green-500 font-bold mb-1">Daily Avg</div>
+                                    <div class="text-2xl font-bold text-gray-800">{{ formatHours(weeklyTotal / 7) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex-1 min-h-[300px] relative">
+                                <canvas id="weeklyChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 p-0 flex flex-col overflow-hidden">
+                            <div class="bg-gray-50 px-5 py-4 border-b border-gray-100"><h3 class="font-bold text-gray-700">{{ selectedReportDate ? selectedReportDate + ' の詳細' : '日付を選択' }}</h3></div>
+                            <div class="flex-1 overflow-y-auto p-4">
+                                <div v-if="!selectedReportDetail || Object.keys(selectedReportDetail).length === 0" class="text-center py-10 text-gray-400 text-sm">記録なし / 日付未選択</div>
+                                <div v-else class="space-y-3">
+                                    <div v-for="(time, sub) in selectedReportDetail" :key="sub" class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                        <span class="font-medium text-sm">{{ sub }}</span>
+                                        <span class="font-mono px-2 py-0.5 rounded text-sm" :class="sub==='休憩'?'text-green-600 bg-green-50':'text-blue-600 bg-blue-50'">{{ formatSeconds(time) }}</span>
+                                    </div>
+                                    <div class="pt-4 mt-4 border-t border-gray-200 flex justify-between font-bold"><span>学習合計(休憩除く)</span><span>{{ formatSeconds(calculateDailyStudyTotal(selectedReportDetail)) }}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. SETTINGS TAB -->
+                <div v-if="currentTab === 'settings'" class="max-w-xl mx-auto">
+                    <header class="mb-6"><h2 class="text-2xl font-bold">設定</h2></header>
+
+                    <!-- Timer Mode Settings -->
+                    <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 font-bold text-sm bg-gray-50 text-gray-700">
+                            <i class="fa-solid fa-clock mr-2"></i>タイマー設定
+                        </div>
+                        <div class="p-6 flex items-center justify-between">
+                            <div>
+                                <h4 class="font-bold text-sm">タイマーモード</h4>
+                                <p class="text-xs text-gray-500">学習タイマーの動作方式を選択します</p>
+                            </div>
+                            <div class="flex bg-gray-100 p-1 rounded-lg">
+                                <button @click="changeTimerMode('countup')" class="px-3 py-1.5 rounded-md text-sm font-bold transition" :class="timerMode==='countup' ? 'bg-white shadow text-blue-600' : 'text-gray-400'">アップ</button>
+                                <button @click="changeTimerMode('countdown')" class="px-3 py-1.5 rounded-md text-sm font-bold transition" :class="timerMode==='countdown' ? 'bg-white shadow text-blue-600' : 'text-gray-400'">ダウン</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Edit Log Section -->
+                    <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 font-bold text-sm bg-gray-50 text-red-500">
+                            <i class="fa-solid fa-eraser mr-2"></i>記録の修正
+                        </div>
+                        <div class="p-6">
+                            <p class="text-xs text-gray-500 mb-4">ボタンで時間を簡単に増減できます（分単位）</p>
+                            <div v-if="Object.keys(todayLog.subjects).length === 0" class="text-center text-gray-300 text-sm">本日の記録はありません</div>
+                            <div v-else class="space-y-4">
+                                <div v-for="(time, sub) in todayLog.subjects" :key="sub" class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-2 border-b last:border-0 border-gray-50">
+                                    <span class="text-sm font-bold w-32 truncate">{{ sub }}</span>
+                                    <div class="flex items-center gap-2 justify-end">
+                                        <button @click="updateSubjectTime(sub, -5)" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded border border-red-100 hover:bg-red-100 font-bold">-5</button>
+                                        <button @click="updateSubjectTime(sub, -1)" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded border border-red-100 hover:bg-red-100 font-bold">-1</button>
+                                        <span class="font-mono text-sm w-16 text-center bg-gray-50 rounded py-1">{{ Math.floor(time/60) }}分</span>
+                                        <button @click="updateSubjectTime(sub, 1)" class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded border border-blue-100 hover:bg-blue-100 font-bold">+1</button>
+                                        <button @click="updateSubjectTime(sub, 5)" class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded border border-blue-100 hover:bg-blue-100 font-bold">+5</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sound Upload -->
+                    <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 font-bold text-sm bg-gray-50">
+                            <i class="fa-solid fa-music mr-2 text-blue-500"></i>通知音の設定
+                        </div>
+                        <div class="p-6">
+                            <p class="text-xs text-gray-500 mb-2">タイマー終了時の音を変更できます（mp3など）</p>
+                            <input type="file" accept="audio/*" @change="handleAudioUpload" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <button @click="testAudio" class="mt-2 text-xs text-blue-500 hover:underline"><i class="fa-solid fa-play mr-1"></i>テスト再生（ループ確認）</button>
+                        </div>
+                    </section>
+
+                    <!-- Subjects Edit -->
+                    <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 font-bold text-sm bg-gray-50 flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square text-blue-500"></i> 教科の編集
+                        </div>
+                        <div class="p-6">
+                            <ul class="space-y-3 mb-4">
+                                <li v-for="(sub, index) in subjects" :key="index" class="flex items-center gap-2">
+                                    <input type="text" v-model="subjects[index]" @change="saveSettings"
+                                           class="flex-1 border rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none bg-gray-50 focus:bg-white transition">
+                                    <button @click="removeSubject(index)" class="text-gray-300 hover:text-red-500 p-2"><i class="fa-solid fa-circle-minus"></i></button>
+                                </li>
+                            </ul>
+                            <div class="flex gap-2">
+                                <input type="text" v-model="newSubjectName" placeholder="新しい教科名" class="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100">
+                                <button @click="addSubject" class="bg-blue-600 text-white px-4 rounded-lg text-sm font-bold shadow hover:bg-blue-700">追加</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Links -->
+                    <section class="space-y-3">
+                        <button @click="startTutorial" class="w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:bg-gray-50 transition">
+                            <span class="font-bold text-sm text-gray-600"><i class="fa-regular fa-circle-question mr-2"></i>チュートリアルを見る</span>
+                            <i class="fa-solid fa-chevron-right text-gray-300"></i>
+                        </button>
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdjnwg6cOysZVQ5l3KrdG54q7okKP10HfEL2AUabEBChr37Ww/viewform?usp=publish-editor" target="_blank"
+                           class="block w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:bg-gray-50 transition">
+                            <span class="font-bold text-sm text-gray-600"><i class="fa-regular fa-envelope mr-2"></i>開発者に連絡</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-gray-300"></i>
+                        </a>
+                        <button v-if="!isGuestMode" @click="logout" class="w-full bg-red-50 border border-red-100 p-4 rounded-xl text-red-500 font-bold text-sm hover:bg-red-100 transition mt-8">ログアウト</button>
+                        <!-- GUEST LOGOUT -->
+                        <div v-else class="text-center mt-8 p-4 border border-gray-200 rounded-xl bg-gray-50">
+                            <p class="text-xs text-gray-400 mb-2">現在ゲストモードです</p>
+                            <div class="flex flex-col gap-2">
+                                <button @click="login" class="text-blue-500 font-bold text-sm py-2 hover:bg-blue-50 rounded">ログインしてデータを保存</button>
+                                <button @click="guestLogout" class="text-red-500 text-xs py-2 hover:bg-red-50 rounded">データを削除して終了</button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+
+            <!-- COUNTDOWN / BREAK MODAL -->
+            <transition name="modal">
+            <div v-if="showCountdownModal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+                    <h3 class="text-lg font-bold mb-4 text-center">
+                        <i v-if="targetSubject==='休憩'" class="fa-solid fa-mug-hot text-green-500 mr-2"></i>
+                        <i v-else class="fa-solid fa-clock text-blue-500 mr-2"></i>
+                        {{ targetSubject }}タイマー
+                    </h3>
+                    <div class="flex justify-center gap-2 mb-6">
+                        <button @click="setCountdown(5)" class="px-4 py-3 bg-gray-50 border rounded-lg font-bold hover:bg-gray-100">5分</button>
+                        <button @click="setCountdown(10)" class="px-4 py-3 bg-gray-50 border rounded-lg font-bold hover:bg-gray-100">10分</button>
+                        <button @click="setCountdown(25)" class="px-4 py-3 bg-gray-50 border rounded-lg font-bold hover:bg-gray-100">25分</button>
+                        <button @click="setCountdown(60)" class="px-4 py-3 bg-gray-50 border rounded-lg font-bold hover:bg-gray-100">60分</button>
+                    </div>
+                    <div class="mb-6 flex items-center justify-center gap-2">
+                        <button @click="adjustCustomTime(-1)" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 font-bold">-</button>
+                        <div class="w-24 text-center">
+                            <input type="number" v-model="customCountdownMin" class="w-full text-center border-b-2 border-blue-500 text-xl font-bold outline-none" step="1">
+                            <span class="text-xs text-gray-500">分</span>
+                        </div>
+                        <button @click="adjustCustomTime(1)" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 font-bold">+</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="showCountdownModal=false" class="flex-1 py-2 text-gray-500 rounded-lg hover:bg-gray-100">キャンセル</button>
+                        <button @click="startCountdownSession" class="flex-1 py-2 text-white rounded-lg font-bold shadow" :class="targetSubject==='休憩'?'bg-green-600 hover:bg-green-700':'bg-blue-600 hover:bg-blue-700'">開始</button>
+                    </div>
+                </div>
+            </div>
+            </transition>
+
+            <!-- ALARM OVERLAY -->
+            <div v-if="isAlarmRinging" class="fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center p-4">
+                <div class="text-white text-6xl mb-8 animate-ring"><i class="fa-solid fa-bell"></i></div>
+                <h2 class="text-white text-3xl font-bold mb-8">Time's Up!</h2>
+                <button @click="stopAlarm" class="px-10 py-5 bg-white text-red-600 rounded-full font-bold text-xl shadow-2xl hover:scale-105 transition">
+                    アラームを停止
+                </button>
+            </div>
+
+            <!-- TUTORIAL -->
+            <div v-if="showTutorial" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-center">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i :class="tutorialSteps[tutorialStep].icon"></i></div>
+                    <h3 class="text-xl font-bold mb-2">{{ tutorialSteps[tutorialStep].title }}</h3>
+                    <p class="text-gray-600 text-sm mb-6">{{ tutorialSteps[tutorialStep].desc }}</p>
+                    <div class="flex gap-2 justify-center">
+                        <button v-if="tutorialStep > 0" @click="tutorialStep--" class="px-4 py-2 text-gray-400 text-sm">戻る</button>
+                        <button @click="nextTutorial" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow flex-1">{{ tutorialStep === tutorialSteps.length - 1 ? '始める' : '次へ' }}</button>
+                    </div>
+                    <div class="flex justify-center gap-1 mt-4">
+                        <div v-for="(s, i) in tutorialSteps" :key="i" class="w-2 h-2 rounded-full" :class="i === tutorialStep ? 'bg-blue-500' : 'bg-gray-200'"></div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeSr9pQ-Ux59I_ofF4MQSQR3eWmDyj7GI",
+            authDomain: "todolist-for-saikyo.firebaseapp.com",
+            projectId: "todolist-for-saikyo",
+            storageBucket: "todolist-for-saikyo.firebasestorage.app",
+            messagingSenderId: "425031799316",
+            appId: "1:425031799316:web:ef3d2ffa7fff2ad517cd01",
+            measurementId: "G-RC6TXQ34KJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+        provider.addScope('https://www.googleapis.com/auth/tasks');
+        provider.setCustomParameters({ prompt: 'select_account consent' });
+
+        const { createApp, ref, computed, onMounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                const user = ref(null);
+                const isGuestMode = ref(false);
+                const accessToken = ref(null);
+                const currentTab = ref('timer');
+                
+                // Data
+                const subjects = ref(["国語", "数学", "理科", "社会", "英語", "その他"]);
+                const todayLog = ref({ total: 0, subjects: {} });
+                const tasks = ref([]);
+                const newTaskTitle = ref("");
+                const showCompletedTasks = ref(false);
+                const newSubjectName = ref("");
+                const showEditLog = ref(false);
+
+                // Timer Logic
+                const timerMode = ref('countup');
+                const isTimerRunning = ref(false);
+                const isPaused = ref(false);
+                const currentSubject = ref(null);
+                const startTime = ref(0);
+                const elapsedTime = ref(0);
+                const countdownDuration = ref(0);
+                const pauseStartTime = ref(0);
+                let timerInterval = null;
+                const breakMode = ref(false);
+                
+                // Modal & Alarm
+                const showCountdownModal = ref(false);
+                const targetSubject = ref(null);
+                const customCountdownMin = ref(5);
+                const isAlarmRinging = ref(false);
+                
+                // Audio
+                const customAudioData = ref(localStorage.getItem('studyMate_audio'));
+                const defaultAudio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+                let currentAudioObj = null;
+
+                // Report
+                const reportWeekStart = ref(new Date()); 
+                const weeklyTotal = ref(0);
+                let chartInstance = null;
+                const selectedReportDate = ref(null);
+                const selectedReportDetail = ref(null);
+
+                // Tutorial
+                const showTutorial = ref(false);
+                const tutorialStep = ref(0);
+                const tutorialSteps = [
+                    { title: "Study Mateへようこそ", desc: "学習記録、休憩、タスク管理を統合したツールです。", icon: "fa-solid fa-hand-sparkles" },
+                    { title: "一時停止機能", desc: "急な用事の際は「PAUSE」ボタンでタイマーを止められます。", icon: "fa-solid fa-pause" },
+                    { title: "タイマーモード", desc: "設定から「カウントアップ」と「カウントダウン」を切り替えられます。", icon: "fa-solid fa-clock" },
+                    { title: "休憩機能", desc: "休憩時間は勉強時間には含まれませんが、記録には残ります。", icon: "fa-solid fa-mug-hot" }
+                ];
+
+                onMounted(() => {
+                    const seen = localStorage.getItem('studyMate_seenTutorial');
+                    if (!seen) showTutorial.value = true;
+                    
+                    const guestFlag = localStorage.getItem('studyMate_isGuest');
+                    if (guestFlag === 'true') {
+                        isGuestMode.value = true;
+                        try { loadTodayData(); loadSettings(); } catch(e){}
+                    }
+
+                    onAuthStateChanged(auth, async (currentUser) => {
+                        if (currentUser) {
+                            isGuestMode.value = false;
+                            user.value = currentUser;
+                            if(localStorage.getItem('studyMate_guest_todayLog')) await mergeGuestData(currentUser.uid);
+                            try { await loadSettings(); await loadTodayData(); } catch(e){}
+                            localStorage.removeItem('studyMate_isGuest');
+                        }
+                    });
+                });
+
+                // Error Handler
+                const hardReset = () => {
+                    if(confirm("データをリセットしてリロードしますか？（ゲストデータは消えます）")) {
+                        localStorage.clear();
+                        window.location.reload();
+                    }
+                };
+
+                // Auth
+                const startGuest = () => { isGuestMode.value = true; localStorage.setItem('studyMate_isGuest', 'true'); loadTodayData(); };
+                const login = async () => { try { const r = await signInWithPopup(auth, provider); accessToken.value = GoogleAuthProvider.credentialFromResult(r).accessToken; fetchTasks(); } catch(e){ alert(e.message); } };
+                const logout = () => { signOut(auth); window.location.reload(); };
+                const guestLogout = () => {
+                    if(confirm("ゲストデータをすべて削除して初期画面に戻りますか？\n（この操作は取り消せません）")) {
+                        localStorage.clear();
+                        window.location.reload();
+                    }
+                };
+
+                // Data Persistence
+                const getTodayStr = () => new Date().toLocaleDateString('en-CA');
+                const loadTodayData = async () => {
+                    const d = getTodayStr();
+                    try {
+                        if(isGuestMode.value) {
+                            const raw = localStorage.getItem(`studyMate_log_${d}`);
+                            todayLog.value = raw ? JSON.parse(raw) : {total:0,subjects:{}};
+                        } else if(user.value) {
+                            const s = await getDoc(doc(db, "users", user.value.uid, "logs", d));
+                            todayLog.value = s.exists() ? s.data() : {total:0,subjects:{}};
+                        }
+                    } catch(e) { todayLog.value = {total:0,subjects:{}}; }
+                };
+                const saveData = async () => {
+                    const d = getTodayStr();
+                    // Recalculate total excluding Break
+                    let realTotal = 0;
+                    for(const [sub, t] of Object.entries(todayLog.value.subjects)){
+                        if(sub !== '休憩') realTotal += t;
+                    }
+                    todayLog.value.total = realTotal;
+
+                    const data = JSON.parse(JSON.stringify(todayLog.value));
+                    if(isGuestMode.value) {
+                        localStorage.setItem(`studyMate_log_${d}`, JSON.stringify(data));
+                        localStorage.setItem('studyMate_guest_todayLog', 'true');
+                    } else if(user.value) await setDoc(doc(db, "users", user.value.uid, "logs", d), data, {merge:true});
+                };
+                
+                const loadSettings = async () => {
+                    let d = { subjects: subjects.value, timerMode: 'countup' };
+                    try {
+                        if(isGuestMode.value) {
+                            const s = localStorage.getItem('studyMate_settings');
+                            if(s) d = JSON.parse(s);
+                        } else if(user.value) {
+                            const s = await getDoc(doc(db, "users", user.value.uid, "settings", "config"));
+                            if(s.exists()) d = { ...d, ...s.data() };
+                        }
+                    } catch(e) {}
+                    subjects.value = d.subjects || subjects.value;
+                    timerMode.value = d.timerMode || 'countup';
+                };
+                const saveSettings = async () => {
+                    const d = { subjects: subjects.value, timerMode: timerMode.value };
+                    if(isGuestMode.value) localStorage.setItem('studyMate_settings', JSON.stringify(d));
+                    else if(user.value) await setDoc(doc(db, "users", user.value.uid, "settings", "config"), d, {merge:true});
+                };
+
+                const mergeGuestData = async (uid) => {
+                    try {
+                        const d = getTodayStr();
+                        const local = JSON.parse(localStorage.getItem(`studyMate_log_${d}`) || 'null');
+                        if(local) {
+                            const s = await getDoc(doc(db, "users", uid, "logs", d));
+                            const cloud = s.exists() ? s.data() : {total:0,subjects:{}};
+                            for(const [k,v] of Object.entries(local.subjects||{})) cloud.subjects[k] = (cloud.subjects[k]||0)+v;
+                            await setDoc(doc(db, "users", uid, "logs", d), cloud, {merge:true});
+                            localStorage.removeItem(`studyMate_log_${d}`);
+                            localStorage.removeItem('studyMate_guest_todayLog');
+                        }
+                    } catch(e) {}
+                };
+
+                // Timer Core
+                const handleSubjectClick = (sub) => {
+                    if (timerMode.value === 'countdown') openCountdownModal(sub);
+                    else startSession(sub, 'countup');
+                };
+
+                const openCountdownModal = (sub) => {
+                    targetSubject.value = sub;
+                    customCountdownMin.value = 5;
+                    showCountdownModal.value = true;
+                };
+
+                const setCountdown = (m) => { customCountdownMin.value = m; };
+                const adjustCustomTime = (d) => { customCountdownMin.value = Math.max(1, customCountdownMin.value + d); };
+
+                const startCountdownSession = () => {
+                    if (customCountdownMin.value < 0.1) {
+                        alert("時間は0.1分以上に設定してください");
+                        return;
+                    }
+                    showCountdownModal.value = false;
+                    startSession(targetSubject.value, 'countdown', customCountdownMin.value * 60);
+                };
+
+                const startSession = (sub, mode, durationSec = 0) => {
+                    currentSubject.value = sub;
+                    breakMode.value = (sub === '休憩');
+                    countdownDuration.value = durationSec;
+                    startTime.value = Date.now();
+                    elapsedTime.value = 0;
+                    isTimerRunning.value = true;
+                    isPaused.value = false;
+                    
+                    timerInterval = setInterval(() => {
+                        const now = Date.now();
+                        const diff = Math.floor((now - startTime.value) / 1000);
+                        elapsedTime.value = diff;
+
+                        // Check countdown finish
+                        if (mode === 'countdown' && diff >= durationSec) {
+                            stopTimer(true); // Auto stop with alarm (natural finish)
+                        }
+                    }, 1000);
+                };
+
+                const pauseTimer = () => {
+                    clearInterval(timerInterval);
+                    isPaused.value = true;
+                    isTimerRunning.value = false;
+                    pauseStartTime.value = Date.now();
+                };
+
+                const resumeTimer = () => {
+                    const now = Date.now();
+                    const pausedDuration = now - pauseStartTime.value;
+                    // Shift start time forward by the duration we were paused
+                    startTime.value += pausedDuration;
+                    
+                    isPaused.value = false;
+                    isTimerRunning.value = true;
+                    
+                    timerInterval = setInterval(() => {
+                        const n = Date.now();
+                        const diff = Math.floor((n - startTime.value) / 1000);
+                        elapsedTime.value = diff;
+
+                        if ((timerMode.value === 'countdown' || breakMode.value) && diff >= countdownDuration.value && countdownDuration.value > 0) {
+                            stopTimer(true);
+                        }
+                    }, 1000);
+                };
+
+                const stopTimer = async (finished = false) => {
+                    clearInterval(timerInterval);
+                    isTimerRunning.value = false;
+                    isPaused.value = false;
+                    
+                    // finished is true ONLY if called from setInterval
+                    const isNaturalFinish = (finished === true);
+                    
+                    // Calc time to add
+                    let addedTime = elapsedTime.value;
+                    if ((timerMode.value === 'countdown' || breakMode.value) && countdownDuration.value > 0) {
+                        addedTime = Math.min(elapsedTime.value, countdownDuration.value);
+                    }
+
+                    // Log Logic
+                    const sub = currentSubject.value;
+                    const oldVal = todayLog.value.subjects[sub] || 0;
+                    todayLog.value.subjects[sub] = oldVal + addedTime;
+                    
+                    await saveData();
+
+                    if (isNaturalFinish) {
+                        playAlarm();
+                    }
+                    
+                    // Reset
+                    elapsedTime.value = 0;
+                    currentSubject.value = null;
+                    breakMode.value = false; // Reset break mode explicitly for display logic
+                };
+
+                // Alarm
+                const playAlarm = () => {
+                    isAlarmRinging.value = true;
+                    if (customAudioData.value) {
+                        currentAudioObj = new Audio(customAudioData.value);
+                    } else {
+                        currentAudioObj = defaultAudio;
+                    }
+                    currentAudioObj.loop = true;
+                    currentAudioObj.play().catch(e => console.log(e));
+                    if(navigator.vibrate) navigator.vibrate([1000, 500, 1000]);
+                };
+
+                const stopAlarm = () => {
+                    if (currentAudioObj) {
+                        currentAudioObj.pause();
+                        currentAudioObj.currentTime = 0;
+                    }
+                    isAlarmRinging.value = false;
+                };
+
+                const handleAudioUpload = (e) => {
+                    const f = e.target.files[0];
+                    if(f){
+                        if(f.size > 3000000) { alert("ファイルが大きすぎます(3MB以下推奨)"); return; }
+                        const r = new FileReader();
+                        r.onload = (ev) => {
+                            customAudioData.value = ev.target.result;
+                            localStorage.setItem('studyMate_audio', ev.target.result);
+                        };
+                        r.readAsDataURL(f);
+                    }
+                };
+                const testAudio = () => {
+                    const a = customAudioData.value ? new Audio(customAudioData.value) : defaultAudio;
+                    a.loop = true;
+                    a.play();
+                    setTimeout(() => { if(confirm("音が鳴りましたか？(OKで停止)")) a.pause(); else a.pause(); }, 500);
+                };
+
+                // Settings & Edit Log
+                const changeTimerMode = (m) => { timerMode.value = m; saveSettings(); };
+                
+                const updateSubjectTime = async (sub, deltaMin) => {
+                    const oldSec = todayLog.value.subjects[sub] || 0;
+                    const newSec = Math.max(0, oldSec + (deltaMin * 60));
+                    todayLog.value.subjects[sub] = newSec;
+                    if(newSec === 0) delete todayLog.value.subjects[sub];
+                    await saveData();
+                };
+
+                // Standard features
+                const fetchTasks = async () => { if(!accessToken.value)return; try{const r=await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=true&showHidden=true',{headers:{Authorization:`Bearer ${accessToken.value}`}});const d=await r.json();if(d.items)tasks.value=d.items;}catch(e){} };
+                const createTask = async (e) => { if(e&&e.isComposing)return; if(!newTaskTitle.value.trim()||!accessToken.value)return; const t=newTaskTitle.value; newTaskTitle.value=""; tasks.value.unshift({id:"temp",title:t,status:'needsAction'}); try{await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks',{method:'POST',headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},body:JSON.stringify({title:t})}); fetchTasks();}catch(e){} };
+                const toggleTaskStatus = async (t)=>{ t.status=t.status==='completed'?'needsAction':'completed'; await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`,{method:'PATCH',headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},body:JSON.stringify({status:t.status})}); };
+                const deleteTask = async (id)=>{ tasks.value=tasks.value.filter(t=>t.id!==id); await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${accessToken.value}`}}); };
+                const updateTaskTitle = async (t)=>{ await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`,{method:'PATCH',headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},body:JSON.stringify({title:t.title})}); };
+                const addSubject = ()=>{ if(newSubjectName.value){ subjects.value.push(newSubjectName.value); newSubjectName.value=""; saveSettings(); } };
+                const removeSubject = (i)=>{ if(confirm("削除？")){ subjects.value.splice(i,1); saveSettings(); } };
+
+                // Report Logic
+                const shiftWeek = (d) => { const n=new Date(reportWeekStart.value); n.setDate(n.getDate()+d); reportWeekStart.value=n; loadWeeklyReport(); };
+                const calculateDailyStudyTotal = (subs) => {
+                    return Object.entries(subs || {}).reduce((acc, [k, v]) => k !== '休憩' ? acc + v : acc, 0);
+                };
+                const loadWeeklyReport = async () => {
+                    const start=new Date(reportWeekStart.value); start.setDate(start.getDate()-start.getDay()); reportWeekStart.value=new Date(start);
+                    const dates=[]; const promises=[];
+                    for(let i=0;i<7;i++){
+                        const d=new Date(start); d.setDate(start.getDate()+i); const s=d.toLocaleDateString('en-CA'); dates.push(s);
+                        if(isGuestMode.value){ const l=localStorage.getItem(`studyMate_log_${s}`); promises.push(Promise.resolve(l?JSON.parse(l):{total:0,subjects:{}})); }
+                        else if(user.value) promises.push(getDoc(doc(db,"users",user.value.uid,"logs",s)).then(x=>x.exists()?x.data():{total:0,subjects:{}}));
+                        else promises.push(Promise.resolve({total:0,subjects:{}}));
+                    }
+                    const data=await Promise.all(promises);
+                    const studyTotals = data.map(d => calculateDailyStudyTotal(d.subjects));
+                    weeklyTotal.value = studyTotals.reduce((a,b)=>a+b,0);
+                    
+                    nextTick(()=>{
+                        const ctx=document.getElementById('weeklyChart');
+                        if(ctx){
+                            if(chartInstance)chartInstance.destroy();
+                            chartInstance=new Chart(ctx,{
+                                type:'bar',
+                                data:{ labels:dates.map(d=>d.slice(5).replace('-','/')), datasets:[{label:'分',data:studyTotals.map(s=>(s/60).toFixed(1)),backgroundColor:'#3b82f6',borderRadius:4}] },
+                                options:{ maintainAspectRatio:false, responsive:true, onClick:(e,el)=>{if(el.length){const i=el[0].index;selectedReportDate.value=dates[i];selectedReportDetail.value=data[i].subjects;}}, scales:{y:{beginAtZero:true},x:{grid:{display:false}}}, plugins:{legend:{display:false}} }
+                            });
+                        }
+                    });
+                };
+
+                // Computed
+                const formattedTime = computed(() => {
+                    // Running or Paused
+                    if (isTimerRunning.value || isPaused.value) {
+                        if (timerMode.value === 'countdown' || breakMode.value) {
+                            const remaining = Math.max(0, countdownDuration.value - elapsedTime.value);
+                            return formatSeconds(remaining);
+                        }
+                        return formatSeconds(elapsedTime.value);
+                    }
+                    // Stopped (Show Total)
+                    return formatSeconds(calculateDailyStudyTotal(todayLog.value.subjects));
+                });
+                const filteredTasks = computed(() => { let t=tasks.value; if(!showCompletedTasks.value)t=t.filter(x=>x.status!=='completed'); return t.sort((a,b)=>a.status==='completed'?1:-1); });
+                const weekRangeLabel = computed(() => { const s=reportWeekStart.value; const e=new Date(s); e.setDate(s.getDate()+6); return `${s.getMonth()+1}/${s.getDate()} - ${e.getMonth()+1}/${e.getDate()}`; });
+                const formatSeconds = (sec) => { const h=Math.floor(sec/3600).toString().padStart(2,'0'); const m=Math.floor((sec%3600)/60).toString().padStart(2,'0'); const s=(sec%60).toString().padStart(2,'0'); return `${h}:${m}:${s}`; };
+                const formatHours = (sec) => (sec/3600).toFixed(1);
+
+                return {
+                    user, isGuestMode, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects,
+                    isTimerRunning, isPaused, timerMode, breakMode, handleSubjectClick, currentSubject, stopTimer, pauseTimer, resumeTimer, formattedTime, todayLog, formatSeconds,
+                    showCountdownModal, targetSubject, customCountdownMin, setCountdown, adjustCustomTime, startCountdownSession, openCountdownModal,
+                    isAlarmRinging, stopAlarm,
+                    tasks, newTaskTitle, showCompletedTasks, filteredTasks, createTask, deleteTask, toggleTaskStatus, updateTaskTitle,
+                    weekRangeLabel, shiftWeek, loadWeeklyReport, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
+                    newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
+                    showEditLog, updateSubjectTime,
+                    showTutorial, tutorialStep, tutorialSteps, nextTutorial:()=>{if(tutorialStep.value<tutorialSteps.length-1)tutorialStep.value++;else{showTutorial.value=false;localStorage.setItem('studyMate_seenTutorial','true');}}, startTutorial:()=>{showTutorial.value=true;tutorialStep.value=0;}
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
