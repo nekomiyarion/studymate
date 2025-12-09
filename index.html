@@ -4,24 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study Mate</title>
-    <!-- サイトアイコン設定 -->
     <link rel="icon" href="./studymate.png" type="image/png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwindの設定: ダークモード有効化 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'var(--primary-color)',
+                        'primary-hover': 'var(--primary-hover)',
+                        'primary-light': 'var(--primary-light)', // 薄い背景用
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
+        :root {
+            /* デフォルトの青色 (#2563eb) */
+            --primary-color: #2563eb; 
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff; /* blue-50 相当 */
+        }
+
         [v-cloak] { display: none; }
         .completed-task { text-decoration: line-through; color: #9ca3af; }
+        
+        /* スクロールバー装飾 */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* アニメーション */
         .tutorial-highlight { 
             position: relative; z-index: 50; 
             box-shadow: 0 0 0 9999px rgba(0,0,0,0.7); 
             background-color: white; pointer-events: none;
         }
+        .dark .tutorial-highlight { background-color: #1e293b; }
+
         @keyframes ring {
             0% { transform: rotate(0deg); }
             25% { transform: rotate(5deg); }
@@ -29,45 +59,44 @@
             100% { transform: rotate(0deg); }
         }
         .animate-ring { animation: ring 0.3s infinite; }
-        .modal-enter-active, .modal-leave-active { transition: opacity 0.3s; }
-        .modal-enter-from, .modal-leave-to { opacity: 0; }
+        
         @keyframes blink { 50% { opacity: 0.5; } }
         .animate-blink { animation: blink 1.5s infinite; }
+
+        .modal-enter-active, .modal-leave-active { transition: opacity 0.3s; }
+        .modal-enter-from, .modal-leave-to { opacity: 0; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans h-screen overflow-hidden">
+<body class="bg-gray-100 text-gray-800 font-sans h-screen overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
     <div id="app" v-cloak class="h-full flex flex-col md:flex-row relative">
         
         <!-- ================= Login / Guest Landing ================= -->
-        <div v-if="!user && !isGuestMode" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 p-6 z-50 absolute inset-0 overflow-y-auto">
-            <!-- ロゴ画像 -->
+        <div v-if="!user && !isGuestMode" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-6 z-50 absolute inset-0 overflow-y-auto">
             <img src="./studymate.png" alt="Logo" class="w-24 h-24 mb-4 rounded-2xl shadow-lg">
             
-            <h1 class="text-5xl font-bold mb-2 text-blue-600 tracking-tighter text-center">Study Mate</h1>
-            <p class="text-gray-500 mb-10 text-center">勉強も、休憩も、これひとつで。</p>
+            <h1 class="text-5xl font-bold mb-2 text-primary tracking-tighter text-center transition-colors">Study Mate</h1>
+            <p class="text-gray-500 dark:text-gray-400 mb-10 text-center">勉強も、休憩も、これひとつで。</p>
             
             <div class="space-y-4 w-full max-w-sm">
-                <button @click="login" class="w-full px-8 py-4 bg-white border border-gray-300 rounded-xl shadow-lg hover:bg-blue-50 flex items-center justify-center gap-4 font-bold text-gray-700 transition transform hover:scale-105">
+                <button @click="login" class="w-full px-8 py-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-lg hover:bg-primary-light dark:hover:bg-gray-700 flex items-center justify-center gap-4 font-bold text-gray-700 dark:text-gray-200 transition transform hover:scale-105">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6">
                     <span>Googleでログイン</span>
                 </button>
-                <button @click="startGuest" class="w-full px-8 py-4 bg-gray-800 text-white rounded-xl shadow-lg hover:bg-gray-700 flex items-center justify-center gap-4 font-bold transition transform hover:scale-105">
+                <button @click="startGuest" class="w-full px-8 py-4 bg-gray-800 dark:bg-gray-700 text-white rounded-xl shadow-lg hover:bg-gray-700 dark:hover:bg-gray-600 flex items-center justify-center gap-4 font-bold transition transform hover:scale-105">
                     <i class="fa-solid fa-user-secret"></i>
                     <span>ゲストとして利用する</span>
                 </button>
             </div>
             
-            <!-- 規約リンク (ログイン画面) -->
             <div class="mt-8 flex gap-6 text-xs text-gray-400">
-                <a href="https://nekomiyarion.github.io/studymate/terms.html" target="_blank" class="hover:text-blue-500 underline">利用規約</a>
-                <a href="https://nekomiyarion.github.io/studymate/privacy.html" target="_blank" class="hover:text-blue-500 underline">プライバシーポリシー</a>
+                <a href="https://nekomiyarion.github.io/studymate/terms.html" target="_blank" class="hover:text-primary underline">利用規約</a>
+                <a href="https://nekomiyarion.github.io/studymate/privacy.html" target="_blank" class="hover:text-primary underline">プライバシーポリシー</a>
             </div>
 
             <p class="mt-4 text-xs text-gray-300 max-w-sm text-center">
                 ※ゲストモードの記録は、あとでログインした際にアカウントへ統合されます。
             </p>
             
-            <!-- 緊急リセットボタン -->
             <div class="absolute bottom-4 right-4">
                 <button @click="hardReset" class="text-xs text-gray-300 underline hover:text-red-500">
                     不具合時リセット
@@ -78,28 +107,31 @@
         <!-- ================= Main App ================= -->
         <template v-else>
             
-            <!-- Navigation -->
-            <nav class="md:w-64 bg-white border-r border-gray-200 flex flex-col md:h-full flex-shrink-0 order-2 md:order-1 fixed md:relative bottom-0 w-full md:w-auto z-40 h-16 md:h-auto shadow-inner md:shadow-none">
-                <div class="hidden md:flex items-center gap-3 p-6 border-b border-gray-100">
-                    <!-- PCサイドバーロゴ -->
+            <!-- Navigation (Sidebar / Bottom Bar) -->
+            <nav class="md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col md:h-full flex-shrink-0 order-2 md:order-1 fixed md:relative bottom-0 w-full md:w-auto z-40 h-20 md:h-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:shadow-none pb-safe">
+                <div class="hidden md:flex items-center gap-3 p-6 border-b border-gray-100 dark:border-gray-700">
                     <img src="./studymate.png" class="w-8 h-8 rounded-lg">
                     <span class="font-bold text-xl tracking-tight">Study Mate</span>
                 </div>
 
-                <div class="flex md:flex-col justify-around md:justify-start h-full md:p-4 md:gap-2">
-                    <button @click="currentTab = 'timer'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" :class="currentTab === 'timer' ? 'text-blue-600 md:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'">
+                <div class="flex md:flex-col justify-around md:justify-start h-full md:p-4 md:gap-2 items-center md:items-stretch">
+                    <button @click="currentTab = 'timer'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" 
+                        :class="currentTab === 'timer' ? 'text-primary md:bg-primary-light dark:md:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
                         <i class="fa-solid fa-stopwatch text-xl md:text-lg"></i>
                         <span class="text-[10px] md:text-sm font-bold">記録</span>
                     </button>
-                    <button @click="currentTab = 'tasks'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" :class="currentTab === 'tasks' ? 'text-blue-600 md:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'">
+                    <button @click="currentTab = 'tasks'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" 
+                        :class="currentTab === 'tasks' ? 'text-primary md:bg-primary-light dark:md:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
                         <i class="fa-solid fa-list-check text-xl md:text-lg"></i>
                         <span class="text-[10px] md:text-sm font-bold">Todo</span>
                     </button>
-                    <button @click="loadWeeklyReport(); currentTab = 'report'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" :class="currentTab === 'report' ? 'text-blue-600 md:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'">
+                    <button @click="loadWeeklyReport(); currentTab = 'report'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" 
+                        :class="currentTab === 'report' ? 'text-primary md:bg-primary-light dark:md:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
                         <i class="fa-solid fa-chart-simple text-xl md:text-lg"></i>
                         <span class="text-[10px] md:text-sm font-bold">レポート</span>
                     </button>
-                    <button @click="currentTab = 'settings'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" :class="currentTab === 'settings' ? 'text-blue-600 md:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'">
+                    <button @click="currentTab = 'settings'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" 
+                        :class="currentTab === 'settings' ? 'text-primary md:bg-primary-light dark:md:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
                         <i class="fa-solid fa-gear text-xl md:text-lg"></i>
                         <span class="text-[10px] md:text-sm font-bold">設定</span>
                     </button>
@@ -107,51 +139,48 @@
             </nav>
 
             <!-- Content Area -->
-            <!-- pb-40を追加して、スマホで下のツールバーに隠れないように余白を確保 -->
-            <main class="flex-1 h-full overflow-y-auto bg-gray-50 p-4 md:p-8 pb-40 md:pb-8 order-1 md:order-2 relative">
+            <!-- 修正ポイント: min-h-full でスクロール可能に。pb-28でナビゲーションバー分の余白を確保 -->
+            <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 pb-32 md:pb-8 order-1 md:order-2 relative transition-colors duration-300">
                 
                 <!-- 1. TIMER TAB -->
-                <div v-if="currentTab === 'timer'" class="max-w-4xl mx-auto h-full flex flex-col">
+                <div v-if="currentTab === 'timer'" class="max-w-4xl mx-auto min-h-full flex flex-col">
                     <header class="mb-6 md:mb-10 flex justify-between items-center">
                         <h2 class="text-2xl font-bold">今日の学習</h2>
                         <div class="flex items-center gap-2">
-                             <div class="text-sm font-mono text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm">
+                             <div class="text-sm font-mono text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border dark:border-gray-700">
                                 {{ new Date().toLocaleDateString() }}
                             </div>
                         </div>
                     </header>
                     <div class="flex-1 flex flex-col md:flex-row gap-6 md:gap-12 items-center md:items-start justify-center">
-                        <!-- Left: Display -->
-                        <div class="w-full md:w-1/2 flex flex-col items-center justify-center py-6 bg-white md:bg-transparent rounded-3xl md:rounded-none shadow-sm md:shadow-none border md:border-none border-gray-100 relative">
+                        <!-- Left: Timer Display -->
+                        <div class="w-full md:w-1/2 flex flex-col items-center justify-center py-6 bg-white dark:bg-gray-800 md:bg-transparent md:dark:bg-transparent rounded-3xl md:rounded-none shadow-sm md:shadow-none border md:border-none border-gray-100 dark:border-gray-700 relative">
                             <!-- Status Indicator -->
-                            <div v-if="breakMode" class="absolute top-0 text-green-500 font-bold bg-green-50 px-3 py-1 rounded-full text-sm animate-pulse">
+                            <div v-if="breakMode && isTimerRunning" class="absolute top-0 text-green-500 font-bold bg-green-50 dark:bg-green-900/30 px-3 py-1 rounded-full text-sm animate-pulse">
                                 <i class="fa-solid fa-mug-hot mr-1"></i>休憩中
                             </div>
-                            <div v-else-if="timerMode === 'countdown' && isTimerRunning" class="absolute top-0 text-blue-500 font-bold bg-blue-50 px-3 py-1 rounded-full text-sm">
+                            <div v-else-if="timerMode === 'countdown' && isTimerRunning" class="absolute top-0 text-primary font-bold bg-primary-light dark:bg-gray-700 px-3 py-1 rounded-full text-sm">
                                 <i class="fa-solid fa-hourglass-half mr-1"></i>カウントダウン
                             </div>
-                            <div v-else-if="isPaused" class="absolute top-0 text-yellow-500 font-bold bg-yellow-50 px-3 py-1 rounded-full text-sm animate-blink">
+                            <div v-else-if="isPaused" class="absolute top-0 text-yellow-500 font-bold bg-yellow-50 dark:bg-yellow-900/30 px-3 py-1 rounded-full text-sm animate-blink">
                                 <i class="fa-solid fa-pause mr-1"></i>一時停止中
                             </div>
 
-                            <p class="text-sm text-gray-500 mb-2 font-bold">
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2 font-bold">
                                 {{ isTimerRunning || isPaused ? (breakMode ? 'Rest Time' : currentSubject + ' 中') : 'Study Total (Excl. Break)' }}
                             </p>
                             
-                            <div class="text-7xl md:text-8xl font-mono font-bold tracking-tighter mb-6" 
-                                 :class="breakMode ? 'text-green-500' : (isPaused ? 'text-yellow-500' : 'text-blue-600')">
+                            <div class="text-7xl md:text-8xl font-mono font-bold tracking-tighter mb-6 transition-colors" 
+                                 :class="breakMode ? 'text-green-500' : (isPaused ? 'text-yellow-500' : 'text-primary')">
                                 {{ formattedTime }}
                             </div>
                             
-                            <!-- Timer Controls (STOP / PAUSE) -->
+                            <!-- Timer Controls -->
                             <div v-if="isTimerRunning || isPaused" class="w-full max-w-sm flex gap-3">
-                                <!-- STOP Button -->
                                 <button @click="stopTimer(false)" class="flex-1 py-6 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
                                     :class="breakMode ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'">
                                     <i class="fa-solid fa-stop"></i> STOP
                                 </button>
-
-                                <!-- PAUSE/RESUME Button -->
                                 <button v-if="!isPaused" @click="pauseTimer" class="flex-1 py-6 bg-yellow-400 hover:bg-yellow-500 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-pause"></i> PAUSE
                                 </button>
@@ -160,39 +189,38 @@
                                 </button>
                             </div>
                             <p v-if="isTimerRunning" class="text-center mt-3 text-gray-400 text-sm animate-pulse">{{ breakMode ? 'リラックス中...' : (timerMode === 'countdown' ? '集中...' : 'Focus...') }}</p>
-
                         </div>
 
                         <!-- Right: Buttons -->
                         <div class="w-full md:w-1/2" v-if="!isTimerRunning && !isPaused">
-                            <!-- Subject Buttons -->
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4">
                                 <button v-for="sub in subjects" :key="sub" @click="handleSubjectClick(sub)"
-                                    class="h-16 md:h-24 bg-white border-2 border-blue-50 hover:border-blue-400 hover:bg-blue-50 rounded-2xl font-bold text-gray-700 shadow-sm transition active:scale-95 flex flex-col items-center justify-center">
+                                    class="h-16 md:h-24 bg-white dark:bg-gray-800 border-2 border-primary-light dark:border-gray-600 hover:border-primary dark:hover:border-primary rounded-2xl font-bold text-gray-700 dark:text-gray-200 shadow-sm transition active:scale-95 flex flex-col items-center justify-center">
                                     <span class="text-lg">{{ sub }}</span>
                                     <span class="text-[10px] text-gray-400 font-normal md:mt-1">{{ timerMode === 'countdown' ? 'SET' : 'START' }}</span>
                                 </button>
                             </div>
 
-                            <!-- Break Button -->
-                            <button @click="openCountdownModal('休憩')" class="w-full mb-8 py-3 bg-green-50 border border-green-200 hover:bg-green-100 text-green-600 font-bold rounded-xl flex items-center justify-center gap-2 transition">
+                            <button @click="openCountdownModal('休憩')" class="w-full mb-8 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold rounded-xl flex items-center justify-center gap-2 transition">
                                 <i class="fa-solid fa-mug-hot"></i> 休憩タイマーをセット
                             </button>
 
-                            <!-- Daily Detail -->
-                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                                <div class="bg-gray-50 px-5 py-3 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase flex justify-between items-center">
+                            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                                <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-3 border-b border-gray-100 dark:border-gray-700 text-xs font-bold text-gray-400 uppercase flex justify-between items-center">
                                     <span>本日の内訳</span>
-                                    <button @click="currentTab='settings'; showEditLog=true" class="text-blue-500 hover:text-blue-700">
+                                    <button @click="currentTab='settings'; showEditLog=true" class="text-primary hover:text-primary-hover">
                                         <i class="fa-solid fa-pen"></i> 修正
                                     </button>
                                 </div>
                                 <div class="p-2 max-h-60 overflow-y-auto">
                                     <div v-if="Object.keys(todayLog.subjects).length === 0" class="text-center py-6 text-gray-400 text-sm">記録なし</div>
                                     <div v-for="(time, sub) in todayLog.subjects" :key="sub">
-                                        <div v-if="time > 0" class="flex justify-between items-center text-sm border-b border-gray-100 last:border-0 p-3 hover:bg-gray-50">
-                                            <span class="font-medium text-gray-700">{{ sub }}</span>
-                                            <span class="font-mono font-bold px-2 py-0.5 rounded" :class="sub==='休憩'?'text-green-600 bg-green-50':'text-blue-600 bg-blue-50'">{{ formatSeconds(time) }}</span>
+                                        <div v-if="time > 0" class="flex justify-between items-center text-sm border-b border-gray-100 dark:border-gray-700 last:border-0 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                            <span class="font-medium text-gray-700 dark:text-gray-300">{{ sub }}</span>
+                                            <span class="font-mono font-bold px-2 py-0.5 rounded text-gray-800 dark:text-gray-100" 
+                                                  :class="sub==='休憩'?'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400':'bg-primary-light dark:bg-primary/20 text-primary dark:text-primary'">
+                                                {{ formatSeconds(time) }}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -202,22 +230,22 @@
                 </div>
 
                 <!-- 2. TODO TAB -->
-                <div v-if="currentTab === 'tasks'" class="max-w-2xl mx-auto">
+                <div v-if="currentTab === 'tasks'" class="max-w-2xl mx-auto min-h-full">
                     <div v-if="isGuestMode" class="text-center py-20">
-                        <i class="fa-solid fa-lock text-6xl text-gray-200 mb-4"></i>
-                        <h3 class="text-xl font-bold text-gray-600">ゲストモードです</h3>
-                        <p class="text-gray-400 mb-6">Todoリスト（Google Tasks）を使用するにはログインが必要です。</p>
-                        <button @click="login" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold shadow hover:bg-blue-700">ログインする</button>
+                        <i class="fa-solid fa-lock text-6xl text-gray-200 dark:text-gray-700 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-600 dark:text-gray-400">ゲストモードです</h3>
+                        <p class="text-gray-400 dark:text-gray-500 mb-6">Todoリストを使用するにはログインが必要です。</p>
+                        <button @click="login" class="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow hover:bg-primary-hover">ログインする</button>
                     </div>
                     <div v-else>
                         <header class="mb-6 flex flex-wrap gap-4 justify-between items-end">
                             <h2 class="text-2xl font-bold">Todoリスト</h2>
                             <div class="flex gap-2">
-                                <button @click="login" class="text-xs bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition">
+                                <button @click="login" class="text-xs bg-white dark:bg-gray-800 border border-primary-light dark:border-gray-600 text-primary px-3 py-1.5 rounded-lg hover:bg-gray-50 transition">
                                     <i class="fa-solid fa-rotate mr-1"></i>再接続
                                 </button>
-                                <label class="flex items-center gap-2 text-xs text-gray-500 cursor-pointer bg-white px-3 py-1.5 rounded border">
-                                    <input type="checkbox" v-model="showCompletedTasks" class="rounded text-blue-500">
+                                <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer bg-white dark:bg-gray-800 px-3 py-1.5 rounded border dark:border-gray-700">
+                                    <input type="checkbox" v-model="showCompletedTasks" class="rounded text-primary">
                                     完了済み
                                 </label>
                             </div>
@@ -226,19 +254,19 @@
                             <div class="relative flex-1">
                                 <span class="absolute left-4 top-3.5 text-gray-400"><i class="fa-solid fa-plus"></i></span>
                                 <input type="text" v-model="newTaskTitle" placeholder="タスクを入力..." 
-                                       class="w-full border-none rounded-xl px-10 py-3.5 shadow-sm outline-none ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-400 transition"
+                                       class="w-full border-none rounded-xl px-10 py-3.5 shadow-sm outline-none ring-1 ring-gray-200 dark:ring-gray-700 focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 dark:text-white transition"
                                        @keydown.enter="createTask">
                             </div>
-                            <button @click="createTask({isComposing:false})" class="bg-blue-600 text-white px-4 rounded-xl shadow hover:bg-blue-700 font-bold">追加</button>
+                            <button @click="createTask({isComposing:false})" class="bg-primary text-white px-4 rounded-xl shadow hover:bg-primary-hover font-bold">追加</button>
                         </div>
                         <div class="space-y-3">
-                            <div v-if="filteredTasks.length === 0" class="text-center py-12 text-gray-400 bg-white rounded-xl border border-dashed border-gray-300">
+                            <div v-if="filteredTasks.length === 0" class="text-center py-12 text-gray-400 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
                                 タスクはありません
                             </div>
                             <div v-for="task in filteredTasks" :key="task.id" 
-                                 class="group bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-start gap-3 transition hover:shadow-md">
-                                <input type="checkbox" :checked="task.status === 'completed'" @change="toggleTaskStatus(task)" class="mt-1.5 w-5 h-5 cursor-pointer accent-blue-500">
-                                <input v-model="task.title" @blur="updateTaskTitle(task)" @keydown.enter="$event.target.blur()" class="flex-1 bg-transparent border-none outline-none text-sm p-0 focus:ring-0" :class="{ 'completed-task': task.status === 'completed' }">
+                                 class="group bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-start gap-3 transition hover:shadow-md">
+                                <input type="checkbox" :checked="task.status === 'completed'" @change="toggleTaskStatus(task)" class="mt-1.5 w-5 h-5 cursor-pointer accent-primary">
+                                <input v-model="task.title" @blur="updateTaskTitle(task)" @keydown.enter="$event.target.blur()" class="flex-1 bg-transparent border-none outline-none text-sm p-0 focus:ring-0 text-gray-800 dark:text-gray-100" :class="{ 'completed-task': task.status === 'completed' }">
                                 <button @click="deleteTask(task.id)" class="text-gray-300 hover:text-red-400 px-2 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
@@ -246,41 +274,41 @@
                 </div>
 
                 <!-- 3. REPORT TAB -->
-                <div v-if="currentTab === 'report'" class="max-w-4xl mx-auto h-full flex flex-col">
+                <div v-if="currentTab === 'report'" class="max-w-4xl mx-auto min-h-full flex flex-col">
                     <header class="mb-6 flex justify-between items-center">
                         <h2 class="text-2xl font-bold">週間レポート</h2>
-                        <div class="flex items-center bg-white rounded-lg shadow-sm border p-1">
-                            <button @click="shiftWeek(-7)" class="p-2 hover:bg-gray-100 rounded text-gray-500"><i class="fa-solid fa-chevron-left"></i></button>
+                        <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-1">
+                            <button @click="shiftWeek(-7)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-left"></i></button>
                             <span class="px-4 text-sm font-bold">{{ weekRangeLabel }}</span>
-                            <button @click="shiftWeek(7)" class="p-2 hover:bg-gray-100 rounded text-gray-500"><i class="fa-solid fa-chevron-right"></i></button>
+                            <button @click="shiftWeek(7)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-right"></i></button>
                         </div>
                     </header>
                     <div class="flex flex-col md:flex-row gap-6 h-full">
                         <div class="w-full md:w-2/3 flex flex-col gap-4">
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
-                                    <div class="text-xs text-blue-400 font-bold mb-1">Total Study</div>
-                                    <div class="text-2xl font-bold text-gray-800">{{ formatHours(weeklyTotal) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
+                                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-primary-light dark:border-gray-700">
+                                    <div class="text-xs text-primary font-bold mb-1">Total Study</div>
+                                    <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
                                 </div>
-                                <div class="bg-white p-4 rounded-xl shadow-sm border border-green-100">
+                                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-green-100 dark:border-gray-700">
                                     <div class="text-xs text-green-500 font-bold mb-1">Daily Avg</div>
-                                    <div class="text-2xl font-bold text-gray-800">{{ formatHours(weeklyTotal / 7) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
+                                    <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal / 7) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
                                 </div>
                             </div>
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex-1 min-h-[300px] relative">
+                            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex-1 min-h-[300px] relative">
                                 <canvas id="weeklyChart"></canvas>
                             </div>
                         </div>
-                        <div class="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 p-0 flex flex-col overflow-hidden">
-                            <div class="bg-gray-50 px-5 py-4 border-b border-gray-100"><h3 class="font-bold text-gray-700">{{ selectedReportDate ? selectedReportDate + ' の詳細' : '日付を選択' }}</h3></div>
+                        <div class="w-full md:w-1/3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-0 flex flex-col overflow-hidden">
+                            <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-4 border-b border-gray-100 dark:border-gray-700"><h3 class="font-bold text-gray-700 dark:text-gray-200">{{ selectedReportDate ? selectedReportDate + ' の詳細' : '日付を選択' }}</h3></div>
                             <div class="flex-1 overflow-y-auto p-4">
                                 <div v-if="!selectedReportDetail || Object.keys(selectedReportDetail).length === 0" class="text-center py-10 text-gray-400 text-sm">記録なし / 日付未選択</div>
                                 <div v-else class="space-y-3">
-                                    <div v-for="(time, sub) in selectedReportDetail" :key="sub" class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                    <div v-for="(time, sub) in selectedReportDetail" :key="sub" class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-2">
                                         <span class="font-medium text-sm">{{ sub }}</span>
-                                        <span class="font-mono px-2 py-0.5 rounded text-sm" :class="sub==='休憩'?'text-green-600 bg-green-50':'text-blue-600 bg-blue-50'">{{ formatSeconds(time) }}</span>
+                                        <span class="font-mono px-2 py-0.5 rounded text-sm" :class="sub==='休憩'?'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30':'text-primary bg-primary-light dark:bg-primary/20'">{{ formatSeconds(time) }}</span>
                                     </div>
-                                    <div class="pt-4 mt-4 border-t border-gray-200 flex justify-between font-bold"><span>学習合計(休憩除く)</span><span>{{ formatSeconds(calculateDailyStudyTotal(selectedReportDetail)) }}</span></div>
+                                    <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between font-bold"><span>学習合計(休憩除く)</span><span>{{ formatSeconds(calculateDailyStudyTotal(selectedReportDetail)) }}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -288,105 +316,134 @@
                 </div>
 
                 <!-- 4. SETTINGS TAB -->
-                <div v-if="currentTab === 'settings'" class="max-w-xl mx-auto">
+                <div v-if="currentTab === 'settings'" class="max-w-xl mx-auto min-h-full">
                     <header class="mb-6"><h2 class="text-2xl font-bold">設定</h2></header>
 
-                    <!-- Timer Mode Settings -->
-                    <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 font-bold text-sm bg-gray-50 text-gray-700">
+                    <!-- Theme Settings -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
+                            <i class="fa-solid fa-palette mr-2 text-primary"></i>外観設定
+                        </div>
+                        <div class="p-6 space-y-6">
+                            <!-- Dark Mode -->
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-bold text-sm">ダークモード</h4>
+                                    <p class="text-xs text-gray-500">画面を暗くして目の負担を軽減します</p>
+                                </div>
+                                <button @click="toggleDarkMode" class="w-14 h-8 rounded-full p-1 transition-colors duration-300" :class="isDarkMode ? 'bg-primary' : 'bg-gray-300'">
+                                    <div class="w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300" :class="isDarkMode ? 'translate-x-6' : ''"></div>
+                                </button>
+                            </div>
+                            <!-- Color Theme -->
+                            <div>
+                                <h4 class="font-bold text-sm mb-2">テーマカラー</h4>
+                                <div class="flex items-center gap-4">
+                                    <input type="color" v-model="tempThemeColor" @change="changeThemeColor" class="w-10 h-10 rounded cursor-pointer border-none">
+                                    <span class="text-xs text-gray-500">現在の色: {{ themeColor }}</span>
+                                    <button @click="resetTheme" class="ml-auto text-xs border px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">デフォルトに戻す</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Timer Mode -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
                             <i class="fa-solid fa-clock mr-2"></i>タイマー設定
                         </div>
                         <div class="p-6 flex items-center justify-between">
                             <div>
                                 <h4 class="font-bold text-sm">タイマーモード</h4>
-                                <p class="text-xs text-gray-500">学習タイマーの動作方式を選択します</p>
+                                <p class="text-xs text-gray-500">学習タイマーの動作方式</p>
                             </div>
-                            <div class="flex bg-gray-100 p-1 rounded-lg">
-                                <button @click="changeTimerMode('countup')" class="px-3 py-1.5 rounded-md text-sm font-bold transition" :class="timerMode==='countup' ? 'bg-white shadow text-blue-600' : 'text-gray-400'">アップ</button>
-                                <button @click="changeTimerMode('countdown')" class="px-3 py-1.5 rounded-md text-sm font-bold transition" :class="timerMode==='countdown' ? 'bg-white shadow text-blue-600' : 'text-gray-400'">ダウン</button>
+                            <div class="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+                                <button @click="changeTimerMode('countup')" class="px-3 py-1.5 rounded-md text-sm font-bold transition" :class="timerMode==='countup' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">アップ</button>
+                                <button @click="changeTimerMode('countdown')" class="px-3 py-1.5 rounded-md text-sm font-bold transition" :class="timerMode==='countdown' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">ダウン</button>
                             </div>
                         </div>
                     </section>
 
-                    <!-- Edit Log Section -->
-                    <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 font-bold text-sm bg-gray-50 text-red-500">
+                    <!-- Edit Log -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 text-red-500">
                             <i class="fa-solid fa-eraser mr-2"></i>記録の修正
                         </div>
                         <div class="p-6">
                             <p class="text-xs text-gray-500 mb-4">ボタンで時間を簡単に増減できます（分単位）</p>
                             <div v-if="Object.keys(todayLog.subjects).length === 0" class="text-center text-gray-300 text-sm">本日の記録はありません</div>
                             <div v-else class="space-y-4">
-                                <div v-for="(time, sub) in todayLog.subjects" :key="sub" class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-2 border-b last:border-0 border-gray-50">
+                                <div v-for="(time, sub) in todayLog.subjects" :key="sub" class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-2 border-b dark:border-gray-700 last:border-0">
                                     <span class="text-sm font-bold w-32 truncate">{{ sub }}</span>
                                     <div class="flex items-center gap-2 justify-end">
-                                        <button @click="updateSubjectTime(sub, -5)" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded border border-red-100 hover:bg-red-100 font-bold">-5</button>
-                                        <button @click="updateSubjectTime(sub, -1)" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded border border-red-100 hover:bg-red-100 font-bold">-1</button>
-                                        <span class="font-mono text-sm w-16 text-center bg-gray-50 rounded py-1">{{ Math.floor(time/60) }}分</span>
-                                        <button @click="updateSubjectTime(sub, 1)" class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded border border-blue-100 hover:bg-blue-100 font-bold">+1</button>
-                                        <button @click="updateSubjectTime(sub, 5)" class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded border border-blue-100 hover:bg-blue-100 font-bold">+5</button>
+                                        <button @click="updateSubjectTime(sub, -5)" class="px-2 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs rounded border border-red-100 dark:border-red-900 font-bold">-5</button>
+                                        <button @click="updateSubjectTime(sub, -1)" class="px-2 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs rounded border border-red-100 dark:border-red-900 font-bold">-1</button>
+                                        <span class="font-mono text-sm w-16 text-center bg-gray-50 dark:bg-gray-700 rounded py-1">{{ Math.floor(time/60) }}分</span>
+                                        <button @click="updateSubjectTime(sub, 1)" class="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-xs rounded border border-blue-100 dark:border-blue-900 font-bold">+1</button>
+                                        <button @click="updateSubjectTime(sub, 5)" class="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-xs rounded border border-blue-100 dark:border-blue-900 font-bold">+5</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    <!-- Sound Upload -->
-                    <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 font-bold text-sm bg-gray-50">
-                            <i class="fa-solid fa-music mr-2 text-blue-500"></i>通知音の設定
+                    <!-- Sound -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
+                            <i class="fa-solid fa-music mr-2 text-primary"></i>通知音の設定
                         </div>
                         <div class="p-6">
-                            <p class="text-xs text-gray-500 mb-2">タイマー終了時の音を変更できます（mp3など）</p>
-                            <input type="file" accept="audio/*" @change="handleAudioUpload" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <button @click="testAudio" class="mt-2 text-xs text-blue-500 hover:underline"><i class="fa-solid fa-play mr-1"></i>テスト再生（ループ確認）</button>
+                            <p class="text-xs text-gray-500 mb-2">タイマー終了時の音を変更（mp3推奨）</p>
+                            <input type="file" accept="audio/*" @change="handleAudioUpload" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200">
+                            <button @click="testAudio" class="mt-2 text-xs text-primary hover:underline"><i class="fa-solid fa-play mr-1"></i>テスト再生</button>
                         </div>
                     </section>
 
-                    <!-- Subjects Edit -->
-                    <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 font-bold text-sm bg-gray-50 flex items-center gap-2">
-                            <i class="fa-solid fa-pen-to-square text-blue-500"></i> 教科の編集
+                    <!-- Subjects -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square text-primary"></i> 教科の編集
                         </div>
                         <div class="p-6">
                             <ul class="space-y-3 mb-4">
                                 <li v-for="(sub, index) in subjects" :key="index" class="flex items-center gap-2">
                                     <input type="text" v-model="subjects[index]" @change="saveSettings"
-                                           class="flex-1 border rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none bg-gray-50 focus:bg-white transition">
+                                           class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-primary outline-none bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 transition">
                                     <button @click="removeSubject(index)" class="text-gray-300 hover:text-red-500 p-2"><i class="fa-solid fa-circle-minus"></i></button>
                                 </li>
                             </ul>
                             <div class="flex gap-2">
-                                <input type="text" v-model="newSubjectName" placeholder="新しい教科名" class="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100">
-                                <button @click="addSubject" class="bg-blue-600 text-white px-4 rounded-lg text-sm font-bold shadow hover:bg-blue-700">追加</button>
+                                <input type="text" v-model="newSubjectName" placeholder="新しい教科名" class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800">
+                                <button @click="addSubject" class="bg-primary text-white px-4 rounded-lg text-sm font-bold shadow hover:bg-primary-hover">追加</button>
                             </div>
                         </div>
                     </section>
 
-                    <!-- Links -->
+                    <!-- Links & Actions -->
                     <section class="space-y-3">
-                        <button @click="startTutorial" class="w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:bg-gray-50 transition">
-                            <span class="font-bold text-sm text-gray-600"><i class="fa-regular fa-circle-question mr-2"></i>チュートリアルを見る</span>
+                        <button @click="startTutorial" class="w-full bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-bold text-sm text-gray-600 dark:text-gray-300"><i class="fa-regular fa-circle-question mr-2"></i>チュートリアルを見る</span>
                             <i class="fa-solid fa-chevron-right text-gray-300"></i>
                         </button>
                         <a href="https://docs.google.com/forms/d/e/1FAIpQLSdjnwg6cOysZVQ5l3KrdG54q7okKP10HfEL2AUabEBChr37Ww/viewform?usp=publish-editor" target="_blank"
-                           class="block w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:bg-gray-50 transition">
-                            <span class="font-bold text-sm text-gray-600"><i class="fa-regular fa-envelope mr-2"></i>開発者に連絡</span>
+                           class="block w-full bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="font-bold text-sm text-gray-600 dark:text-gray-300"><i class="fa-regular fa-envelope mr-2"></i>開発者に連絡</span>
                             <i class="fa-solid fa-arrow-up-right-from-square text-gray-300"></i>
                         </a>
-                        <button v-if="!isGuestMode" @click="logout" class="w-full bg-red-50 border border-red-100 p-4 rounded-xl text-red-500 font-bold text-sm hover:bg-red-100 transition mt-8">ログアウト</button>
-                        <!-- GUEST LOGOUT -->
-                        <div v-else class="text-center mt-8 p-4 border border-gray-200 rounded-xl bg-gray-50">
+                        
+                        <button v-if="!isGuestMode" @click="logout" class="w-full bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900 p-4 rounded-xl text-red-500 font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition mt-8">ログアウト</button>
+                        
+                        <div v-else class="text-center mt-8 p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800">
                             <p class="text-xs text-gray-400 mb-2">現在ゲストモードです</p>
                             <div class="flex flex-col gap-2">
-                                <button @click="login" class="text-blue-500 font-bold text-sm py-2 hover:bg-blue-50 rounded">ログインしてデータを保存</button>
-                                <button @click="guestLogout" class="text-red-500 text-xs py-2 hover:bg-red-50 rounded">データを削除して終了</button>
+                                <button @click="login" class="text-primary font-bold text-sm py-2 hover:bg-primary-light dark:hover:bg-gray-700 rounded">ログインしてデータを保存</button>
+                                <button @click="guestLogout" class="text-red-500 text-xs py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded">データを削除して終了</button>
                             </div>
                         </div>
-                        
-                        <!-- 規約リンク (設定画面下部) -->
+
+                        <!-- Footer Links -->
                         <div class="mt-8 text-center text-xs text-gray-300 pb-8">
-                            Study Mate v3.4<br>
+                            Study Mate v3.5<br>
                             <span v-if="user">User: {{ user.uid.slice(0, 8) }}...</span>
                             <div class="flex gap-4 justify-center mt-2">
                                 <a href="https://nekomiyarion.github.io/studymate/terms.html" target="_blank" class="underline hover:text-gray-500">利用規約</a>
@@ -400,29 +457,29 @@
             <!-- COUNTDOWN / BREAK MODAL -->
             <transition name="modal">
             <div v-if="showCountdownModal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-                <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-                    <h3 class="text-lg font-bold mb-4 text-center">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+                    <h3 class="text-lg font-bold mb-4 text-center dark:text-white">
                         <i v-if="targetSubject==='休憩'" class="fa-solid fa-mug-hot text-green-500 mr-2"></i>
-                        <i v-else class="fa-solid fa-clock text-blue-500 mr-2"></i>
+                        <i v-else class="fa-solid fa-clock text-primary mr-2"></i>
                         {{ targetSubject }}タイマー
                     </h3>
                     <div class="flex justify-center gap-2 mb-6">
-                        <button @click="setCountdown(5)" class="px-4 py-3 bg-gray-50 border rounded-lg font-bold hover:bg-gray-100">5分</button>
-                        <button @click="setCountdown(10)" class="px-4 py-3 bg-gray-50 border rounded-lg font-bold hover:bg-gray-100">10分</button>
-                        <button @click="setCountdown(25)" class="px-4 py-3 bg-gray-50 border rounded-lg font-bold hover:bg-gray-100">25分</button>
-                        <button @click="setCountdown(60)" class="px-4 py-3 bg-gray-50 border rounded-lg font-bold hover:bg-gray-100">60分</button>
+                        <button @click="setCountdown(5)" class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded-lg font-bold hover:bg-gray-100 dark:hover:bg-gray-600">5分</button>
+                        <button @click="setCountdown(10)" class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded-lg font-bold hover:bg-gray-100 dark:hover:bg-gray-600">10分</button>
+                        <button @click="setCountdown(25)" class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded-lg font-bold hover:bg-gray-100 dark:hover:bg-gray-600">25分</button>
+                        <button @click="setCountdown(60)" class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded-lg font-bold hover:bg-gray-100 dark:hover:bg-gray-600">60分</button>
                     </div>
                     <div class="mb-6 flex items-center justify-center gap-2">
-                        <button @click="adjustCustomTime(-1)" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 font-bold">-</button>
+                        <button @click="adjustCustomTime(-1)" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
                         <div class="w-24 text-center">
-                            <input type="number" v-model="customCountdownMin" class="w-full text-center border-b-2 border-blue-500 text-xl font-bold outline-none" step="1">
+                            <input type="number" v-model="customCountdownMin" class="w-full text-center border-b-2 border-primary text-xl font-bold outline-none bg-transparent dark:text-white" step="1">
                             <span class="text-xs text-gray-500">分</span>
                         </div>
-                        <button @click="adjustCustomTime(1)" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 font-bold">+</button>
+                        <button @click="adjustCustomTime(1)" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
                     </div>
                     <div class="flex gap-2">
-                        <button @click="showCountdownModal=false" class="flex-1 py-2 text-gray-500 rounded-lg hover:bg-gray-100">キャンセル</button>
-                        <button @click="startCountdownSession" class="flex-1 py-2 text-white rounded-lg font-bold shadow" :class="targetSubject==='休憩'?'bg-green-600 hover:bg-green-700':'bg-blue-600 hover:bg-blue-700'">開始</button>
+                        <button @click="showCountdownModal=false" class="flex-1 py-2 text-gray-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">キャンセル</button>
+                        <button @click="startCountdownSession" class="flex-1 py-2 text-white rounded-lg font-bold shadow" :class="targetSubject==='休憩'?'bg-green-600 hover:bg-green-700':'bg-primary hover:bg-primary-hover'">開始</button>
                     </div>
                 </div>
             </div>
@@ -439,16 +496,16 @@
 
             <!-- TUTORIAL -->
             <div v-if="showTutorial" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-                <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-center">
-                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i :class="tutorialSteps[tutorialStep].icon"></i></div>
-                    <h3 class="text-xl font-bold mb-2">{{ tutorialSteps[tutorialStep].title }}</h3>
-                    <p class="text-gray-600 text-sm mb-6">{{ tutorialSteps[tutorialStep].desc }}</p>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-center">
+                    <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 text-primary rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i :class="tutorialSteps[tutorialStep].icon"></i></div>
+                    <h3 class="text-xl font-bold mb-2 dark:text-white">{{ tutorialSteps[tutorialStep].title }}</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">{{ tutorialSteps[tutorialStep].desc }}</p>
                     <div class="flex gap-2 justify-center">
-                        <button v-if="tutorialStep > 0" @click="tutorialStep--" class="px-4 py-2 text-gray-400 text-sm">戻る</button>
-                        <button @click="nextTutorial" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow flex-1">{{ tutorialStep === tutorialSteps.length - 1 ? '始める' : '次へ' }}</button>
+                        <button v-if="tutorialStep > 0" @click="tutorialStep--" class="px-4 py-2 text-gray-400 dark:text-gray-500 text-sm">戻る</button>
+                        <button @click="nextTutorial" class="bg-primary text-white px-6 py-2 rounded-lg font-bold shadow flex-1">{{ tutorialStep === tutorialSteps.length - 1 ? '始める' : '次へ' }}</button>
                     </div>
                     <div class="flex justify-center gap-1 mt-4">
-                        <div v-for="(s, i) in tutorialSteps" :key="i" class="w-2 h-2 rounded-full" :class="i === tutorialStep ? 'bg-blue-500' : 'bg-gray-200'"></div>
+                        <div v-for="(s, i) in tutorialSteps" :key="i" class="w-2 h-2 rounded-full" :class="i === tutorialStep ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-600'"></div>
                     </div>
                 </div>
             </div>
@@ -477,7 +534,7 @@
         provider.addScope('https://www.googleapis.com/auth/tasks');
         provider.setCustomParameters({ prompt: 'select_account consent' });
 
-        const { createApp, ref, computed, onMounted, nextTick } = Vue;
+        const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 
         createApp({
             setup() {
@@ -486,6 +543,31 @@
                 const accessToken = ref(null);
                 const currentTab = ref('timer');
                 
+                // --- THEME & COLOR ---
+                const isDarkMode = ref(false);
+                const themeColor = ref('#2563eb');
+                const tempThemeColor = ref('#2563eb');
+
+                const applyTheme = () => {
+                    const root = document.documentElement;
+                    if (isDarkMode.value) root.classList.add('dark');
+                    else root.classList.remove('dark');
+                    
+                    // CSS変数更新
+                    root.style.setProperty('--primary-color', themeColor.value);
+                    root.style.setProperty('--primary-hover', adjustColor(themeColor.value, -20));
+                    root.style.setProperty('--primary-light', adjustColor(themeColor.value, 180)); // 簡易的なライトカラー
+                };
+
+                const toggleDarkMode = () => { isDarkMode.value = !isDarkMode.value; applyTheme(); saveSettings(); };
+                const changeThemeColor = () => { themeColor.value = tempThemeColor.value; applyTheme(); saveSettings(); };
+                const resetTheme = () => { themeColor.value = '#2563eb'; tempThemeColor.value = '#2563eb'; isDarkMode.value = false; applyTheme(); saveSettings(); };
+
+                // Color utility (Hex brightness adjust)
+                function adjustColor(color, amount) {
+                    return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+                }
+
                 // Data
                 const subjects = ref(["国語", "数学", "理科", "社会", "英語", "その他"]);
                 const todayLog = ref({ total: 0, subjects: {} });
@@ -531,7 +613,7 @@
                 const tutorialSteps = [
                     { title: "Study Mateへようこそ", desc: "学習記録、休憩、タスク管理を統合したツールです。", icon: "fa-solid fa-hand-sparkles" },
                     { title: "一時停止機能", desc: "急な用事の際は「PAUSE」ボタンでタイマーを止められます。", icon: "fa-solid fa-pause" },
-                    { title: "タイマーモード", desc: "設定から「カウントアップ」と「カウントダウン」を切り替えられます。", icon: "fa-solid fa-clock" },
+                    { title: "テーマ変更", desc: "設定からダークモードや好きな色に変更できます。", icon: "fa-solid fa-palette" },
                     { title: "休憩機能", desc: "休憩時間は勉強時間には含まれませんが、記録には残ります。", icon: "fa-solid fa-mug-hot" }
                 ];
 
@@ -554,6 +636,8 @@
                             localStorage.removeItem('studyMate_isGuest');
                         }
                     });
+                    // Apply theme initially (even for guest default)
+                    if(!user.value && !isGuestMode.value) applyTheme();
                 });
 
                 // Error Handler
@@ -591,7 +675,6 @@
                 };
                 const saveData = async () => {
                     const d = getTodayStr();
-                    // Recalculate total excluding Break
                     let realTotal = 0;
                     for(const [sub, t] of Object.entries(todayLog.value.subjects)){
                         if(sub !== '休憩') realTotal += t;
@@ -606,7 +689,7 @@
                 };
                 
                 const loadSettings = async () => {
-                    let d = { subjects: subjects.value, timerMode: 'countup' };
+                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', isDarkMode: false };
                     try {
                         if(isGuestMode.value) {
                             const s = localStorage.getItem('studyMate_settings');
@@ -618,9 +701,18 @@
                     } catch(e) {}
                     subjects.value = d.subjects || subjects.value;
                     timerMode.value = d.timerMode || 'countup';
+                    themeColor.value = d.themeColor || '#2563eb';
+                    tempThemeColor.value = themeColor.value;
+                    isDarkMode.value = d.isDarkMode || false;
+                    applyTheme();
                 };
                 const saveSettings = async () => {
-                    const d = { subjects: subjects.value, timerMode: timerMode.value };
+                    const d = { 
+                        subjects: subjects.value, 
+                        timerMode: timerMode.value,
+                        themeColor: themeColor.value,
+                        isDarkMode: isDarkMode.value
+                    };
                     if(isGuestMode.value) localStorage.setItem('studyMate_settings', JSON.stringify(d));
                     else if(user.value) await setDoc(doc(db, "users", user.value.uid, "settings", "config"), d, {merge:true});
                 };
@@ -695,17 +787,13 @@
                 const resumeTimer = () => {
                     const now = Date.now();
                     const pausedDuration = now - pauseStartTime.value;
-                    // Shift start time forward by the duration we were paused
                     startTime.value += pausedDuration;
-                    
                     isPaused.value = false;
                     isTimerRunning.value = true;
-                    
                     timerInterval = setInterval(() => {
                         const n = Date.now();
                         const diff = Math.floor((n - startTime.value) / 1000);
                         elapsedTime.value = diff;
-
                         if ((timerMode.value === 'countdown' || breakMode.value) && diff >= countdownDuration.value && countdownDuration.value > 0) {
                             stopTimer(true);
                         }
@@ -717,16 +805,12 @@
                     isTimerRunning.value = false;
                     isPaused.value = false;
                     
-                    // finished is true ONLY if called from setInterval
                     const isNaturalFinish = (finished === true);
-                    
-                    // Calc time to add
                     let addedTime = elapsedTime.value;
                     if ((timerMode.value === 'countdown' || breakMode.value) && countdownDuration.value > 0) {
                         addedTime = Math.min(elapsedTime.value, countdownDuration.value);
                     }
 
-                    // Log Logic
                     const sub = currentSubject.value;
                     const oldVal = todayLog.value.subjects[sub] || 0;
                     todayLog.value.subjects[sub] = oldVal + addedTime;
@@ -737,10 +821,9 @@
                         playAlarm();
                     }
                     
-                    // Reset
                     elapsedTime.value = 0;
                     currentSubject.value = null;
-                    breakMode.value = false; // Reset break mode explicitly for display logic
+                    breakMode.value = false; 
                 };
 
                 // Alarm
@@ -825,10 +908,12 @@
                         const ctx=document.getElementById('weeklyChart');
                         if(ctx){
                             if(chartInstance)chartInstance.destroy();
+                            // Theme color integration for chart
+                            const chartColor = themeColor.value; 
                             chartInstance=new Chart(ctx,{
                                 type:'bar',
-                                data:{ labels:dates.map(d=>d.slice(5).replace('-','/')), datasets:[{label:'分',data:studyTotals.map(s=>(s/60).toFixed(1)),backgroundColor:'#3b82f6',borderRadius:4}] },
-                                options:{ maintainAspectRatio:false, responsive:true, onClick:(e,el)=>{if(el.length){const i=el[0].index;selectedReportDate.value=dates[i];selectedReportDetail.value=data[i].subjects;}}, scales:{y:{beginAtZero:true},x:{grid:{display:false}}}, plugins:{legend:{display:false}} }
+                                data:{ labels:dates.map(d=>d.slice(5).replace('-','/')), datasets:[{label:'分',data:studyTotals.map(s=>(s/60).toFixed(1)),backgroundColor:chartColor,borderRadius:4}] },
+                                options:{ maintainAspectRatio:false, responsive:true, onClick:(e,el)=>{if(el.length){const i=el[0].index;selectedReportDate.value=dates[i];selectedReportDetail.value=data[i].subjects;}}, scales:{y:{beginAtZero:true, grid:{color:isDarkMode.value?'#374151':'#e5e7eb'}},x:{grid:{display:false}, ticks:{color:isDarkMode.value?'#9ca3af':'#374151'}}}, plugins:{legend:{display:false}} }
                             });
                         }
                     });
@@ -836,7 +921,6 @@
 
                 // Computed
                 const formattedTime = computed(() => {
-                    // Running or Paused
                     if (isTimerRunning.value || isPaused.value) {
                         if (timerMode.value === 'countdown' || breakMode.value) {
                             const remaining = Math.max(0, countdownDuration.value - elapsedTime.value);
@@ -844,7 +928,6 @@
                         }
                         return formatSeconds(elapsedTime.value);
                     }
-                    // Stopped (Show Total)
                     return formatSeconds(calculateDailyStudyTotal(todayLog.value.subjects));
                 });
                 const filteredTasks = computed(() => { let t=tasks.value; if(!showCompletedTasks.value)t=t.filter(x=>x.status!=='completed'); return t.sort((a,b)=>a.status==='completed'?1:-1); });
@@ -861,6 +944,8 @@
                     weekRangeLabel, shiftWeek, loadWeeklyReport, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
+                    // Theme
+                    isDarkMode, toggleDarkMode, themeColor, tempThemeColor, changeThemeColor, resetTheme,
                     showTutorial, tutorialStep, tutorialSteps, nextTutorial:()=>{if(tutorialStep.value<tutorialSteps.length-1)tutorialStep.value++;else{showTutorial.value=false;localStorage.setItem('studyMate_seenTutorial','true');}}, startTutorial:()=>{showTutorial.value=true;tutorialStep.value=0;}
                 };
             }
