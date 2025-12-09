@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tailwindの設定: ダークモード有効化 -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -20,7 +19,7 @@
                     colors: {
                         primary: 'var(--primary-color)',
                         'primary-hover': 'var(--primary-hover)',
-                        'primary-light': 'var(--primary-light)', // 薄い背景用
+                        'primary-light': 'var(--primary-light)',
                     }
                 }
             }
@@ -29,22 +28,19 @@
 
     <style>
         :root {
-            /* デフォルトの青色 (#2563eb) */
             --primary-color: #2563eb; 
             --primary-hover: #1d4ed8;
-            --primary-light: #eff6ff; /* blue-50 相当 */
+            --primary-light: #eff6ff;
         }
 
         [v-cloak] { display: none; }
         .completed-task { text-decoration: line-through; color: #9ca3af; }
         
-        /* スクロールバー装飾 */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
 
-        /* アニメーション */
         .tutorial-highlight { 
             position: relative; z-index: 50; 
             box-shadow: 0 0 0 9999px rgba(0,0,0,0.7); 
@@ -107,7 +103,7 @@
         <!-- ================= Main App ================= -->
         <template v-else>
             
-            <!-- Navigation (Sidebar / Bottom Bar) -->
+            <!-- Navigation -->
             <nav class="md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col md:h-full flex-shrink-0 order-2 md:order-1 fixed md:relative bottom-0 w-full md:w-auto z-40 h-20 md:h-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:shadow-none pb-safe">
                 <div class="hidden md:flex items-center gap-3 p-6 border-b border-gray-100 dark:border-gray-700">
                     <img src="./studymate.png" class="w-8 h-8 rounded-lg">
@@ -139,7 +135,6 @@
             </nav>
 
             <!-- Content Area -->
-            <!-- 修正ポイント: min-h-full でスクロール可能に。pb-28でナビゲーションバー分の余白を確保 -->
             <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 pb-32 md:pb-8 order-1 md:order-2 relative transition-colors duration-300">
                 
                 <!-- 1. TIMER TAB -->
@@ -153,9 +148,9 @@
                         </div>
                     </header>
                     <div class="flex-1 flex flex-col md:flex-row gap-6 md:gap-12 items-center md:items-start justify-center">
-                        <!-- Left: Timer Display -->
+                        <!-- Left: Display -->
                         <div class="w-full md:w-1/2 flex flex-col items-center justify-center py-6 bg-white dark:bg-gray-800 md:bg-transparent md:dark:bg-transparent rounded-3xl md:rounded-none shadow-sm md:shadow-none border md:border-none border-gray-100 dark:border-gray-700 relative">
-                            <!-- Status Indicator -->
+                            <!-- Status -->
                             <div v-if="breakMode && isTimerRunning" class="absolute top-0 text-green-500 font-bold bg-green-50 dark:bg-green-900/30 px-3 py-1 rounded-full text-sm animate-pulse">
                                 <i class="fa-solid fa-mug-hot mr-1"></i>休憩中
                             </div>
@@ -175,7 +170,7 @@
                                 {{ formattedTime }}
                             </div>
                             
-                            <!-- Timer Controls -->
+                            <!-- Controls -->
                             <div v-if="isTimerRunning || isPaused" class="w-full max-w-sm flex gap-3">
                                 <button @click="stopTimer(false)" class="flex-1 py-6 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
                                     :class="breakMode ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'">
@@ -241,6 +236,7 @@
                         <header class="mb-6 flex flex-wrap gap-4 justify-between items-end">
                             <h2 class="text-2xl font-bold">Todoリスト</h2>
                             <div class="flex gap-2">
+                                <!-- 再接続ボタン (1時間経過などでトークンが切れた場合に押す) -->
                                 <button @click="login" class="text-xs bg-white dark:bg-gray-800 border border-primary-light dark:border-gray-600 text-primary px-3 py-1.5 rounded-lg hover:bg-gray-50 transition">
                                     <i class="fa-solid fa-rotate mr-1"></i>再接続
                                 </button>
@@ -325,7 +321,6 @@
                             <i class="fa-solid fa-palette mr-2 text-primary"></i>外観設定
                         </div>
                         <div class="p-6 space-y-6">
-                            <!-- Dark Mode -->
                             <div class="flex items-center justify-between">
                                 <div>
                                     <h4 class="font-bold text-sm">ダークモード</h4>
@@ -335,7 +330,6 @@
                                     <div class="w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300" :class="isDarkMode ? 'translate-x-6' : ''"></div>
                                 </button>
                             </div>
-                            <!-- Color Theme -->
                             <div>
                                 <h4 class="font-bold text-sm mb-2">テーマカラー</h4>
                                 <div class="flex items-center gap-4">
@@ -532,7 +526,8 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
         provider.addScope('https://www.googleapis.com/auth/tasks');
-        provider.setCustomParameters({ prompt: 'select_account consent' });
+        // promptオプションを削除またはselect_accountのみにして同意画面を抑制
+        provider.setCustomParameters({ prompt: 'select_account' });
 
         const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 
@@ -553,17 +548,15 @@
                     if (isDarkMode.value) root.classList.add('dark');
                     else root.classList.remove('dark');
                     
-                    // CSS変数更新
                     root.style.setProperty('--primary-color', themeColor.value);
                     root.style.setProperty('--primary-hover', adjustColor(themeColor.value, -20));
-                    root.style.setProperty('--primary-light', adjustColor(themeColor.value, 180)); // 簡易的なライトカラー
+                    root.style.setProperty('--primary-light', adjustColor(themeColor.value, 180));
                 };
 
                 const toggleDarkMode = () => { isDarkMode.value = !isDarkMode.value; applyTheme(); saveSettings(); };
                 const changeThemeColor = () => { themeColor.value = tempThemeColor.value; applyTheme(); saveSettings(); };
                 const resetTheme = () => { themeColor.value = '#2563eb'; tempThemeColor.value = '#2563eb'; isDarkMode.value = false; applyTheme(); saveSettings(); };
 
-                // Color utility (Hex brightness adjust)
                 function adjustColor(color, amount) {
                     return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
                 }
@@ -627,6 +620,10 @@
                         try { loadTodayData(); loadSettings(); } catch(e){}
                     }
 
+                    // *** 重要: ローカルストレージからトークン復元 ***
+                    const storedToken = localStorage.getItem('google_tasks_token');
+                    if (storedToken) accessToken.value = storedToken;
+
                     onAuthStateChanged(auth, async (currentUser) => {
                         if (currentUser) {
                             isGuestMode.value = false;
@@ -634,13 +631,16 @@
                             if(localStorage.getItem('studyMate_guest_todayLog')) await mergeGuestData(currentUser.uid);
                             try { await loadSettings(); await loadTodayData(); } catch(e){}
                             localStorage.removeItem('studyMate_isGuest');
+                            
+                            // ログイン時にトークンがあればタスク取得を試みる
+                            if (accessToken.value) fetchTasks();
                         }
                     });
-                    // Apply theme initially (even for guest default)
+                    
+                    // Apply theme initially
                     if(!user.value && !isGuestMode.value) applyTheme();
                 });
 
-                // Error Handler
                 const hardReset = () => {
                     if(confirm("データをリセットしてリロードしますか？（ゲストデータは消えます）")) {
                         localStorage.clear();
@@ -648,10 +648,27 @@
                     }
                 };
 
-                // Auth
                 const startGuest = () => { isGuestMode.value = true; localStorage.setItem('studyMate_isGuest', 'true'); loadTodayData(); };
-                const login = async () => { try { const r = await signInWithPopup(auth, provider); accessToken.value = GoogleAuthProvider.credentialFromResult(r).accessToken; fetchTasks(); } catch(e){ alert(e.message); } };
-                const logout = () => { signOut(auth); window.location.reload(); };
+                
+                const login = async () => { 
+                    try { 
+                        const r = await signInWithPopup(auth, provider); 
+                        const credential = GoogleAuthProvider.credentialFromResult(r);
+                        // *** トークンを保存 ***
+                        accessToken.value = credential.accessToken;
+                        localStorage.setItem('google_tasks_token', credential.accessToken);
+                        fetchTasks(); 
+                    } catch(e){ 
+                        alert(e.message); 
+                    } 
+                };
+                
+                const logout = () => { 
+                    signOut(auth); 
+                    localStorage.removeItem('google_tasks_token'); // ログアウト時は消す
+                    window.location.reload(); 
+                };
+                
                 const guestLogout = () => {
                     if(confirm("ゲストデータをすべて削除して初期画面に戻りますか？\n（この操作は取り消せません）")) {
                         localStorage.clear();
@@ -659,19 +676,18 @@
                     }
                 };
 
-                // Data Persistence
                 const getTodayStr = () => new Date().toLocaleDateString('en-CA');
                 const loadTodayData = async () => {
                     const d = getTodayStr();
                     try {
                         if(isGuestMode.value) {
                             const raw = localStorage.getItem(`studyMate_log_${d}`);
-                            todayLog.value = raw ? JSON.parse(raw) : {total:0,subjects:{}};
+                            todayLog.value = raw ? JSON.parse(raw) : {total:0, subjects:{}};
                         } else if(user.value) {
                             const s = await getDoc(doc(db, "users", user.value.uid, "logs", d));
-                            todayLog.value = s.exists() ? s.data() : {total:0,subjects:{}};
+                            todayLog.value = s.exists() ? s.data() : {total:0, subjects:{}};
                         }
-                    } catch(e) { todayLog.value = {total:0,subjects:{}}; }
+                    } catch(e) { todayLog.value = {total:0, subjects:{}}; }
                 };
                 const saveData = async () => {
                     const d = getTodayStr();
@@ -723,7 +739,7 @@
                         const local = JSON.parse(localStorage.getItem(`studyMate_log_${d}`) || 'null');
                         if(local) {
                             const s = await getDoc(doc(db, "users", uid, "logs", d));
-                            const cloud = s.exists() ? s.data() : {total:0,subjects:{}};
+                            const cloud = s.exists() ? s.data() : {total:0, subjects:{}};
                             for(const [k,v] of Object.entries(local.subjects||{})) cloud.subjects[k] = (cloud.subjects[k]||0)+v;
                             await setDoc(doc(db, "users", uid, "logs", d), cloud, {merge:true});
                             localStorage.removeItem(`studyMate_log_${d}`);
@@ -732,7 +748,6 @@
                     } catch(e) {}
                 };
 
-                // Timer Core
                 const handleSubjectClick = (sub) => {
                     if (timerMode.value === 'countdown') openCountdownModal(sub);
                     else startSession(sub, 'countup');
@@ -769,10 +784,8 @@
                         const now = Date.now();
                         const diff = Math.floor((now - startTime.value) / 1000);
                         elapsedTime.value = diff;
-
-                        // Check countdown finish
                         if (mode === 'countdown' && diff >= durationSec) {
-                            stopTimer(true); // Auto stop with alarm (natural finish)
+                            stopTimer(true); 
                         }
                     }, 1000);
                 };
@@ -826,7 +839,6 @@
                     breakMode.value = false; 
                 };
 
-                // Alarm
                 const playAlarm = () => {
                     isAlarmRinging.value = true;
                     if (customAudioData.value) {
@@ -866,7 +878,6 @@
                     setTimeout(() => { if(confirm("音が鳴りましたか？(OKで停止)")) a.pause(); else a.pause(); }, 500);
                 };
 
-                // Settings & Edit Log
                 const changeTimerMode = (m) => { timerMode.value = m; saveSettings(); };
                 
                 const updateSubjectTime = async (sub, deltaMin) => {
@@ -877,16 +888,46 @@
                     await saveData();
                 };
 
-                // Standard features
-                const fetchTasks = async () => { if(!accessToken.value)return; try{const r=await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=true&showHidden=true',{headers:{Authorization:`Bearer ${accessToken.value}`}});const d=await r.json();if(d.items)tasks.value=d.items;}catch(e){} };
-                const createTask = async (e) => { if(e&&e.isComposing)return; if(!newTaskTitle.value.trim()||!accessToken.value)return; const t=newTaskTitle.value; newTaskTitle.value=""; tasks.value.unshift({id:"temp",title:t,status:'needsAction'}); try{await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks',{method:'POST',headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},body:JSON.stringify({title:t})}); fetchTasks();}catch(e){} };
+                // Task Logic with 401 Handler
+                const fetchTasks = async () => { 
+                    if(!accessToken.value) return; 
+                    try {
+                        const r = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=true&showHidden=true', {
+                            headers:{Authorization:`Bearer ${accessToken.value}`}
+                        });
+                        if (r.status === 401) {
+                            accessToken.value = null; // Token expired
+                            localStorage.removeItem('google_tasks_token');
+                            return;
+                        }
+                        const d = await r.json();
+                        if(d.items) tasks.value = d.items;
+                    } catch(e){} 
+                };
+                
+                const createTask = async (e) => { 
+                    if(e&&e.isComposing) return; 
+                    if(!newTaskTitle.value.trim()||!accessToken.value) return; 
+                    const t = newTaskTitle.value; 
+                    newTaskTitle.value=""; 
+                    tasks.value.unshift({id:"temp",title:t,status:'needsAction'}); 
+                    try {
+                        await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
+                            method:'POST',
+                            headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
+                            body:JSON.stringify({title:t})
+                        }); 
+                        fetchTasks();
+                    } catch(e){} 
+                };
+                
                 const toggleTaskStatus = async (t)=>{ t.status=t.status==='completed'?'needsAction':'completed'; await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`,{method:'PATCH',headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},body:JSON.stringify({status:t.status})}); };
                 const deleteTask = async (id)=>{ tasks.value=tasks.value.filter(t=>t.id!==id); await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${accessToken.value}`}}); };
                 const updateTaskTitle = async (t)=>{ await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`,{method:'PATCH',headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},body:JSON.stringify({title:t.title})}); };
+                
                 const addSubject = ()=>{ if(newSubjectName.value){ subjects.value.push(newSubjectName.value); newSubjectName.value=""; saveSettings(); } };
                 const removeSubject = (i)=>{ if(confirm("削除？")){ subjects.value.splice(i,1); saveSettings(); } };
 
-                // Report Logic
                 const shiftWeek = (d) => { const n=new Date(reportWeekStart.value); n.setDate(n.getDate()+d); reportWeekStart.value=n; loadWeeklyReport(); };
                 const calculateDailyStudyTotal = (subs) => {
                     return Object.entries(subs || {}).reduce((acc, [k, v]) => k !== '休憩' ? acc + v : acc, 0);
@@ -908,7 +949,6 @@
                         const ctx=document.getElementById('weeklyChart');
                         if(ctx){
                             if(chartInstance)chartInstance.destroy();
-                            // Theme color integration for chart
                             const chartColor = themeColor.value; 
                             chartInstance=new Chart(ctx,{
                                 type:'bar',
@@ -919,7 +959,6 @@
                     });
                 };
 
-                // Computed
                 const formattedTime = computed(() => {
                     if (isTimerRunning.value || isPaused.value) {
                         if (timerMode.value === 'countdown' || breakMode.value) {
@@ -944,7 +983,6 @@
                     weekRangeLabel, shiftWeek, loadWeeklyReport, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
-                    // Theme
                     isDarkMode, toggleDarkMode, themeColor, tempThemeColor, changeThemeColor, resetTheme,
                     showTutorial, tutorialStep, tutorialSteps, nextTutorial:()=>{if(tutorialStep.value<tutorialSteps.length-1)tutorialStep.value++;else{showTutorial.value=false;localStorage.setItem('studyMate_seenTutorial','true');}}, startTutorial:()=>{showTutorial.value=true;tutorialStep.value=0;}
                 };
