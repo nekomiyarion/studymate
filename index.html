@@ -72,8 +72,16 @@
 <body class="bg-gray-100 text-gray-800 font-sans h-screen overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
     <div id="app" v-cloak class="h-full flex flex-col md:flex-row relative">
         
+        <!-- ================= LOADING SCREEN ================= -->
+        <div v-if="isAuthLoading" class="fixed inset-0 z-[100] bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+            <div class="flex flex-col items-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary mb-4"></div>
+                <p class="text-gray-500 font-bold animate-pulse">Loading...</p>
+            </div>
+        </div>
+
         <!-- ================= Login / Guest Landing ================= -->
-        <div v-if="!user && !isGuestMode" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-6 z-50 absolute inset-0 overflow-y-auto">
+        <div v-else-if="!user && !isGuestMode" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-6 z-50 absolute inset-0 overflow-y-auto">
             <img src="./studymate.png" alt="Logo" class="w-24 h-24 mb-4 rounded-2xl shadow-lg">
             
             <h1 class="text-5xl font-bold mb-2 text-primary tracking-tighter text-center transition-colors">Study Mate</h1>
@@ -460,7 +468,7 @@
 
                         <!-- Footer Links -->
                         <div class="mt-8 text-center text-xs text-gray-300 pb-8">
-                            Study Mate v3.6<br>
+                            Study Mate v3.7<br>
                             <span v-if="user">User: {{ user.uid.slice(0, 8) }}...</span>
                             <div class="flex gap-4 justify-center mt-2">
                                 <a href="https://nekomiyarion.github.io/studymate/terms.html" target="_blank" class="underline hover:text-gray-500">利用規約</a>
@@ -557,12 +565,15 @@
             setup() {
                 const user = ref(null);
                 const isGuestMode = ref(false);
+                const isAuthLoading = ref(true); // ★ローディング状態管理
                 const accessToken = ref(null);
                 const currentTab = ref('timer');
                 
                 // Mobile & Fullscreen
                 const isMobile = ref(false);
                 const isFullscreen = ref(false);
+                const wakeLock = ref(null); // ★スリープ防止用
+                const TIMER_STATE_KEY = 'studyMate_timer_state'; // ★タイマー保存用キー
 
                 // --- THEME & COLOR ---
                 const isDarkMode = ref(false);
@@ -636,34 +647,37 @@
                     { title: "休憩機能", desc: "休憩時間は勉強時間には含まれませんが、記録には残ります。", icon: "fa-solid fa-mug-hot" }
                 ];
 
-                // Fullscreen functions
-                const checkMobile = () => {
-                    isMobile.value = window.innerWidth < 768;
+                // --- WAKE LOCK (スリープ防止) ---
+                const requestWakeLock = async () => {
+                    try {
+                        if ('wakeLock' in navigator) {
+                            wakeLock.value = await navigator.wakeLock.request('screen');
+                        }
+                    } catch (err) { console.log(err); }
+                };
+                const releaseWakeLock = async () => {
+                    if (wakeLock.value) { await wakeLock.value.release(); wakeLock.value = null; }
+                };
+                const handleVisibilityChange = async () => {
+                    if (wakeLock.value !== null && document.visibilityState === 'visible') await requestWakeLock();
                 };
 
+                // Fullscreen functions
+                const checkMobile = () => { isMobile.value = window.innerWidth < 768; };
                 const toggleFullscreen = () => {
                     if (!document.fullscreenElement) {
-                        document.documentElement.requestFullscreen().then(() => {
-                            isFullscreen.value = true;
-                        }).catch(err => {
-                            alert(`全画面表示できませんでした: ${err.message}`);
-                        });
+                        document.documentElement.requestFullscreen().then(() => { isFullscreen.value = true; }).catch(e=>alert(e));
                     } else {
-                        document.exitFullscreen().then(() => {
-                            isFullscreen.value = false;
-                        });
+                        document.exitFullscreen().then(() => { isFullscreen.value = false; });
                     }
                 };
-
-                // Track fullscreen state
-                const handleFullscreenChange = () => {
-                    isFullscreen.value = !!document.fullscreenElement;
-                };
+                const handleFullscreenChange = () => { isFullscreen.value = !!document.fullscreenElement; };
 
                 onMounted(() => {
                     checkMobile();
                     window.addEventListener('resize', checkMobile);
                     document.addEventListener('fullscreenchange', handleFullscreenChange);
+                    document.addEventListener('visibilitychange', handleVisibilityChange);
 
                     const seen = localStorage.getItem('studyMate_seenTutorial');
                     if (!seen) showTutorial.value = true;
@@ -676,6 +690,9 @@
 
                     const storedToken = localStorage.getItem('google_tasks_token');
                     if (storedToken) accessToken.value = storedToken;
+
+                    // ★タイマー状態の復元（リロード・再開対策）
+                    restoreTimerState();
 
                     onAuthStateChanged(auth, async (currentUser) => {
                         if (currentUser) {
@@ -692,9 +709,15 @@
                                 fetchTasks();
                             }
                         }
+                        // ★認証判定終了でローディング解除
+                        isAuthLoading.value = false;
                     });
                     
-                    if(!user.value && !isGuestMode.value) applyTheme();
+                    if(!user.value && !isGuestMode.value) {
+                         applyTheme();
+                         // ゲスト等の場合も念のため少し待って解除
+                         setTimeout(() => { isAuthLoading.value = false; }, 800);
+                    }
                 });
 
                 const hardReset = () => {
@@ -781,12 +804,7 @@
                     applyTheme();
                 };
                 const saveSettings = async () => {
-                    const d = { 
-                        subjects: subjects.value, 
-                        timerMode: timerMode.value,
-                        themeColor: themeColor.value,
-                        isDarkMode: isDarkMode.value
-                    };
+                    const d = { subjects: subjects.value, timerMode: timerMode.value, themeColor: themeColor.value, isDarkMode: isDarkMode.value };
                     if(isGuestMode.value) localStorage.setItem('studyMate_settings', JSON.stringify(d));
                     else if(user.value) await setDoc(doc(db, "users", user.value.uid, "settings", "config"), d, {merge:true});
                 };
@@ -812,99 +830,40 @@
                         const stored = localStorage.getItem('studyMate_local_tasks');
                         if (stored) {
                             const localTasks = JSON.parse(stored);
-                            // ローカルタスクとクラウドタスクをマージ
                             const cloudTaskIds = tasks.value.map(t => t.id);
                             const uniqueLocalTasks = localTasks.filter(lt => !cloudTaskIds.includes(lt.id));
                             tasks.value = [...tasks.value, ...uniqueLocalTasks];
                         }
-                    } catch(e) {
-                        console.error('Load local tasks error:', e);
-                    }
+                    } catch(e) { console.error('Load local tasks error:', e); }
                 };
 
                 const saveLocalTasks = () => {
                     try {
                         localStorage.setItem('studyMate_local_tasks', JSON.stringify(tasks.value));
-                        if (!isGuestMode.value) {
-                            localStorage.setItem('studyMate_offline_tasks', 'true');
-                        } else {
-                            localStorage.setItem('studyMate_guest_tasks', 'true');
-                        }
-                    } catch(e) {
-                        console.error('Save local tasks error:', e);
-                    }
-                };
-
-                const syncLocalTasksToCloud = async () => {
-                    try {
-                        if (!accessToken.value || tokenExpired.value) return;
-                        
-                        const localTasks = tasks.value.filter(t => t.id && t.id.startsWith('local_'));
-                        
-                        for (const task of localTasks) {
-                            try {
-                                const response = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
-                                    method: 'POST',
-                                    headers: {
-                                        Authorization: `Bearer ${accessToken.value}`,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        title: task.title,
-                                        status: task.status || 'needsAction'
-                                    })
-                                });
-                                
-                                if (response.status === 401) {
-                                    tokenExpired.value = true;
-                                    return;
-                                }
-                            } catch(e) {
-                                console.error('Failed to sync task:', e);
-                            }
-                        }
-                        
-                        // 同期成功後、ローカルタスクフラグをクリア
-                        localStorage.removeItem('studyMate_offline_tasks');
-                        await fetchTasks();
-                    } catch(e) {
-                        console.error('Sync local tasks error:', e);
-                    }
+                        if (!isGuestMode.value) localStorage.setItem('studyMate_offline_tasks', 'true');
+                        else localStorage.setItem('studyMate_guest_tasks', 'true');
+                    } catch(e) { console.error('Save local tasks error:', e); }
                 };
 
                 const mergeGuestTasks = async () => {
                     try {
                         if (!accessToken.value) return;
                         const localTasks = JSON.parse(localStorage.getItem('studyMate_local_tasks') || '[]');
-                        
                         for (const task of localTasks) {
                             if (task.id && !task.id.startsWith('local_')) continue;
-                            
                             try {
                                 await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
                                     method: 'POST',
-                                    headers: {
-                                        Authorization: `Bearer ${accessToken.value}`,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        title: task.title,
-                                        status: task.status || 'needsAction'
-                                    })
+                                    headers: { Authorization: `Bearer ${accessToken.value}`, 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ title: task.title, status: task.status || 'needsAction' })
                                 });
-                            } catch(e) {
-                                console.error('Failed to sync task:', e);
-                            }
+                            } catch(e) {}
                         }
-
                         localStorage.removeItem('studyMate_local_tasks');
                         localStorage.removeItem('studyMate_guest_tasks');
                         localStorage.removeItem('studyMate_offline_tasks');
-                        
                         await fetchTasks();
-                    } catch(e) {
-                        console.error('Merge guest tasks error:', e);
-                    }
+                    } catch(e) {}
                 };
 
                 const handleSubjectClick = (sub) => {
@@ -922,30 +881,36 @@
                 const adjustCustomTime = (d) => { customCountdownMin.value = Math.max(1, customCountdownMin.value + d); };
 
                 const startCountdownSession = () => {
-                    if (customCountdownMin.value < 0.1) {
-                        alert("時間は0.1分以上に設定してください");
-                        return;
-                    }
+                    if (customCountdownMin.value < 0.1) { alert("時間は0.1分以上に設定してください"); return; }
                     showCountdownModal.value = false;
                     startSession(targetSubject.value, 'countdown', customCountdownMin.value * 60);
                 };
 
+                // --- TIMER CONTROL ---
                 const startSession = (sub, mode, durationSec = 0) => {
                     currentSubject.value = sub;
                     breakMode.value = (sub === '休憩');
                     countdownDuration.value = durationSec;
-                    startTime.value = Date.now();
+                    
+                    if (!startTime.value) startTime.value = Date.now();
                     elapsedTime.value = 0;
                     isTimerRunning.value = true;
                     isPaused.value = false;
                     
+                    requestWakeLock(); // ★スリープ防止
+
+                    // ★ローカルストレージに状態保存
+                    localStorage.setItem(TIMER_STATE_KEY, JSON.stringify({
+                        subject: sub, mode: mode, duration: durationSec,
+                        startTime: startTime.value, breakMode: breakMode.value, isPaused: false
+                    }));
+                    
+                    if (timerInterval) clearInterval(timerInterval);
                     timerInterval = setInterval(() => {
                         const now = Date.now();
                         const diff = Math.floor((now - startTime.value) / 1000);
                         elapsedTime.value = diff;
-                        if (mode === 'countdown' && diff >= durationSec) {
-                            stopTimer(true); 
-                        }
+                        if (mode === 'countdown' && diff >= durationSec) stopTimer(true);
                     }, 1000);
                 };
 
@@ -954,6 +919,13 @@
                     isPaused.value = true;
                     isTimerRunning.value = false;
                     pauseStartTime.value = Date.now();
+                    releaseWakeLock(); // ★停止中はスリープ許可
+
+                    // ★一時停止状態保存
+                    const saved = JSON.parse(localStorage.getItem(TIMER_STATE_KEY) || '{}');
+                    saved.isPaused = true;
+                    saved.pauseStartTime = pauseStartTime.value;
+                    localStorage.setItem(TIMER_STATE_KEY, JSON.stringify(saved));
                 };
 
                 const resumeTimer = () => {
@@ -962,6 +934,16 @@
                     startTime.value += pausedDuration;
                     isPaused.value = false;
                     isTimerRunning.value = true;
+                    
+                    requestWakeLock(); // ★スリープ防止
+
+                    // ★再開状態保存
+                    const saved = JSON.parse(localStorage.getItem(TIMER_STATE_KEY) || '{}');
+                    saved.isPaused = false;
+                    saved.startTime = startTime.value;
+                    delete saved.pauseStartTime;
+                    localStorage.setItem(TIMER_STATE_KEY, JSON.stringify(saved));
+
                     timerInterval = setInterval(() => {
                         const n = Date.now();
                         const diff = Math.floor((n - startTime.value) / 1000);
@@ -976,7 +958,11 @@
                     clearInterval(timerInterval);
                     isTimerRunning.value = false;
                     isPaused.value = false;
+                    startTime.value = 0;
                     
+                    releaseWakeLock(); // ★スリープ防止解除
+                    localStorage.removeItem(TIMER_STATE_KEY); // ★保存削除
+
                     const isNaturalFinish = (finished === true);
                     let addedTime = elapsedTime.value;
                     if ((timerMode.value === 'countdown' || breakMode.value) && countdownDuration.value > 0) {
@@ -984,37 +970,66 @@
                     }
 
                     const sub = currentSubject.value;
-                    const oldVal = todayLog.value.subjects[sub] || 0;
-                    todayLog.value.subjects[sub] = oldVal + addedTime;
-                    
-                    await saveData();
-
-                    if (isNaturalFinish) {
-                        playAlarm();
+                    if(sub && todayLog.value.subjects) {
+                        const oldVal = todayLog.value.subjects[sub] || 0;
+                        todayLog.value.subjects[sub] = oldVal + addedTime;
+                        await saveData();
                     }
+
+                    if (isNaturalFinish) playAlarm();
                     
                     elapsedTime.value = 0;
                     currentSubject.value = null;
                     breakMode.value = false; 
                 };
 
+                // ★タイマー復元処理
+                const restoreTimerState = () => {
+                    const saved = localStorage.getItem(TIMER_STATE_KEY);
+                    if (!saved) return;
+                    try {
+                        const state = JSON.parse(saved);
+                        if (state.isPaused) {
+                            currentSubject.value = state.subject;
+                            breakMode.value = state.breakMode;
+                            timerMode.value = state.mode;
+                            countdownDuration.value = state.duration;
+                            startTime.value = state.startTime;
+                            pauseStartTime.value = state.pauseStartTime;
+                            isPaused.value = true;
+                            isTimerRunning.value = false;
+                            elapsedTime.value = Math.floor((state.pauseStartTime - state.startTime) / 1000);
+                        } else {
+                            const now = Date.now();
+                            const diff = Math.floor((now - state.startTime) / 1000);
+                            if (state.mode === 'countdown' && diff >= state.duration) {
+                                currentSubject.value = state.subject;
+                                startTime.value = state.startTime;
+                                elapsedTime.value = diff;
+                                breakMode.value = state.breakMode;
+                                countdownDuration.value = state.duration;
+                                stopTimer(true);
+                            } else {
+                                startTime.value = state.startTime;
+                                startSession(state.subject, state.mode, state.duration);
+                            }
+                        }
+                    } catch (e) {
+                        localStorage.removeItem(TIMER_STATE_KEY);
+                    }
+                };
+
                 const playAlarm = () => {
                     isAlarmRinging.value = true;
-                    if (customAudioData.value) {
-                        currentAudioObj = new Audio(customAudioData.value);
-                    } else {
-                        currentAudioObj = defaultAudio;
-                    }
+                    if (customAudioData.value) currentAudioObj = new Audio(customAudioData.value);
+                    else currentAudioObj = defaultAudio;
                     currentAudioObj.loop = true;
                     currentAudioObj.play().catch(e => console.log(e));
                     if(navigator.vibrate) navigator.vibrate([1000, 500, 1000]);
                 };
 
                 const stopAlarm = () => {
-                    if (currentAudioObj) {
-                        currentAudioObj.pause();
-                        currentAudioObj.currentTime = 0;
-                    }
+                    if (currentAudioObj) { currentAudioObj.pause(); currentAudioObj.currentTime = 0; }
                     isAlarmRinging.value = false;
                 };
 
@@ -1032,8 +1047,7 @@
                 };
                 const testAudio = () => {
                     const a = customAudioData.value ? new Audio(customAudioData.value) : defaultAudio;
-                    a.loop = true;
-                    a.play();
+                    a.loop = true; a.play();
                     setTimeout(() => { if(confirm("音が鳴りましたか？(OKで停止)")) a.pause(); else a.pause(); }, 500);
                 };
 
@@ -1047,26 +1061,17 @@
                     await saveData();
                 };
 
-                // Task Logic with Session Management
+                // Task Logic
                 const tokenExpired = ref(false);
                 const lastTokenRefresh = ref(Date.now());
-                
                 const checkTokenExpiry = () => {
                     const elapsed = Date.now() - lastTokenRefresh.value;
-                    // 50分経過したら警告（60分でタイムアウトなので余裕を持って）
-                    if (elapsed > 50 * 60 * 1000 && accessToken.value) {
-                        tokenExpired.value = true;
-                    }
+                    if (elapsed > 50 * 60 * 1000 && accessToken.value) tokenExpired.value = true;
                 };
-
-                // 定期的にトークンの有効期限をチェック
                 let tokenCheckInterval = null;
-                
                 const startTokenCheck = () => {
                     if (tokenCheckInterval) clearInterval(tokenCheckInterval);
-                    tokenCheckInterval = setInterval(() => {
-                        checkTokenExpiry();
-                    }, 60000); // 1分ごとにチェック
+                    tokenCheckInterval = setInterval(() => { checkTokenExpiry(); }, 60000);
                 };
 
                 const refreshToken = async () => {
@@ -1078,9 +1083,7 @@
                         lastTokenRefresh.value = Date.now();
                         tokenExpired.value = false;
                         await fetchTasks();
-                    } catch(e) {
-                        console.error('Token refresh failed:', e);
-                    }
+                    } catch(e) {}
                 };
 
                 const fetchTasks = async () => { 
@@ -1089,35 +1092,20 @@
                         const r = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=true&showHidden=true', {
                             headers:{Authorization:`Bearer ${accessToken.value}`}
                         });
-                        if (r.status === 401) {
-                            accessToken.value = null;
-                            localStorage.removeItem('google_tasks_token');
-                            tokenExpired.value = true;
-                            return;
-                        }
+                        if (r.status === 401) { accessToken.value = null; localStorage.removeItem('google_tasks_token'); tokenExpired.value = true; return; }
                         const d = await r.json();
                         if(d.items) tasks.value = d.items;
-                        // タスク取得成功時にエラー状態をリセット
                         tokenExpired.value = false;
-                    } catch(e){
-                        console.error('Fetch tasks error:', e);
-                    } 
+                    } catch(e){} 
                 };
                 
                 const createTask = async (e) => { 
                     if(e&&e.isComposing) return; 
                     if(!newTaskTitle.value.trim()) return;
-                    
-                    const t = newTaskTitle.value; 
-                    newTaskTitle.value="";
+                    const t = newTaskTitle.value; newTaskTitle.value="";
                     
                     if (isGuestMode.value) {
-                        const localTask = {
-                            id: 'local_' + Date.now(),
-                            title: t,
-                            status: 'needsAction',
-                            updated: new Date().toISOString()
-                        };
+                        const localTask = { id: 'local_' + Date.now(), title: t, status: 'needsAction', updated: new Date().toISOString() };
                         tasks.value.unshift(localTask);
                         saveLocalTasks();
                     } else if (accessToken.value) {
@@ -1128,81 +1116,50 @@
                                 headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
                                 body:JSON.stringify({title:t})
                             });
-                            if (response.status === 401) {
-                                tokenExpired.value = true;
-                                tasks.value = tasks.value.filter(task => task.id !== "temp");
-                                return;
-                            }
+                            if (response.status === 401) { tokenExpired.value = true; tasks.value = tasks.value.filter(task => task.id !== "temp"); return; }
                             fetchTasks();
-                        } catch(e){
-                            console.error('Create task error:', e);
-                        } 
+                        } catch(e){} 
                     }
                 };
                 
                 const toggleTaskStatus = async (t) => {
                     const oldStatus = t.status;
                     t.status = t.status === 'completed' ? 'needsAction' : 'completed';
-                    
-                    if (isGuestMode.value) {
-                        saveLocalTasks();
-                    } else if (accessToken.value && !t.id.startsWith('local_')) {
+                    if (isGuestMode.value) saveLocalTasks();
+                    else if (accessToken.value && !t.id.startsWith('local_')) {
                         try {
                             const response = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`, {
-                                method:'PATCH',
-                                headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
+                                method:'PATCH', headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
                                 body:JSON.stringify({status:t.status})
                             });
-                            if (response.status === 401) {
-                                tokenExpired.value = true;
-                                t.status = oldStatus; // 元に戻す
-                            }
-                        } catch(e) {
-                            t.status = oldStatus;
-                            console.error('Toggle task error:', e);
-                        }
+                            if (response.status === 401) tokenExpired.value = true; t.status = oldStatus;
+                        } catch(e) { t.status = oldStatus; }
                     }
                 };
 
                 const deleteTask = async (id) => {
                     const taskToDelete = tasks.value.find(t => t.id === id);
                     tasks.value = tasks.value.filter(t => t.id !== id);
-                    
-                    if (isGuestMode.value) {
-                        saveLocalTasks();
-                    } else if (accessToken.value && !id.startsWith('local_')) {
+                    if (isGuestMode.value) saveLocalTasks();
+                    else if (accessToken.value && !id.startsWith('local_')) {
                         try {
                             const response = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${id}`, {
-                                method:'DELETE',
-                                headers:{Authorization:`Bearer ${accessToken.value}`}
+                                method:'DELETE', headers:{Authorization:`Bearer ${accessToken.value}`}
                             });
-                            if (response.status === 401) {
-                                tokenExpired.value = true;
-                                if (taskToDelete) tasks.value.push(taskToDelete); // 元に戻す
-                            }
-                        } catch(e) {
-                            if (taskToDelete) tasks.value.push(taskToDelete);
-                            console.error('Delete task error:', e);
-                        }
+                            if (response.status === 401) { tokenExpired.value = true; if (taskToDelete) tasks.value.push(taskToDelete); }
+                        } catch(e) { if (taskToDelete) tasks.value.push(taskToDelete); }
                     }
                 };
 
                 const updateTaskTitle = async (t) => {
-                    if (isGuestMode.value) {
-                        saveLocalTasks();
-                    } else if (accessToken.value && !t.id.startsWith('local_')) {
+                    if (isGuestMode.value) saveLocalTasks();
+                    else if (accessToken.value && !t.id.startsWith('local_')) {
                         try {
-                            const response = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`, {
-                                method:'PATCH',
-                                headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
+                            await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`, {
+                                method:'PATCH', headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
                                 body:JSON.stringify({title:t.title})
                             });
-                            if (response.status === 401) {
-                                tokenExpired.value = true;
-                            }
-                        } catch(e) {
-                            console.error('Update task error:', e);
-                        }
+                        } catch(e) {}
                     }
                 };
                 
@@ -1230,10 +1187,9 @@
                         const ctx=document.getElementById('weeklyChart');
                         if(ctx){
                             if(chartInstance)chartInstance.destroy();
-                            const chartColor = themeColor.value; 
                             chartInstance=new Chart(ctx,{
                                 type:'bar',
-                                data:{ labels:dates.map(d=>d.slice(5).replace('-','/')), datasets:[{label:'分',data:studyTotals.map(s=>(s/60).toFixed(1)),backgroundColor:chartColor,borderRadius:4}] },
+                                data:{ labels:dates.map(d=>d.slice(5).replace('-','/')), datasets:[{label:'分',data:studyTotals.map(s=>(s/60).toFixed(1)),backgroundColor:themeColor.value,borderRadius:4}] },
                                 options:{ maintainAspectRatio:false, responsive:true, onClick:(e,el)=>{if(el.length){const i=el[0].index;selectedReportDate.value=dates[i];selectedReportDetail.value=data[i].subjects;}}, scales:{y:{beginAtZero:true, grid:{color:isDarkMode.value?'#374151':'#e5e7eb'}},x:{grid:{display:false}, ticks:{color:isDarkMode.value?'#9ca3af':'#374151'}}}, plugins:{legend:{display:false}} }
                             });
                         }
@@ -1256,7 +1212,7 @@
                 const formatHours = (sec) => (sec/3600).toFixed(1);
 
                 return {
-                    user, isGuestMode, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects,
+                    user, isGuestMode, isAuthLoading, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects,
                     isTimerRunning, isPaused, timerMode, breakMode, handleSubjectClick, currentSubject, stopTimer, pauseTimer, resumeTimer, formattedTime, todayLog, formatSeconds,
                     showCountdownModal, targetSubject, customCountdownMin, setCountdown, adjustCustomTime, startCountdownSession, openCountdownModal,
                     isAlarmRinging, stopAlarm,
