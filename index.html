@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>Study Mate</title>
     <link rel="icon" href="./studymate.png" type="image/png">
-    <meta name="google-site-verification" content="xgvD7OjkKryaOKHSlVhas__A7gQiW5va7-MLIObY1zE" />
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -62,6 +61,12 @@
 
         .modal-enter-active, .modal-leave-active { transition: opacity 0.3s; }
         .modal-enter-from, .modal-leave-to { opacity: 0; }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .slide-up { animation: slideUp 0.3s ease-out; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans h-screen overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
@@ -223,49 +228,60 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Fullscreen Button (Mobile Only) -->
+                    <div v-if="isMobile && !isFullscreen" class="fixed bottom-24 right-4 md:hidden slide-up z-30">
+                        <button @click="toggleFullscreen" class="bg-primary text-white p-4 rounded-full shadow-2xl hover:bg-primary-hover transition transform active:scale-95">
+                            <i class="fa-solid fa-expand text-xl"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- 2. TODO TAB -->
                 <div v-if="currentTab === 'tasks'" class="max-w-2xl mx-auto min-h-full">
-                    <div v-if="isGuestMode" class="text-center py-20">
-                        <i class="fa-solid fa-lock text-6xl text-gray-200 dark:text-gray-700 mb-4"></i>
-                        <h3 class="text-xl font-bold text-gray-600 dark:text-gray-400">ゲストモードです</h3>
-                        <p class="text-gray-400 dark:text-gray-500 mb-6">Todoリストを使用するにはログインが必要です。</p>
-                        <button @click="login" class="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow hover:bg-primary-hover">ログインする</button>
-                    </div>
-                    <div v-else>
-                        <header class="mb-6 flex flex-wrap gap-4 justify-between items-end">
-                            <h2 class="text-2xl font-bold">Todoリスト</h2>
-                            <div class="flex gap-2">
-                                <!-- 再接続ボタン (1時間経過などでトークンが切れた場合に押す) -->
-                                <button @click="login" class="text-xs bg-white dark:bg-gray-800 border border-primary-light dark:border-gray-600 text-primary px-3 py-1.5 rounded-lg hover:bg-gray-50 transition">
-                                    <i class="fa-solid fa-rotate mr-1"></i>再接続
-                                </button>
-                                <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer bg-white dark:bg-gray-800 px-3 py-1.5 rounded border dark:border-gray-700">
-                                    <input type="checkbox" v-model="showCompletedTasks" class="rounded text-primary">
-                                    完了済み
-                                </label>
-                            </div>
-                        </header>
-                        <div class="flex gap-2 mb-6">
-                            <div class="relative flex-1">
-                                <span class="absolute left-4 top-3.5 text-gray-400"><i class="fa-solid fa-plus"></i></span>
-                                <input type="text" v-model="newTaskTitle" placeholder="タスクを入力..." 
-                                       class="w-full border-none rounded-xl px-10 py-3.5 shadow-sm outline-none ring-1 ring-gray-200 dark:ring-gray-700 focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 dark:text-white transition"
-                                       @keydown.enter="createTask">
-                            </div>
-                            <button @click="createTask({isComposing:false})" class="bg-primary text-white px-4 rounded-xl shadow hover:bg-primary-hover font-bold">追加</button>
+                    <header class="mb-6 flex flex-wrap gap-4 justify-between items-end">
+                        <h2 class="text-2xl font-bold">Todoリスト</h2>
+                        <div class="flex gap-2">
+                            <button v-if="!isGuestMode" @click="login" class="text-xs bg-white dark:bg-gray-800 border border-primary-light dark:border-gray-600 text-primary px-3 py-1.5 rounded-lg hover:bg-gray-50 transition">
+                                <i class="fa-solid fa-rotate mr-1"></i>再接続
+                            </button>
+                            <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer bg-white dark:bg-gray-800 px-3 py-1.5 rounded border dark:border-gray-700">
+                                <input type="checkbox" v-model="showCompletedTasks" class="rounded text-primary">
+                                完了済み
+                            </label>
                         </div>
-                        <div class="space-y-3">
-                            <div v-if="filteredTasks.length === 0" class="text-center py-12 text-gray-400 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
-                                タスクはありません
-                            </div>
-                            <div v-for="task in filteredTasks" :key="task.id" 
-                                 class="group bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-start gap-3 transition hover:shadow-md">
-                                <input type="checkbox" :checked="task.status === 'completed'" @change="toggleTaskStatus(task)" class="mt-1.5 w-5 h-5 cursor-pointer accent-primary">
-                                <input v-model="task.title" @blur="updateTaskTitle(task)" @keydown.enter="$event.target.blur()" class="flex-1 bg-transparent border-none outline-none text-sm p-0 focus:ring-0 text-gray-800 dark:text-gray-100" :class="{ 'completed-task': task.status === 'completed' }">
-                                <button @click="deleteTask(task.id)" class="text-gray-300 hover:text-red-400 px-2 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash-can"></i></button>
-                            </div>
+                    </header>
+
+                    <!-- Guest Mode Info Banner -->
+                    <div v-if="isGuestMode" class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-6 flex items-start gap-3">
+                        <i class="fa-solid fa-info-circle text-yellow-600 dark:text-yellow-400 mt-0.5"></i>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-yellow-800 dark:text-yellow-300 mb-1">ゲストモードで利用中</p>
+                            <p class="text-xs text-yellow-700 dark:text-yellow-400 mb-2">タスクはこのデバイスに保存されます。ログインすると、Googleアカウントに同期できます。</p>
+                            <button @click="login" class="text-xs bg-yellow-600 dark:bg-yellow-700 text-white px-3 py-1.5 rounded-lg hover:bg-yellow-700 dark:hover:bg-yellow-600 font-bold">
+                                ログインして同期
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 mb-6">
+                        <div class="relative flex-1">
+                            <span class="absolute left-4 top-3.5 text-gray-400"><i class="fa-solid fa-plus"></i></span>
+                            <input type="text" v-model="newTaskTitle" placeholder="タスクを入力..." 
+                                   class="w-full border-none rounded-xl px-10 py-3.5 shadow-sm outline-none ring-1 ring-gray-200 dark:ring-gray-700 focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 dark:text-white transition"
+                                   @keydown.enter="createTask">
+                        </div>
+                        <button @click="createTask({isComposing:false})" class="bg-primary text-white px-4 rounded-xl shadow hover:bg-primary-hover font-bold">追加</button>
+                    </div>
+                    <div class="space-y-3">
+                        <div v-if="filteredTasks.length === 0" class="text-center py-12 text-gray-400 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                            タスクはありません
+                        </div>
+                        <div v-for="task in filteredTasks" :key="task.id" 
+                             class="group bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-start gap-3 transition hover:shadow-md">
+                            <input type="checkbox" :checked="task.status === 'completed'" @change="toggleTaskStatus(task)" class="mt-1.5 w-5 h-5 cursor-pointer accent-primary">
+                            <input v-model="task.title" @blur="updateTaskTitle(task)" @keydown.enter="$event.target.blur()" class="flex-1 bg-transparent border-none outline-none text-sm p-0 focus:ring-0 text-gray-800 dark:text-gray-100" :class="{ 'completed-task': task.status === 'completed' }">
+                            <button @click="deleteTask(task.id)" class="text-gray-300 hover:text-red-400 px-2 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </div>
                 </div>
@@ -438,7 +454,7 @@
 
                         <!-- Footer Links -->
                         <div class="mt-8 text-center text-xs text-gray-300 pb-8">
-                            Study Mate v3.5<br>
+                            Study Mate v3.6<br>
                             <span v-if="user">User: {{ user.uid.slice(0, 8) }}...</span>
                             <div class="flex gap-4 justify-center mt-2">
                                 <a href="https://nekomiyarion.github.io/studymate/terms.html" target="_blank" class="underline hover:text-gray-500">利用規約</a>
@@ -527,7 +543,6 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
         provider.addScope('https://www.googleapis.com/auth/tasks');
-        // promptオプションを削除またはselect_accountのみにして同意画面を抑制
         provider.setCustomParameters({ prompt: 'select_account' });
 
         const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
@@ -539,6 +554,10 @@
                 const accessToken = ref(null);
                 const currentTab = ref('timer');
                 
+                // Mobile & Fullscreen
+                const isMobile = ref(false);
+                const isFullscreen = ref(false);
+
                 // --- THEME & COLOR ---
                 const isDarkMode = ref(false);
                 const themeColor = ref('#2563eb');
@@ -611,17 +630,44 @@
                     { title: "休憩機能", desc: "休憩時間は勉強時間には含まれませんが、記録には残ります。", icon: "fa-solid fa-mug-hot" }
                 ];
 
+                // Fullscreen functions
+                const checkMobile = () => {
+                    isMobile.value = window.innerWidth < 768;
+                };
+
+                const toggleFullscreen = () => {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen().then(() => {
+                            isFullscreen.value = true;
+                        }).catch(err => {
+                            alert(`全画面表示できませんでした: ${err.message}`);
+                        });
+                    } else {
+                        document.exitFullscreen().then(() => {
+                            isFullscreen.value = false;
+                        });
+                    }
+                };
+
+                // Track fullscreen state
+                const handleFullscreenChange = () => {
+                    isFullscreen.value = !!document.fullscreenElement;
+                };
+
                 onMounted(() => {
+                    checkMobile();
+                    window.addEventListener('resize', checkMobile);
+                    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
                     const seen = localStorage.getItem('studyMate_seenTutorial');
                     if (!seen) showTutorial.value = true;
                     
                     const guestFlag = localStorage.getItem('studyMate_isGuest');
                     if (guestFlag === 'true') {
                         isGuestMode.value = true;
-                        try { loadTodayData(); loadSettings(); } catch(e){}
+                        try { loadTodayData(); loadSettings(); loadLocalTasks(); } catch(e){}
                     }
 
-                    // *** 重要: ローカルストレージからトークン復元 ***
                     const storedToken = localStorage.getItem('google_tasks_token');
                     if (storedToken) accessToken.value = storedToken;
 
@@ -630,15 +676,14 @@
                             isGuestMode.value = false;
                             user.value = currentUser;
                             if(localStorage.getItem('studyMate_guest_todayLog')) await mergeGuestData(currentUser.uid);
+                            if(localStorage.getItem('studyMate_guest_tasks')) await mergeGuestTasks();
                             try { await loadSettings(); await loadTodayData(); } catch(e){}
                             localStorage.removeItem('studyMate_isGuest');
                             
-                            // ログイン時にトークンがあればタスク取得を試みる
                             if (accessToken.value) fetchTasks();
                         }
                     });
                     
-                    // Apply theme initially
                     if(!user.value && !isGuestMode.value) applyTheme();
                 });
 
@@ -649,13 +694,12 @@
                     }
                 };
 
-                const startGuest = () => { isGuestMode.value = true; localStorage.setItem('studyMate_isGuest', 'true'); loadTodayData(); };
+                const startGuest = () => { isGuestMode.value = true; localStorage.setItem('studyMate_isGuest', 'true'); loadTodayData(); loadLocalTasks(); };
                 
                 const login = async () => { 
                     try { 
                         const r = await signInWithPopup(auth, provider); 
                         const credential = GoogleAuthProvider.credentialFromResult(r);
-                        // *** トークンを保存 ***
                         accessToken.value = credential.accessToken;
                         localStorage.setItem('google_tasks_token', credential.accessToken);
                         fetchTasks(); 
@@ -666,7 +710,7 @@
                 
                 const logout = () => { 
                     signOut(auth); 
-                    localStorage.removeItem('google_tasks_token'); // ログアウト時は消す
+                    localStorage.removeItem('google_tasks_token');
                     window.location.reload(); 
                 };
                 
@@ -747,6 +791,55 @@
                             localStorage.removeItem('studyMate_guest_todayLog');
                         }
                     } catch(e) {}
+                };
+
+                // ===== LOCAL TASKS (GUEST MODE) =====
+                const loadLocalTasks = () => {
+                    try {
+                        const stored = localStorage.getItem('studyMate_local_tasks');
+                        if (stored) {
+                            tasks.value = JSON.parse(stored);
+                        }
+                    } catch(e) {}
+                };
+
+                const saveLocalTasks = () => {
+                    localStorage.setItem('studyMate_local_tasks', JSON.stringify(tasks.value));
+                    localStorage.setItem('studyMate_guest_tasks', 'true');
+                };
+
+                const mergeGuestTasks = async () => {
+                    try {
+                        if (!accessToken.value) return;
+                        const localTasks = JSON.parse(localStorage.getItem('studyMate_local_tasks') || '[]');
+                        
+                        for (const task of localTasks) {
+                            if (task.id && !task.id.startsWith('local_')) continue;
+                            
+                            try {
+                                await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
+                                    method: 'POST',
+                                    headers: {
+                                        Authorization: `Bearer ${accessToken.value}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        title: task.title,
+                                        status: task.status || 'needsAction'
+                                    })
+                                });
+                            } catch(e) {
+                                console.error('Failed to sync task:', e);
+                            }
+                        }
+
+                        localStorage.removeItem('studyMate_local_tasks');
+                        localStorage.removeItem('studyMate_guest_tasks');
+                        
+                        await fetchTasks();
+                    } catch(e) {
+                        console.error('Merge guest tasks error:', e);
+                    }
                 };
 
                 const handleSubjectClick = (sub) => {
@@ -889,7 +982,7 @@
                     await saveData();
                 };
 
-                // Task Logic with 401 Handler
+                // Task Logic
                 const fetchTasks = async () => { 
                     if(!accessToken.value) return; 
                     try {
@@ -897,7 +990,7 @@
                             headers:{Authorization:`Bearer ${accessToken.value}`}
                         });
                         if (r.status === 401) {
-                            accessToken.value = null; // Token expired
+                            accessToken.value = null;
                             localStorage.removeItem('google_tasks_token');
                             return;
                         }
@@ -908,23 +1001,71 @@
                 
                 const createTask = async (e) => { 
                     if(e&&e.isComposing) return; 
-                    if(!newTaskTitle.value.trim()||!accessToken.value) return; 
+                    if(!newTaskTitle.value.trim()) return;
+                    
                     const t = newTaskTitle.value; 
-                    newTaskTitle.value=""; 
-                    tasks.value.unshift({id:"temp",title:t,status:'needsAction'}); 
-                    try {
-                        await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
-                            method:'POST',
-                            headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
-                            body:JSON.stringify({title:t})
-                        }); 
-                        fetchTasks();
-                    } catch(e){} 
+                    newTaskTitle.value="";
+                    
+                    if (isGuestMode.value) {
+                        const localTask = {
+                            id: 'local_' + Date.now(),
+                            title: t,
+                            status: 'needsAction',
+                            updated: new Date().toISOString()
+                        };
+                        tasks.value.unshift(localTask);
+                        saveLocalTasks();
+                    } else if (accessToken.value) {
+                        tasks.value.unshift({id:"temp",title:t,status:'needsAction'}); 
+                        try {
+                            await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
+                                method:'POST',
+                                headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
+                                body:JSON.stringify({title:t})
+                            }); 
+                            fetchTasks();
+                        } catch(e){} 
+                    }
                 };
                 
-                const toggleTaskStatus = async (t)=>{ t.status=t.status==='completed'?'needsAction':'completed'; await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`,{method:'PATCH',headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},body:JSON.stringify({status:t.status})}); };
-                const deleteTask = async (id)=>{ tasks.value=tasks.value.filter(t=>t.id!==id); await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${accessToken.value}`}}); };
-                const updateTaskTitle = async (t)=>{ await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`,{method:'PATCH',headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},body:JSON.stringify({title:t.title})}); };
+                const toggleTaskStatus = async (t) => {
+                    t.status = t.status === 'completed' ? 'needsAction' : 'completed';
+                    
+                    if (isGuestMode.value) {
+                        saveLocalTasks();
+                    } else if (accessToken.value && !t.id.startsWith('local_')) {
+                        await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`, {
+                            method:'PATCH',
+                            headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
+                            body:JSON.stringify({status:t.status})
+                        });
+                    }
+                };
+
+                const deleteTask = async (id) => {
+                    tasks.value = tasks.value.filter(t => t.id !== id);
+                    
+                    if (isGuestMode.value) {
+                        saveLocalTasks();
+                    } else if (accessToken.value && !id.startsWith('local_')) {
+                        await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${id}`, {
+                            method:'DELETE',
+                            headers:{Authorization:`Bearer ${accessToken.value}`}
+                        });
+                    }
+                };
+
+                const updateTaskTitle = async (t) => {
+                    if (isGuestMode.value) {
+                        saveLocalTasks();
+                    } else if (accessToken.value && !t.id.startsWith('local_')) {
+                        await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`, {
+                            method:'PATCH',
+                            headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
+                            body:JSON.stringify({title:t.title})
+                        });
+                    }
+                };
                 
                 const addSubject = ()=>{ if(newSubjectName.value){ subjects.value.push(newSubjectName.value); newSubjectName.value=""; saveSettings(); } };
                 const removeSubject = (i)=>{ if(confirm("削除？")){ subjects.value.splice(i,1); saveSettings(); } };
@@ -985,7 +1126,10 @@
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
                     isDarkMode, toggleDarkMode, themeColor, tempThemeColor, changeThemeColor, resetTheme,
-                    showTutorial, tutorialStep, tutorialSteps, nextTutorial:()=>{if(tutorialStep.value<tutorialSteps.length-1)tutorialStep.value++;else{showTutorial.value=false;localStorage.setItem('studyMate_seenTutorial','true');}}, startTutorial:()=>{showTutorial.value=true;tutorialStep.value=0;}
+                    showTutorial, tutorialStep, tutorialSteps, 
+                    nextTutorial:()=>{if(tutorialStep.value<tutorialSteps.length-1)tutorialStep.value++;else{showTutorial.value=false;localStorage.setItem('studyMate_seenTutorial','true');}}, 
+                    startTutorial:()=>{showTutorial.value=true;tutorialStep.value=0;},
+                    isMobile, isFullscreen, toggleFullscreen
                 };
             }
         }).mount('#app');
