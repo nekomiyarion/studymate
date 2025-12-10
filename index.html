@@ -141,10 +141,10 @@
             </nav>
 
             <!-- Content Area -->
-            <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 pb-32 md:pb-8 order-1 md:order-2 relative transition-colors duration-300">
+            <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 pb-28 md:pb-8 order-1 md:order-2 relative transition-colors duration-300">
                 
                 <!-- 1. TIMER TAB -->
-                <div v-if="currentTab === 'timer'" class="max-w-4xl mx-auto min-h-full flex flex-col">
+                <div v-if="currentTab === 'timer'" class="max-w-4xl mx-auto min-h-full flex flex-col pb-8">
                     <header class="mb-6 md:mb-10 flex justify-between items-center">
                         <h2 class="text-2xl font-bold">今日の学習</h2>
                         <div class="flex items-center gap-2">
@@ -230,19 +230,25 @@
                     </div>
 
                     <!-- Fullscreen Button (Mobile Only) -->
-                    <div v-if="isMobile && !isFullscreen" class="fixed bottom-24 right-4 md:hidden slide-up z-30">
-                        <button @click="toggleFullscreen" class="bg-primary text-white p-4 rounded-full shadow-2xl hover:bg-primary-hover transition transform active:scale-95">
-                            <i class="fa-solid fa-expand text-xl"></i>
+                    <div v-if="isMobile && !isFullscreen" class="fixed bottom-28 left-4 md:hidden slide-up z-30">
+                        <button @click="toggleFullscreen" class="bg-gray-800/80 dark:bg-gray-700/80 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition transform active:scale-95 text-xs font-medium flex items-center gap-1.5">
+                            <i class="fa-solid fa-expand text-sm"></i>
+                            <span>全画面</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- 2. TODO TAB -->
-                <div v-if="currentTab === 'tasks'" class="max-w-2xl mx-auto min-h-full">
+                <div v-if="currentTab === 'tasks'" class="max-w-2xl mx-auto min-h-full pb-8">
                     <header class="mb-6 flex flex-wrap gap-4 justify-between items-end">
                         <h2 class="text-2xl font-bold">Todoリスト</h2>
-                        <div class="flex gap-2">
-                            <button v-if="!isGuestMode" @click="login" class="text-xs bg-white dark:bg-gray-800 border border-primary-light dark:border-gray-600 text-primary px-3 py-1.5 rounded-lg hover:bg-gray-50 transition">
+                        <div class="flex gap-2 items-center">
+                            <!-- Session Status Indicator (Small) -->
+                            <div v-if="tokenExpired && !isGuestMode" class="flex items-center gap-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-2.5 py-1.5 rounded-lg">
+                                <i class="fa-solid fa-circle-exclamation text-red-600 dark:text-red-400 text-xs"></i>
+                                <span class="text-[10px] font-bold text-red-700 dark:text-red-300">セッション切れ</span>
+                            </div>
+                            <button v-if="!isGuestMode" @click="refreshToken" class="text-xs bg-white dark:bg-gray-800 border border-primary-light dark:border-gray-600 text-primary px-3 py-1.5 rounded-lg hover:bg-gray-50 transition">
                                 <i class="fa-solid fa-rotate mr-1"></i>再接続
                             </button>
                             <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer bg-white dark:bg-gray-800 px-3 py-1.5 rounded border dark:border-gray-700">
@@ -287,7 +293,7 @@
                 </div>
 
                 <!-- 3. REPORT TAB -->
-                <div v-if="currentTab === 'report'" class="max-w-4xl mx-auto min-h-full flex flex-col">
+                <div v-if="currentTab === 'report'" class="max-w-4xl mx-auto min-h-full flex flex-col pb-8">
                     <header class="mb-6 flex justify-between items-center">
                         <h2 class="text-2xl font-bold">週間レポート</h2>
                         <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-1">
@@ -329,7 +335,7 @@
                 </div>
 
                 <!-- 4. SETTINGS TAB -->
-                <div v-if="currentTab === 'settings'" class="max-w-xl mx-auto min-h-full">
+                <div v-if="currentTab === 'settings'" class="max-w-xl mx-auto min-h-full pb-8">
                     <header class="mb-6"><h2 class="text-2xl font-bold">設定</h2></header>
 
                     <!-- Theme Settings -->
@@ -680,7 +686,11 @@
                             try { await loadSettings(); await loadTodayData(); } catch(e){}
                             localStorage.removeItem('studyMate_isGuest');
                             
-                            if (accessToken.value) fetchTasks();
+                            if (accessToken.value) {
+                                lastTokenRefresh.value = Date.now();
+                                startTokenCheck();
+                                fetchTasks();
+                            }
                         }
                     });
                     
@@ -702,6 +712,9 @@
                         const credential = GoogleAuthProvider.credentialFromResult(r);
                         accessToken.value = credential.accessToken;
                         localStorage.setItem('google_tasks_token', credential.accessToken);
+                        lastTokenRefresh.value = Date.now();
+                        tokenExpired.value = false;
+                        startTokenCheck();
                         fetchTasks(); 
                     } catch(e){ 
                         alert(e.message); 
@@ -793,19 +806,70 @@
                     } catch(e) {}
                 };
 
-                // ===== LOCAL TASKS (GUEST MODE) =====
+                // ===== LOCAL TASKS (GUEST MODE & OFFLINE MODE) =====
                 const loadLocalTasks = () => {
                     try {
                         const stored = localStorage.getItem('studyMate_local_tasks');
                         if (stored) {
-                            tasks.value = JSON.parse(stored);
+                            const localTasks = JSON.parse(stored);
+                            // ローカルタスクとクラウドタスクをマージ
+                            const cloudTaskIds = tasks.value.map(t => t.id);
+                            const uniqueLocalTasks = localTasks.filter(lt => !cloudTaskIds.includes(lt.id));
+                            tasks.value = [...tasks.value, ...uniqueLocalTasks];
                         }
-                    } catch(e) {}
+                    } catch(e) {
+                        console.error('Load local tasks error:', e);
+                    }
                 };
 
                 const saveLocalTasks = () => {
-                    localStorage.setItem('studyMate_local_tasks', JSON.stringify(tasks.value));
-                    localStorage.setItem('studyMate_guest_tasks', 'true');
+                    try {
+                        localStorage.setItem('studyMate_local_tasks', JSON.stringify(tasks.value));
+                        if (!isGuestMode.value) {
+                            localStorage.setItem('studyMate_offline_tasks', 'true');
+                        } else {
+                            localStorage.setItem('studyMate_guest_tasks', 'true');
+                        }
+                    } catch(e) {
+                        console.error('Save local tasks error:', e);
+                    }
+                };
+
+                const syncLocalTasksToCloud = async () => {
+                    try {
+                        if (!accessToken.value || tokenExpired.value) return;
+                        
+                        const localTasks = tasks.value.filter(t => t.id && t.id.startsWith('local_'));
+                        
+                        for (const task of localTasks) {
+                            try {
+                                const response = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
+                                    method: 'POST',
+                                    headers: {
+                                        Authorization: `Bearer ${accessToken.value}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        title: task.title,
+                                        status: task.status || 'needsAction'
+                                    })
+                                });
+                                
+                                if (response.status === 401) {
+                                    tokenExpired.value = true;
+                                    return;
+                                }
+                            } catch(e) {
+                                console.error('Failed to sync task:', e);
+                            }
+                        }
+                        
+                        // 同期成功後、ローカルタスクフラグをクリア
+                        localStorage.removeItem('studyMate_offline_tasks');
+                        await fetchTasks();
+                    } catch(e) {
+                        console.error('Sync local tasks error:', e);
+                    }
                 };
 
                 const mergeGuestTasks = async () => {
@@ -835,6 +899,7 @@
 
                         localStorage.removeItem('studyMate_local_tasks');
                         localStorage.removeItem('studyMate_guest_tasks');
+                        localStorage.removeItem('studyMate_offline_tasks');
                         
                         await fetchTasks();
                     } catch(e) {
@@ -982,7 +1047,42 @@
                     await saveData();
                 };
 
-                // Task Logic
+                // Task Logic with Session Management
+                const tokenExpired = ref(false);
+                const lastTokenRefresh = ref(Date.now());
+                
+                const checkTokenExpiry = () => {
+                    const elapsed = Date.now() - lastTokenRefresh.value;
+                    // 50分経過したら警告（60分でタイムアウトなので余裕を持って）
+                    if (elapsed > 50 * 60 * 1000 && accessToken.value) {
+                        tokenExpired.value = true;
+                    }
+                };
+
+                // 定期的にトークンの有効期限をチェック
+                let tokenCheckInterval = null;
+                
+                const startTokenCheck = () => {
+                    if (tokenCheckInterval) clearInterval(tokenCheckInterval);
+                    tokenCheckInterval = setInterval(() => {
+                        checkTokenExpiry();
+                    }, 60000); // 1分ごとにチェック
+                };
+
+                const refreshToken = async () => {
+                    try {
+                        const r = await signInWithPopup(auth, provider);
+                        const credential = GoogleAuthProvider.credentialFromResult(r);
+                        accessToken.value = credential.accessToken;
+                        localStorage.setItem('google_tasks_token', credential.accessToken);
+                        lastTokenRefresh.value = Date.now();
+                        tokenExpired.value = false;
+                        await fetchTasks();
+                    } catch(e) {
+                        console.error('Token refresh failed:', e);
+                    }
+                };
+
                 const fetchTasks = async () => { 
                     if(!accessToken.value) return; 
                     try {
@@ -992,11 +1092,16 @@
                         if (r.status === 401) {
                             accessToken.value = null;
                             localStorage.removeItem('google_tasks_token');
+                            tokenExpired.value = true;
                             return;
                         }
                         const d = await r.json();
                         if(d.items) tasks.value = d.items;
-                    } catch(e){} 
+                        // タスク取得成功時にエラー状態をリセット
+                        tokenExpired.value = false;
+                    } catch(e){
+                        console.error('Fetch tasks error:', e);
+                    } 
                 };
                 
                 const createTask = async (e) => { 
@@ -1018,40 +1123,67 @@
                     } else if (accessToken.value) {
                         tasks.value.unshift({id:"temp",title:t,status:'needsAction'}); 
                         try {
-                            await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
+                            const response = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
                                 method:'POST',
                                 headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
                                 body:JSON.stringify({title:t})
-                            }); 
+                            });
+                            if (response.status === 401) {
+                                tokenExpired.value = true;
+                                tasks.value = tasks.value.filter(task => task.id !== "temp");
+                                return;
+                            }
                             fetchTasks();
-                        } catch(e){} 
+                        } catch(e){
+                            console.error('Create task error:', e);
+                        } 
                     }
                 };
                 
                 const toggleTaskStatus = async (t) => {
+                    const oldStatus = t.status;
                     t.status = t.status === 'completed' ? 'needsAction' : 'completed';
                     
                     if (isGuestMode.value) {
                         saveLocalTasks();
                     } else if (accessToken.value && !t.id.startsWith('local_')) {
-                        await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`, {
-                            method:'PATCH',
-                            headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
-                            body:JSON.stringify({status:t.status})
-                        });
+                        try {
+                            const response = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`, {
+                                method:'PATCH',
+                                headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
+                                body:JSON.stringify({status:t.status})
+                            });
+                            if (response.status === 401) {
+                                tokenExpired.value = true;
+                                t.status = oldStatus; // 元に戻す
+                            }
+                        } catch(e) {
+                            t.status = oldStatus;
+                            console.error('Toggle task error:', e);
+                        }
                     }
                 };
 
                 const deleteTask = async (id) => {
+                    const taskToDelete = tasks.value.find(t => t.id === id);
                     tasks.value = tasks.value.filter(t => t.id !== id);
                     
                     if (isGuestMode.value) {
                         saveLocalTasks();
                     } else if (accessToken.value && !id.startsWith('local_')) {
-                        await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${id}`, {
-                            method:'DELETE',
-                            headers:{Authorization:`Bearer ${accessToken.value}`}
-                        });
+                        try {
+                            const response = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${id}`, {
+                                method:'DELETE',
+                                headers:{Authorization:`Bearer ${accessToken.value}`}
+                            });
+                            if (response.status === 401) {
+                                tokenExpired.value = true;
+                                if (taskToDelete) tasks.value.push(taskToDelete); // 元に戻す
+                            }
+                        } catch(e) {
+                            if (taskToDelete) tasks.value.push(taskToDelete);
+                            console.error('Delete task error:', e);
+                        }
                     }
                 };
 
@@ -1059,11 +1191,18 @@
                     if (isGuestMode.value) {
                         saveLocalTasks();
                     } else if (accessToken.value && !t.id.startsWith('local_')) {
-                        await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`, {
-                            method:'PATCH',
-                            headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
-                            body:JSON.stringify({title:t.title})
-                        });
+                        try {
+                            const response = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${t.id}`, {
+                                method:'PATCH',
+                                headers:{Authorization:`Bearer ${accessToken.value}`,'Content-Type':'application/json'},
+                                body:JSON.stringify({title:t.title})
+                            });
+                            if (response.status === 401) {
+                                tokenExpired.value = true;
+                            }
+                        } catch(e) {
+                            console.error('Update task error:', e);
+                        }
                     }
                 };
                 
@@ -1122,6 +1261,7 @@
                     showCountdownModal, targetSubject, customCountdownMin, setCountdown, adjustCustomTime, startCountdownSession, openCountdownModal,
                     isAlarmRinging, stopAlarm,
                     tasks, newTaskTitle, showCompletedTasks, filteredTasks, createTask, deleteTask, toggleTaskStatus, updateTaskTitle,
+                    tokenExpired, refreshToken,
                     weekRangeLabel, shiftWeek, loadWeeklyReport, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
