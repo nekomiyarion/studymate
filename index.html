@@ -59,6 +59,15 @@
         @keyframes blink { 50% { opacity: 0.5; } }
         .animate-blink { animation: blink 1.5s infinite; }
 
+        /* ▼▼▼ フラッシュ通知用のアニメーション（修正版） ▼▼▼ */
+        /* 白ではなく、暗いグレーでゆっくり明滅するように変更 */
+        @keyframes flash-screen {
+            0%, 100% { background-color: rgba(0,0,0,0.9); }
+            50% { background-color: rgba(70, 70, 70, 0.9); } 
+        }
+        .animate-flash-screen { animation: flash-screen 1.5s infinite ease-in-out; }
+        /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
+
         .modal-enter-active, .modal-leave-active { transition: opacity 0.3s; }
         .modal-enter-from, .modal-leave-to { opacity: 0; }
 
@@ -67,6 +76,12 @@
             to { transform: translateY(0); opacity: 1; }
         }
         .slide-up { animation: slideUp 0.3s ease-out; }
+
+        /* スタンバイモード用のフォント設定 */
+        .font-standby {
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans h-screen overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
@@ -82,7 +97,7 @@
 
         <!-- ================= Login / Guest Landing ================= -->
         <div v-else-if="!user && !isGuestMode" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-6 z-50 absolute inset-0 overflow-y-auto">
-            <img src="./studymate.png" alt="Logo" class="w-24 h-24 mb-4 rounded-2xl shadow-lg">
+            <img src="./studymate.png" onerror="this.style.display='none'" alt="Logo" class="w-24 h-24 mb-4 rounded-2xl shadow-lg">
             
             <h1 class="text-5xl font-bold mb-2 text-primary tracking-tighter text-center transition-colors">Study Mate</h1>
             <p class="text-gray-500 dark:text-gray-400 mb-10 text-center">勉強も、休憩も、これひとつで。</p>
@@ -117,10 +132,10 @@
         <!-- ================= Main App ================= -->
         <template v-else>
             
-            <!-- Navigation -->
-            <nav class="md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col md:h-full flex-shrink-0 order-2 md:order-1 fixed md:relative bottom-0 w-full md:w-auto z-40 h-20 md:h-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:shadow-none pb-safe">
+            <!-- Navigation (スタンバイモード時は非表示) -->
+            <nav v-show="!isStandbyMode" class="md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col md:h-full flex-shrink-0 order-2 md:order-1 fixed md:relative bottom-0 w-full md:w-auto z-40 h-20 md:h-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:shadow-none pb-safe">
                 <div class="hidden md:flex items-center gap-3 p-6 border-b border-gray-100 dark:border-gray-700">
-                    <img src="./studymate.png" class="w-8 h-8 rounded-lg">
+                    <img src="./studymate.png" onerror="this.style.display='none'" class="w-8 h-8 rounded-lg">
                     <span class="font-bold text-xl tracking-tight">Study Mate</span>
                 </div>
 
@@ -149,11 +164,16 @@
             </nav>
 
             <!-- Content Area -->
-            <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 pb-28 md:pb-8 order-1 md:order-2 relative transition-colors duration-300">
+            <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 pb-28 md:pb-8 order-1 md:order-2 relative transition-colors duration-300"
+                  :class="{'!p-0 !pb-0 !overflow-hidden': isStandbyMode}">
                 
-                <!-- 1. TIMER TAB -->
-                <div v-if="currentTab === 'timer'" class="max-w-4xl mx-auto min-h-full flex flex-col pb-8">
-                    <header class="mb-6 md:mb-10 flex justify-between items-center">
+                <!-- 1. TIMER TAB (Modified for Standby Mode) -->
+                <div v-if="currentTab === 'timer'" 
+                     class="mx-auto min-h-full flex flex-col transition-all duration-500"
+                     :class="isStandbyMode ? 'fixed inset-0 z-[200] bg-black text-white p-0 justify-center' : 'max-w-4xl pb-8'">
+                    
+                    <!-- Header (通常時のみ表示) -->
+                    <header v-if="!isStandbyMode" class="mb-6 md:mb-10 flex justify-between items-center">
                         <h2 class="text-2xl font-bold">今日の学習</h2>
                         <div class="flex items-center gap-2">
                              <div class="text-sm font-mono text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border dark:border-gray-700">
@@ -161,47 +181,74 @@
                             </div>
                         </div>
                     </header>
-                    <div class="flex-1 flex flex-col md:flex-row gap-6 md:gap-12 items-center md:items-start justify-center">
-                        <!-- Left: Display -->
-                        <div class="w-full md:w-1/2 flex flex-col items-center justify-center py-6 bg-white dark:bg-gray-800 md:bg-transparent md:dark:bg-transparent rounded-3xl md:rounded-none shadow-sm md:shadow-none border md:border-none border-gray-100 dark:border-gray-700 relative">
-                            <!-- Status -->
-                            <div v-if="breakMode && isTimerRunning" class="absolute top-0 text-green-500 font-bold bg-green-50 dark:bg-green-900/30 px-3 py-1 rounded-full text-sm animate-pulse">
+
+                    <div class="flex-1 flex flex-col gap-6 md:gap-12 items-center justify-center"
+                         :class="!isStandbyMode ? 'md:flex-row md:items-start' : 'w-full h-full'">
+                        
+                        <!-- Left: Display Area -->
+                        <div class="flex flex-col items-center justify-center relative transition-all duration-500"
+                             :class="isStandbyMode ? 'w-full h-full' : 'w-full md:w-1/2 py-6 bg-white dark:bg-gray-800 md:bg-transparent md:dark:bg-transparent rounded-3xl md:rounded-none shadow-sm md:shadow-none border md:border-none border-gray-100 dark:border-gray-700'">
+                            
+                            <!-- Status Indicators -->
+                            <div v-if="breakMode && isTimerRunning" 
+                                 class="font-bold px-3 py-1 rounded-full text-sm animate-pulse z-10"
+                                 :class="isStandbyMode ? 'absolute top-6 right-6 bg-green-900/50 text-green-400' : 'absolute top-0 text-green-500 bg-green-50 dark:bg-green-900/30'">
                                 <i class="fa-solid fa-mug-hot mr-1"></i>休憩中
                             </div>
-                            <div v-else-if="timerMode === 'countdown' && isTimerRunning" class="absolute top-0 text-primary font-bold bg-primary-light dark:bg-gray-700 px-3 py-1 rounded-full text-sm">
+                            <div v-else-if="timerMode === 'countdown' && isTimerRunning" 
+                                 class="font-bold px-3 py-1 rounded-full text-sm z-10"
+                                 :class="isStandbyMode ? 'absolute top-6 right-6 bg-gray-800/50 text-primary-light' : 'absolute top-0 text-primary bg-primary-light dark:bg-gray-700'">
                                 <i class="fa-solid fa-hourglass-half mr-1"></i>カウントダウン
                             </div>
-                            <div v-else-if="isPaused" class="absolute top-0 text-yellow-500 font-bold bg-yellow-50 dark:bg-yellow-900/30 px-3 py-1 rounded-full text-sm animate-blink">
+                            <div v-else-if="isPaused" 
+                                 class="font-bold px-3 py-1 rounded-full text-sm animate-blink z-10"
+                                 :class="isStandbyMode ? 'absolute top-6 right-6 bg-yellow-900/50 text-yellow-500' : 'absolute top-0 text-yellow-500 bg-yellow-50 dark:bg-yellow-900/30'">
                                 <i class="fa-solid fa-pause mr-1"></i>一時停止中
                             </div>
 
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2 font-bold">
-                                {{ isTimerRunning || isPaused ? (breakMode ? 'Rest Time' : currentSubject + ' 中') : 'Study Total (Excl. Break)' }}
+                            <!-- Subject Label -->
+                            <p class="font-bold mb-2 transition-all z-10"
+                               :class="isStandbyMode ? 'text-gray-500 text-xl absolute top-6 left-8' : 'text-sm text-gray-500 dark:text-gray-400'">
+                                {{ isTimerRunning || isPaused ? (breakMode ? 'REST TIME' : currentSubject) : 'Study Total (Excl. Break)' }}
                             </p>
                             
-                            <div class="text-7xl md:text-8xl font-mono font-bold tracking-tighter mb-6 transition-colors" 
-                                 :class="breakMode ? 'text-green-500' : (isPaused ? 'text-yellow-500' : 'text-primary')">
+                            <!-- MAIN TIMER DISPLAY -->
+                            <div class="font-mono font-bold font-standby tracking-tighter transition-all duration-300 leading-none select-none" 
+                                 :class="[
+                                    breakMode ? 'text-green-500' : (isPaused ? 'text-yellow-500' : (isStandbyMode ? 'text-white' : 'text-primary')),
+                                    isStandbyMode ? 'text-[25vw]' : 'text-7xl md:text-8xl mb-2'
+                                 ]">
                                 {{ formattedTime }}
                             </div>
+
+                            <!-- REALTIME TOTAL DISPLAY -->
+                            <div v-if="isTimerRunning || isPaused" class="flex flex-col items-center mt-2 z-10">
+                                <p class="font-mono font-bold transition-colors" 
+                                   :class="isStandbyMode ? 'text-gray-500 text-2xl' : 'text-gray-400 dark:text-gray-500 text-lg'">
+                                    <span class="text-xs mr-2 opacity-70">TOTAL</span>{{ currentTotalTimeFormatted }}
+                                </p>
+                            </div>
                             
-                            <!-- Controls -->
-                            <div v-if="isTimerRunning || isPaused" class="w-full max-w-sm flex gap-3">
+                            <!-- Controls (Standby時は下部に薄く表示) -->
+                            <div v-if="isTimerRunning || isPaused" class="w-full max-w-sm flex gap-3 z-10"
+                                 :class="isStandbyMode ? 'absolute bottom-8 px-12 opacity-30 hover:opacity-100 transition-opacity' : 'mt-6'">
                                 <button @click="stopTimer(false)" class="flex-1 py-6 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
                                     :class="breakMode ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'">
-                                    <i class="fa-solid fa-stop"></i> STOP
+                                    <i class="fa-solid fa-stop"></i><span v-if="!isStandbyMode">STOP</span>
                                 </button>
                                 <button v-if="!isPaused" @click="pauseTimer" class="flex-1 py-6 bg-yellow-400 hover:bg-yellow-500 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-pause"></i> PAUSE
+                                    <i class="fa-solid fa-pause"></i><span v-if="!isStandbyMode">PAUSE</span>
                                 </button>
                                 <button v-else @click="resumeTimer" class="flex-1 py-6 bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-play"></i> RESUME
+                                    <i class="fa-solid fa-play"></i><span v-if="!isStandbyMode">RESUME</span>
                                 </button>
                             </div>
-                            <p v-if="isTimerRunning" class="text-center mt-3 text-gray-400 text-sm animate-pulse">{{ breakMode ? 'リラックス中...' : (timerMode === 'countdown' ? '集中...' : 'Focus...') }}</p>
+                            
+                            <p v-if="isTimerRunning && !isStandbyMode" class="text-center mt-3 text-gray-400 text-sm animate-pulse">{{ breakMode ? 'リラックス中...' : (timerMode === 'countdown' ? '集中...' : 'Focus...') }}</p>
                         </div>
 
-                        <!-- Right: Buttons -->
-                        <div class="w-full md:w-1/2" v-if="!isTimerRunning && !isPaused">
+                        <!-- Right: Buttons (スタンバイ時は非表示) -->
+                        <div class="w-full md:w-1/2" v-if="!isStandbyMode && !isTimerRunning && !isPaused">
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4">
                                 <button v-for="sub in subjects" :key="sub" @click="handleSubjectClick(sub)"
                                     class="h-16 md:h-24 bg-white dark:bg-gray-800 border-2 border-primary-light dark:border-gray-600 hover:border-primary dark:hover:border-primary rounded-2xl font-bold text-gray-700 dark:text-gray-200 shadow-sm transition active:scale-95 flex flex-col items-center justify-center">
@@ -237,8 +284,8 @@
                         </div>
                     </div>
 
-                    <!-- Fullscreen Button (Mobile Only) -->
-                    <div v-if="isMobile && !isFullscreen" class="fixed bottom-28 left-4 md:hidden slide-up z-30">
+                    <!-- Fullscreen Button (Mobile Only, not in Standby) -->
+                    <div v-if="isMobile && !isFullscreen && !isStandbyMode" class="fixed bottom-28 left-4 md:hidden slide-up z-30">
                         <button @click="toggleFullscreen" class="bg-gray-800/80 dark:bg-gray-700/80 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition transform active:scale-95 text-xs font-medium flex items-center gap-1.5">
                             <i class="fa-solid fa-expand text-sm"></i>
                             <span>全画面</span>
@@ -251,7 +298,6 @@
                     <header class="mb-6 flex flex-wrap gap-4 justify-between items-end">
                         <h2 class="text-2xl font-bold">Todoリスト</h2>
                         <div class="flex gap-2 items-center">
-                            <!-- Session Status Indicator (Small) -->
                             <div v-if="tokenExpired && !isGuestMode" class="flex items-center gap-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-2.5 py-1.5 rounded-lg">
                                 <i class="fa-solid fa-circle-exclamation text-red-600 dark:text-red-400 text-xs"></i>
                                 <span class="text-[10px] font-bold text-red-700 dark:text-red-300">セッション切れ</span>
@@ -389,6 +435,48 @@
                         </div>
                     </section>
 
+                    <!-- Notification Settings -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
+                            <i class="fa-solid fa-bell mr-2 text-primary"></i>通知設定
+                        </div>
+                        <div class="p-6">
+                            <h4 class="font-bold text-sm mb-3">タイマー終了時の通知モード</h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button @click="setNotificationMode('sound_vibrate')" 
+                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
+                                    :class="notificationMode === 'sound_vibrate' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
+                                    <i class="fa-solid fa-bell text-lg"></i>
+                                    音 + 振動
+                                </button>
+                                <button @click="setNotificationMode('vibrate_only')" 
+                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
+                                    :class="notificationMode === 'vibrate_only' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
+                                    <i class="fa-solid fa-mobile-screen-button text-lg"></i>
+                                    振動のみ
+                                </button>
+                                <button @click="setNotificationMode('silent')" 
+                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
+                                    :class="notificationMode === 'silent' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
+                                    <i class="fa-solid fa-bell-slash text-lg"></i>
+                                    音無し
+                                </button>
+                                <button @click="setNotificationMode('flash')" 
+                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
+                                    :class="notificationMode === 'flash' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
+                                    <i class="fa-solid fa-bolt text-lg"></i>
+                                    音無し + フラッシュ
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-2">
+                                <span v-if="notificationMode==='sound_vibrate'">アラーム音と振動で通知します。</span>
+                                <span v-else-if="notificationMode==='vibrate_only'">音は鳴らさず、振動だけで通知します。</span>
+                                <span v-else-if="notificationMode==='silent'">音も振動もありません。「Time's Up」画面のみ表示されます。</span>
+                                <span v-else-if="notificationMode==='flash'">音も振動もありませんが、画面がゆっくりと明滅します。</span>
+                            </p>
+                        </div>
+                    </section>
+
                     <!-- Edit Log -->
                     <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
                         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 text-red-500">
@@ -468,7 +556,7 @@
 
                         <!-- Footer Links -->
                         <div class="mt-8 text-center text-xs text-gray-300 pb-8">
-                            Study Mate v3.7<br>
+                            Study Mate v3.9.1<br>
                             <span v-if="user">User: {{ user.uid.slice(0, 8) }}...</span>
                             <div class="flex gap-4 justify-center mt-2">
                                 <a href="https://nekomiyarion.github.io/studymate/terms.html" target="_blank" class="underline hover:text-gray-500">利用規約</a>
@@ -510,8 +598,10 @@
             </div>
             </transition>
 
-            <!-- ALARM OVERLAY -->
-            <div v-if="isAlarmRinging" class="fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center p-4">
+            <!-- ALARM OVERLAY (Updated with Flash capability) -->
+            <div v-if="isAlarmRinging" 
+                 class="fixed inset-0 z-[300] bg-black/80 flex flex-col items-center justify-center p-4 transition-colors duration-100"
+                 :class="{ 'animate-flash-screen': notificationMode === 'flash' }">
                 <div class="text-white text-6xl mb-8 animate-ring"><i class="fa-solid fa-bell"></i></div>
                 <h2 class="text-white text-3xl font-bold mb-8">Time's Up!</h2>
                 <button @click="stopAlarm" class="px-10 py-5 bg-white text-red-600 rounded-full font-bold text-xl shadow-2xl hover:scale-105 transition">
@@ -565,15 +655,16 @@
             setup() {
                 const user = ref(null);
                 const isGuestMode = ref(false);
-                const isAuthLoading = ref(true); // ★ローディング状態管理
+                const isAuthLoading = ref(true); 
                 const accessToken = ref(null);
                 const currentTab = ref('timer');
                 
-                // Mobile & Fullscreen
+                // Mobile & Fullscreen & Standby Mode
                 const isMobile = ref(false);
                 const isFullscreen = ref(false);
-                const wakeLock = ref(null); // ★スリープ防止用
-                const TIMER_STATE_KEY = 'studyMate_timer_state'; // ★タイマー保存用キー
+                const isLandscape = ref(window.innerWidth > window.innerHeight);
+                const wakeLock = ref(null); 
+                const TIMER_STATE_KEY = 'studyMate_timer_state'; 
 
                 // --- THEME & COLOR ---
                 const isDarkMode = ref(false);
@@ -625,6 +716,10 @@
                 const customCountdownMin = ref(5);
                 const isAlarmRinging = ref(false);
                 
+                // Notification Settings
+                // 'sound_vibrate', 'vibrate_only', 'silent', 'flash'
+                const notificationMode = ref('sound_vibrate'); 
+
                 // Audio
                 const customAudioData = ref(localStorage.getItem('studyMate_audio'));
                 const defaultAudio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
@@ -642,8 +737,9 @@
                 const tutorialStep = ref(0);
                 const tutorialSteps = [
                     { title: "Study Mateへようこそ", desc: "学習記録、休憩、タスク管理を統合したツールです。", icon: "fa-solid fa-hand-sparkles" },
+                    { title: "スタンバイモード", desc: "スマホで「全画面」にして横向きにすると、時計代わりのシンプルな表示になります。", icon: "fa-solid fa-mobile-screen" },
+                    { title: "通知設定", desc: "タイマー終了時の音、振動、フラッシュなどを設定画面から選べます。", icon: "fa-solid fa-bell" },
                     { title: "一時停止機能", desc: "急な用事の際は「PAUSE」ボタンでタイマーを止められます。", icon: "fa-solid fa-pause" },
-                    { title: "テーマ変更", desc: "設定からダークモードや好きな色に変更できます。", icon: "fa-solid fa-palette" },
                     { title: "休憩機能", desc: "休憩時間は勉強時間には含まれませんが、記録には残ります。", icon: "fa-solid fa-mug-hot" }
                 ];
 
@@ -662,8 +758,13 @@
                     if (wakeLock.value !== null && document.visibilityState === 'visible') await requestWakeLock();
                 };
 
-                // Fullscreen functions
+                // Fullscreen & Orientation functions
                 const checkMobile = () => { isMobile.value = window.innerWidth < 768; };
+                const checkOrientation = () => { 
+                    isLandscape.value = window.innerWidth > window.innerHeight; 
+                    checkMobile();
+                };
+                
                 const toggleFullscreen = () => {
                     if (!document.fullscreenElement) {
                         document.documentElement.requestFullscreen().then(() => { isFullscreen.value = true; }).catch(e=>alert(e));
@@ -672,10 +773,16 @@
                     }
                 };
                 const handleFullscreenChange = () => { isFullscreen.value = !!document.fullscreenElement; };
+                
+                // Standby Mode Computed
+                const isStandbyMode = computed(() => {
+                    return isMobile.value && isFullscreen.value && isLandscape.value && currentTab.value === 'timer';
+                });
 
                 onMounted(() => {
                     checkMobile();
-                    window.addEventListener('resize', checkMobile);
+                    checkOrientation();
+                    window.addEventListener('resize', checkOrientation); // リサイズで向き検知
                     document.addEventListener('fullscreenchange', handleFullscreenChange);
                     document.addEventListener('visibilitychange', handleVisibilityChange);
 
@@ -786,7 +893,7 @@
                 };
                 
                 const loadSettings = async () => {
-                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', isDarkMode: false };
+                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', isDarkMode: false, notificationMode: 'sound_vibrate' };
                     try {
                         if(isGuestMode.value) {
                             const s = localStorage.getItem('studyMate_settings');
@@ -801,10 +908,17 @@
                     themeColor.value = d.themeColor || '#2563eb';
                     tempThemeColor.value = themeColor.value;
                     isDarkMode.value = d.isDarkMode || false;
+                    notificationMode.value = d.notificationMode || 'sound_vibrate';
                     applyTheme();
                 };
                 const saveSettings = async () => {
-                    const d = { subjects: subjects.value, timerMode: timerMode.value, themeColor: themeColor.value, isDarkMode: isDarkMode.value };
+                    const d = { 
+                        subjects: subjects.value, 
+                        timerMode: timerMode.value, 
+                        themeColor: themeColor.value, 
+                        isDarkMode: isDarkMode.value,
+                        notificationMode: notificationMode.value
+                    };
                     if(isGuestMode.value) localStorage.setItem('studyMate_settings', JSON.stringify(d));
                     else if(user.value) await setDoc(doc(db, "users", user.value.uid, "settings", "config"), d, {merge:true});
                 };
@@ -1021,10 +1135,27 @@
 
                 const playAlarm = () => {
                     isAlarmRinging.value = true;
+                    const mode = notificationMode.value;
+
+                    // Sound Logic
+                    if (mode === 'sound_vibrate') {
+                        triggerAudio();
+                        triggerVibration();
+                    } else if (mode === 'vibrate_only') {
+                        triggerVibration();
+                    } else if (mode === 'flash') {
+                        // Flash is handled by CSS binding
+                    }
+                };
+
+                const triggerAudio = () => {
                     if (customAudioData.value) currentAudioObj = new Audio(customAudioData.value);
                     else currentAudioObj = defaultAudio;
                     currentAudioObj.loop = true;
                     currentAudioObj.play().catch(e => console.log(e));
+                };
+
+                const triggerVibration = () => {
                     if(navigator.vibrate) navigator.vibrate([1000, 500, 1000]);
                 };
 
@@ -1052,6 +1183,7 @@
                 };
 
                 const changeTimerMode = (m) => { timerMode.value = m; saveSettings(); };
+                const setNotificationMode = (m) => { notificationMode.value = m; saveSettings(); };
                 
                 const updateSubjectTime = async (sub, deltaMin) => {
                     const oldSec = todayLog.value.subjects[sub] || 0;
@@ -1206,6 +1338,15 @@
                     }
                     return formatSeconds(calculateDailyStudyTotal(todayLog.value.subjects));
                 });
+                
+                const currentTotalTimeFormatted = computed(() => {
+                    let total = calculateDailyStudyTotal(todayLog.value.subjects);
+                    if (!breakMode.value && (isTimerRunning.value || isPaused.value)) {
+                        total += elapsedTime.value;
+                    }
+                    return formatSeconds(total);
+                });
+                
                 const filteredTasks = computed(() => { let t=tasks.value; if(!showCompletedTasks.value)t=t.filter(x=>x.status!=='completed'); return t.sort((a,b)=>a.status==='completed'?1:-1); });
                 const weekRangeLabel = computed(() => { const s=reportWeekStart.value; const e=new Date(s); e.setDate(s.getDate()+6); return `${s.getMonth()+1}/${s.getDate()} - ${e.getMonth()+1}/${e.getDate()}`; });
                 const formatSeconds = (sec) => { const h=Math.floor(sec/3600).toString().padStart(2,'0'); const m=Math.floor((sec%3600)/60).toString().padStart(2,'0'); const s=(sec%60).toString().padStart(2,'0'); return `${h}:${m}:${s}`; };
@@ -1215,7 +1356,7 @@
                     user, isGuestMode, isAuthLoading, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects,
                     isTimerRunning, isPaused, timerMode, breakMode, handleSubjectClick, currentSubject, stopTimer, pauseTimer, resumeTimer, formattedTime, todayLog, formatSeconds,
                     showCountdownModal, targetSubject, customCountdownMin, setCountdown, adjustCustomTime, startCountdownSession, openCountdownModal,
-                    isAlarmRinging, stopAlarm,
+                    isAlarmRinging, stopAlarm, notificationMode, setNotificationMode,
                     tasks, newTaskTitle, showCompletedTasks, filteredTasks, createTask, deleteTask, toggleTaskStatus, updateTaskTitle,
                     tokenExpired, refreshToken,
                     weekRangeLabel, shiftWeek, loadWeeklyReport, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
@@ -1225,7 +1366,7 @@
                     showTutorial, tutorialStep, tutorialSteps, 
                     nextTutorial:()=>{if(tutorialStep.value<tutorialSteps.length-1)tutorialStep.value++;else{showTutorial.value=false;localStorage.setItem('studyMate_seenTutorial','true');}}, 
                     startTutorial:()=>{showTutorial.value=true;tutorialStep.value=0;},
-                    isMobile, isFullscreen, toggleFullscreen
+                    isMobile, isFullscreen, toggleFullscreen, isLandscape, isStandbyMode, currentTotalTimeFormatted
                 };
             }
         }).mount('#app');
