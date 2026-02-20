@@ -3,139 +3,190 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>管理者パネル - テスト予想ゲーム</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Zen+Kaku+Gothic+New:wght@300;400;700;900&display=swap" rel="stylesheet">
+<title>管理者パネル — TestBattle</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #06070d;
-    --surface: #0d0e18;
-    --surface2: #141520;
-    --surface3: #1c1d2b;
-    --accent: #00d4ff;
-    --accent2: #ff4c7a;
-    --accent3: #7cff6a;
-    --warn: #ffb347;
-    --text: #c8d0e8;
-    --text2: #606880;
-    --border: #1e2030;
-    --danger: #ff4c4c;
-    --success: #4cffaa;
+    --bg:       #0b0b0f;
+    --surface:  #111116;
+    --surface2: #17171e;
+    --surface3: #1e1e27;
+    --accent:   #4f7fe8;
+    --accent-dim: rgba(79,127,232,0.1);
+    --accent-border: rgba(79,127,232,0.3);
+    --text:     #d8dcef;
+    --text2:    #757a94;
+    --text3:    #44475a;
+    --border:   #1e1f2b;
+    --border2:  #282938;
+    --success:  #4db870;
+    --success-dim: rgba(77,184,112,0.1);
+    --danger:   #d95b5b;
+    --danger-dim: rgba(217,91,91,0.1);
+    --warn:     #c49a3a;
+    --warn-dim: rgba(196,154,58,0.1);
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 400;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
-  body::before {
-    content: 'ADMIN';
+  body::after {
+    content: '';
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%) rotate(-30deg);
-    font-size: 200px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-weight: 700;
-    color: rgba(0,212,255,0.015);
-    pointer-events: none;
-    z-index: 0;
-    letter-spacing: -10px;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.5;
+    z-index: 200;
   }
 
-  /* AUTH */
+  /* ─── AUTH ───────────────────────── */
   #auth-screen {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    z-index: 1;
   }
   .auth-box {
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 40px;
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 40px 36px;
     width: 380px;
     max-width: 95vw;
-    position: relative;
   }
-  .auth-box::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-  }
-  .auth-logo {
-    text-align: center;
-    margin-bottom: 32px;
-  }
+  .auth-logo { margin-bottom: 28px; }
   .auth-logo h1 {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 20px;
-    color: var(--accent);
-    letter-spacing: 2px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.2px;
   }
-  .auth-logo p { color: var(--text2); font-size: 12px; margin-top: 6px; }
-  .form-group { margin-bottom: 16px; }
+  .auth-logo .sub {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .form-group { margin-bottom: 13px; }
   .form-group label {
     display: block;
-    font-size: 11px;
-    color: var(--text2);
-    margin-bottom: 6px;
-    letter-spacing: 1px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text3);
     text-transform: uppercase;
-    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
   }
   .form-group input {
     width: 100%;
     background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 14px;
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    padding: 10px 13px;
     color: var(--text);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.18s;
   }
   .form-group input:focus { border-color: var(--accent); }
+  .form-group input::placeholder { color: var(--text3); }
+
   .btn-login {
     width: 100%;
-    background: transparent;
-    border: 1px solid var(--accent);
-    border-radius: 8px;
-    padding: 12px;
-    color: var(--accent);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 14px;
+    background: var(--accent);
+    border: none;
+    border-radius: 7px;
+    padding: 11px;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
     cursor: pointer;
-    letter-spacing: 2px;
-    transition: all 0.2s;
-    margin-top: 8px;
+    transition: opacity 0.18s;
+    margin-top: 4px;
   }
-  .btn-login:hover { background: rgba(0,212,255,0.08); }
+  .btn-login:hover { opacity: 0.85; }
+
+  .divider {
+    text-align: center;
+    color: var(--text3);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 16px 0;
+    position: relative;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    position: absolute;
+    top: 50%; width: 42%; height: 1px;
+    background: var(--border2);
+  }
+  .divider::before { left: 0; }
+  .divider::after  { right: 0; }
+
+  .btn-oauth {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    padding: 10px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    transition: border-color 0.18s, background 0.18s;
+  }
+  .btn-oauth:hover { border-color: var(--text2); background: var(--surface3); }
+
   .error-msg {
-    background: rgba(255,76,76,0.1);
-    border: 1px solid rgba(255,76,76,0.3);
-    border-radius: 6px;
-    padding: 10px 14px;
+    background: var(--danger-dim);
+    border: 1px solid rgba(217,91,91,0.3);
+    border-radius: 7px;
+    padding: 10px 13px;
     font-size: 12px;
     color: var(--danger);
-    margin-bottom: 14px;
+    margin-bottom: 13px;
     display: none;
-    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1.5;
+    font-family: 'JetBrains Mono', monospace;
   }
+  .warn-msg {
+    background: var(--warn-dim);
+    border: 1px solid rgba(196,154,58,0.35);
+    border-radius: 7px;
+    padding: 10px 13px;
+    font-size: 11px;
+    color: var(--warn);
+    margin-bottom: 13px;
+    display: none;
+    line-height: 1.7;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .warn-msg code { color: var(--success); font-size: 11px; }
 
-  /* MAIN */
-  #main-app { display: none; position: relative; z-index: 1; }
+  /* ─── MAIN LAYOUT ────────────────── */
+  #main-app { display: none; }
   .topbar {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 56px;
+    height: 52px;
+    padding: 0 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -144,374 +195,356 @@
     z-index: 100;
   }
   .topbar-logo {
-    font-family: 'IBM Plex Mono', monospace;
     font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.2px;
+  }
+  .topbar-logo span { color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .admin-badge {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-border);
+    border-radius: 5px;
+    padding: 3px 9px;
+    font-size: 10px;
+    font-weight: 600;
     color: var(--accent);
-    letter-spacing: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  #admin-name {
+    font-size: 12px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
   }
   .btn-sm {
     background: var(--surface2);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border2);
     border-radius: 6px;
-    padding: 6px 14px;
+    padding: 5px 12px;
     color: var(--text2);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Noto Sans JP', sans-serif;
     font-size: 12px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.18s;
   }
   .btn-sm:hover { color: var(--text); border-color: var(--text2); }
+  .btn-sm.danger:hover { color: var(--danger); border-color: rgba(217,91,91,0.4); }
 
   .layout {
     display: grid;
-    grid-template-columns: 220px 1fr;
-    min-height: calc(100vh - 56px);
+    grid-template-columns: 200px 1fr;
+    min-height: calc(100vh - 52px);
   }
   .sidebar {
     background: var(--surface);
     border-right: 1px solid var(--border);
-    padding: 20px 0;
+    padding: 16px 0;
   }
-  .sidebar-section {
-    padding: 8px 16px;
-    font-size: 10px;
-    color: var(--text2);
-    letter-spacing: 1.5px;
+  .sidebar-group {
+    padding: 14px 16px 5px;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text3);
     text-transform: uppercase;
-    font-family: 'IBM Plex Mono', monospace;
-    margin-top: 12px;
+    letter-spacing: 1.2px;
+    font-family: 'JetBrains Mono', monospace;
   }
   .sidebar-item {
-    padding: 10px 20px;
+    padding: 9px 18px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
     color: var(--text2);
     transition: all 0.15s;
+    border-left: 2px solid transparent;
     display: flex;
     align-items: center;
-    gap: 10px;
-    border-left: 3px solid transparent;
+    gap: 9px;
+    user-select: none;
   }
+  .sidebar-item svg { opacity: 0.5; flex-shrink: 0; }
   .sidebar-item:hover { color: var(--text); background: var(--surface2); }
   .sidebar-item.active {
     color: var(--accent);
     border-left-color: var(--accent);
-    background: rgba(0,212,255,0.05);
+    background: var(--accent-dim);
   }
+  .sidebar-item.active svg { opacity: 1; }
 
-  .main-content { padding: 32px; overflow-x: hidden; }
+  .main-content { padding: 28px 24px; overflow-x: hidden; }
 
+  /* ─── PAGE TITLES ────────────────── */
   .page-title {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: -0.2px;
   }
-  .page-subtitle { color: var(--text2); font-size: 13px; margin-bottom: 32px; }
+  .page-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 24px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    margin-top: 28px;
+  }
 
-  /* CONTROL CARDS */
-  .control-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-  .control-card {
+  /* ─── CARDS ──────────────────────── */
+  .card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 12px;
   }
-  .control-card-title {
-    font-size: 11px;
-    color: var(--text2);
+  .card-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    font-family: 'JetBrains Mono', monospace;
   }
-  .control-card-desc { font-size: 14px; line-height: 1.5; }
+  .card-desc {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 4px;
+  }
 
-  /* TOGGLE SWITCH */
+  /* ─── STATUS DOT ─────────────────── */
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .sdot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--text3);
+    flex-shrink: 0;
+  }
+  .sdot.on  { background: var(--success); box-shadow: 0 0 5px rgba(77,184,112,0.5); }
+  .sdot.off { background: var(--text3); }
+
+  /* ─── TOGGLE ─────────────────────── */
   .toggle-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
   }
-  .toggle-switch {
-    position: relative;
-    width: 52px;
-    height: 28px;
-  }
+  .toggle-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
   .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider {
+  .tslider {
     position: absolute;
     cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
+    inset: 0;
     background: var(--surface3);
-    border-radius: 28px;
-    transition: 0.3s;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border2);
+    border-radius: 26px;
+    transition: 0.25s;
   }
-  .toggle-slider::before {
+  .tslider::before {
     content: '';
     position: absolute;
-    height: 20px; width: 20px;
+    height: 18px; width: 18px;
     left: 3px; bottom: 3px;
-    background: var(--text2);
+    background: var(--text3);
     border-radius: 50%;
-    transition: 0.3s;
+    transition: 0.25s;
   }
-  input:checked + .toggle-slider { background: rgba(76,255,170,0.15); border-color: var(--success); }
-  input:checked + .toggle-slider::before { transform: translateX(24px); background: var(--success); }
-  .status-dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    margin-right: 6px;
-  }
-  .status-dot.on { background: var(--success); box-shadow: 0 0 6px var(--success); }
-  .status-dot.off { background: var(--text2); }
+  input:checked + .tslider { background: rgba(77,184,112,0.15); border-color: var(--success); }
+  input:checked + .tslider::before { transform: translateX(22px); background: var(--success); }
 
-  /* BIG ACTION BUTTON */
-  .btn-action {
-    background: transparent;
-    border: 2px solid var(--accent);
-    border-radius: 10px;
-    padding: 14px 28px;
-    color: var(--accent);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .btn-action:hover { background: rgba(0,212,255,0.08); transform: translateY(-1px); }
-  .btn-action.danger { border-color: var(--danger); color: var(--danger); }
-  .btn-action.danger:hover { background: rgba(255,76,76,0.08); }
-  .btn-action.success-btn { border-color: var(--success); color: var(--success); }
-  .btn-action.success-btn:hover { background: rgba(76,255,170,0.08); }
-
-  /* DATA TABLE */
-  .data-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
-  table.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-  .data-table th {
-    background: var(--surface2);
-    padding: 12px 16px;
-    text-align: left;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text2);
-    font-family: 'IBM Plex Mono', monospace;
-    font-weight: 400;
-  }
-  .data-table td {
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-    font-size: 13px;
-  }
-  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
-  .mono { font-family: 'IBM Plex Mono', monospace; }
-
-  .editable-input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 10px;
-    color: var(--text);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    width: 90px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .editable-input:focus { border-color: var(--accent); }
-
-  /* SUBJECT MANAGEMENT */
+  /* ─── SUBJECTS ───────────────────── */
   .subject-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 0;
+    gap: 10px;
+    padding: 10px 0;
     border-bottom: 1px solid var(--border);
   }
   .subject-row:last-child { border-bottom: none; }
   .subject-row input[type="text"] {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 12px;
-    color: var(--text);
-    font-family: 'Zen Kaku Gothic New', sans-serif;
-    font-size: 14px;
-    outline: none;
     flex: 1;
-    transition: border-color 0.2s;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 8px 11px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.18s;
   }
   .subject-row input[type="text"]:focus { border-color: var(--accent); }
   .subject-row input[type="number"] {
+    width: 88px;
     background: var(--surface2);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border2);
     border-radius: 6px;
-    padding: 8px 12px;
+    padding: 8px 11px;
     color: var(--text);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
     outline: none;
-    width: 100px;
-    transition: border-color 0.2s;
+    transition: border-color 0.18s;
   }
   .subject-row input[type="number"]:focus { border-color: var(--accent); }
   .btn-del {
     background: none;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border2);
     border-radius: 6px;
     padding: 6px 10px;
-    color: var(--text2);
+    color: var(--text3);
+    font-size: 14px;
     cursor: pointer;
-    font-size: 16px;
-    transition: all 0.2s;
+    transition: all 0.18s;
+    line-height: 1;
     flex-shrink: 0;
   }
-  .btn-del:hover { border-color: var(--danger); color: var(--danger); }
-  .btn-add-subject {
-    background: none;
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    padding: 10px;
-    color: var(--text2);
-    cursor: pointer;
-    font-size: 13px;
-    transition: all 0.2s;
-    width: 100%;
-    text-align: center;
-    margin-top: 12px;
-    font-family: 'Zen Kaku Gothic New', sans-serif;
-  }
-  .btn-add-subject:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-save-subjects {
-    background: transparent;
-    border: 1px solid var(--success);
-    border-radius: 8px;
-    padding: 10px 24px;
-    color: var(--success);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: all 0.2s;
-    margin-top: 16px;
-  }
-  .btn-save-subjects:hover { background: rgba(76,255,170,0.08); }
+  .btn-del:hover { border-color: rgba(217,91,91,0.4); color: var(--danger); }
 
-  /* PAGE PANELS */
+  .btn-add {
+    width: 100%;
+    background: none;
+    border: 1px dashed var(--border2);
+    border-radius: 7px;
+    padding: 9px;
+    color: var(--text2);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+    margin-top: 10px;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-save-primary {
+    background: var(--accent);
+    border: none;
+    border-radius: 7px;
+    padding: 9px 22px;
+    color: #fff;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.18s;
+    margin-top: 14px;
+  }
+  .btn-save-primary:hover { opacity: 0.85; }
+
+  /* ─── DATA TABLE ─────────────────── */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; }
+  table.dtable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .dtable th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .dtable td {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+  }
+  .dtable tr:hover td { background: rgba(255,255,255,0.015); }
+  .mono { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .c-success { color: var(--success); }
+  .c-danger  { color: var(--danger);  }
+  .c-accent  { color: var(--accent);  }
+
+  /* ─── PAGES ──────────────────────── */
   .admin-page { display: none; }
   .admin-page.active { display: block; }
 
-  /* TOAST */
+  /* ─── TOAST ──────────────────────── */
   #toast {
     position: fixed;
-    bottom: 24px; right: 24px;
+    bottom: 20px; right: 20px;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 20px;
+    border: 1px solid var(--border2);
+    border-radius: 9px;
+    padding: 11px 17px;
     font-size: 13px;
-    font-family: 'IBM Plex Mono', monospace;
-    transform: translateY(100px);
+    font-weight: 500;
+    transform: translateY(70px);
     opacity: 0;
-    transition: all 0.3s;
+    transition: all 0.26s cubic-bezier(0.34,1.2,0.64,1);
     z-index: 999;
+    max-width: 300px;
   }
   #toast.show { transform: translateY(0); opacity: 1; }
-  #toast.success { border-color: var(--success); color: var(--success); }
-  #toast.error { border-color: var(--danger); color: var(--danger); }
-
-  .spinner {
-    width: 16px; height: 16px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    display: inline-block;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .confirm-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-    display: none;
-  }
-  .confirm-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 32px;
-    width: 360px;
-    text-align: center;
-  }
-  .confirm-box h3 { font-size: 18px; margin-bottom: 12px; }
-  .confirm-box p { color: var(--text2); font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
-  .confirm-actions { display: flex; gap: 12px; justify-content: center; }
-  .btn-confirm-yes {
-    background: var(--danger);
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
-    color: white;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    cursor: pointer;
-  }
-  .btn-confirm-no {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 24px;
-    color: var(--text2);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    cursor: pointer;
-  }
+  #toast.success { border-color: rgba(77,184,112,0.4); color: var(--success); }
+  #toast.error   { border-color: rgba(217,91,91,0.4);  color: var(--danger);  }
 
   @media (max-width: 768px) {
     .layout { grid-template-columns: 1fr; }
     .sidebar { display: flex; overflow-x: auto; padding: 0; border-right: none; border-bottom: 1px solid var(--border); }
-    .sidebar-section { display: none; }
-    .sidebar-item { border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+    .sidebar-group { display: none; }
+    .sidebar-item { border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; flex-direction: column; gap: 3px; font-size: 11px; padding: 10px 14px; }
     .sidebar-item.active { border-bottom-color: var(--accent); }
+    .sidebar-item svg { display: none; }
     .main-content { padding: 16px; }
   }
 </style>
 </head>
 <body>
 
-<!-- AUTH -->
+<!-- ─── AUTH ──────────────────────────────── -->
 <div id="auth-screen">
   <div class="auth-box">
     <div class="auth-logo">
-      <h1>⚡ ADMIN PANEL</h1>
-      <p>管理者アカウントでログインしてください</p>
+      <h1>管理者パネル</h1>
+      <div class="sub">TESTBATTLE / ADMIN</div>
     </div>
     <div id="auth-error" class="error-msg"></div>
+    <div id="db-rule-warning" class="warn-msg">
+      DB書き込み権限エラーが発生しました。<br>
+      Firebase Console → Realtime Database → ルール を変更してください：<br>
+      <code>{ "rules": { ".read": "auth != null", ".write": "auth != null" } }</code>
+    </div>
     <div class="form-group">
       <label>Email</label>
       <input type="email" id="login-email" placeholder="admin@example.com" autocomplete="email">
@@ -520,106 +553,122 @@
       <label>Password</label>
       <input type="password" id="login-password" autocomplete="current-password">
     </div>
-    <button class="btn-login" onclick="loginAdmin()">LOGIN →</button>
-    <div style="display:flex;align-items:center;gap:10px;margin:16px 0">
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-      <span style="font-size:11px;color:var(--text2);font-family:'IBM Plex Mono',monospace;letter-spacing:1px">OR</span>
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-    </div>
-    <button onclick="loginGoogle()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:1px;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      GOOGLE LOGIN
+    <button class="btn-login" onclick="loginAdmin()">ログイン</button>
+    <div class="divider">または</div>
+    <button class="btn-oauth" onclick="loginGoogle()">
+      <svg width="15" height="15" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Google でログイン
     </button>
   </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- ─── MAIN APP ──────────────────────────── -->
 <div id="main-app">
   <div class="topbar">
-    <div class="topbar-logo">⚡ ADMIN PANEL</div>
-    <div style="display:flex;align-items:center;gap:12px">
-      <span id="admin-name" style="font-size:12px;color:var(--text2);font-family:'IBM Plex Mono',monospace"></span>
-      <button class="btn-sm" onclick="logout()">LOGOUT</button>
+    <div class="topbar-logo">TestBattle <span>ADMIN</span></div>
+    <div class="topbar-right">
+      <div class="admin-badge">Admin</div>
+      <span id="admin-name"></span>
+      <button class="btn-sm" onclick="logout()">ログアウト</button>
     </div>
   </div>
 
   <div class="layout">
+    <!-- SIDEBAR -->
     <div class="sidebar">
-      <div class="sidebar-section">メイン</div>
-      <div class="sidebar-item active" onclick="showPage('dashboard')">📊 <span>ダッシュボード</span></div>
-      <div class="sidebar-item" onclick="showPage('controls')">🎛️ <span>入力制御</span></div>
-      <div class="sidebar-section">データ</div>
-      <div class="sidebar-item" onclick="showPage('subjects')">📚 <span>教科管理</span></div>
-      <div class="sidebar-item" onclick="showPage('predictions')">🎯 <span>予想データ</span></div>
-      <div class="sidebar-item" onclick="showPage('results')">📋 <span>結果データ</span></div>
-      <div class="sidebar-section">スコア</div>
-      <div class="sidebar-item" onclick="showPage('scores')">🏆 <span>スコア管理</span></div>
+      <div class="sidebar-group">メイン</div>
+      <div class="sidebar-item active" onclick="showPage('dashboard')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        ダッシュボード
+      </div>
+      <div class="sidebar-item" onclick="showPage('controls')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+        入力制御
+      </div>
+      <div class="sidebar-group">データ</div>
+      <div class="sidebar-item" onclick="showPage('subjects')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        教科管理
+      </div>
+      <div class="sidebar-item" onclick="showPage('predictions')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        予想データ
+      </div>
+      <div class="sidebar-item" onclick="showPage('results')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        結果データ
+      </div>
+      <div class="sidebar-group">スコア</div>
+      <div class="sidebar-item" onclick="showPage('scores')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        スコア管理
+      </div>
     </div>
 
+    <!-- MAIN -->
     <div class="main-content">
 
       <!-- DASHBOARD -->
       <div class="admin-page active" id="page-dashboard">
-        <div class="page-title">📊 ダッシュボード</div>
-        <div class="page-subtitle">全体の状況を確認できます</div>
-        <div class="control-grid">
-          <div class="control-card">
-            <div class="control-card-title">予想入力</div>
-            <div id="dash-predict-status"></div>
+        <div class="page-title">ダッシュボード</div>
+        <div class="page-sub">全体の状況を確認できます</div>
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card-label">予想入力</div>
+            <div id="dash-predict-status" class="status-row"><span class="sdot"></span><span>—</span></div>
           </div>
-          <div class="control-card">
-            <div class="control-card-title">テスト結果入力</div>
-            <div id="dash-result-status"></div>
+          <div class="card">
+            <div class="card-label">テスト結果入力</div>
+            <div id="dash-result-status" class="status-row"><span class="sdot"></span><span>—</span></div>
           </div>
-          <div class="control-card">
-            <div class="control-card-title">スコア公開</div>
-            <div id="dash-score-status"></div>
+          <div class="card">
+            <div class="card-label">スコア公開</div>
+            <div id="dash-score-status" class="status-row"><span class="sdot"></span><span>—</span></div>
           </div>
-          <div class="control-card">
-            <div class="control-card-title">参加者数</div>
-            <div id="dash-users" style="font-size:32px;font-family:'IBM Plex Mono',monospace;color:var(--accent)">-</div>
+          <div class="card">
+            <div class="card-label">参加者数</div>
+            <div id="dash-users" class="stat-val">—</div>
           </div>
-          <div class="control-card">
-            <div class="control-card-title">予想入力済み</div>
-            <div id="dash-predictions" style="font-size:32px;font-family:'IBM Plex Mono',monospace;color:var(--accent)">-</div>
+          <div class="card">
+            <div class="card-label">予想入力済み</div>
+            <div id="dash-predictions" class="stat-val">—</div>
           </div>
-          <div class="control-card">
-            <div class="control-card-title">結果入力済み</div>
-            <div id="dash-results" style="font-size:32px;font-family:'IBM Plex Mono',monospace;color:var(--accent)">-</div>
+          <div class="card">
+            <div class="card-label">結果入力済み</div>
+            <div id="dash-results" class="stat-val">—</div>
           </div>
         </div>
       </div>
 
       <!-- CONTROLS -->
       <div class="admin-page" id="page-controls">
-        <div class="page-title">🎛️ 入力制御</div>
-        <div class="page-subtitle">各フェーズの入力許可・不許可を制御します</div>
-        <div class="control-grid">
-          <div class="control-card">
-            <div class="control-card-title">予想入力フェーズ</div>
-            <div class="control-card-desc">ONにするとユーザーが予想点数を入力できます。テスト前のフェーズです。</div>
+        <div class="page-title">入力制御</div>
+        <div class="page-sub">各フェーズの入力を許可・禁止します</div>
+        <div class="cards-grid" style="max-width:640px">
+          <div class="card">
+            <div class="card-label">予想入力フェーズ</div>
+            <div class="card-desc">ONにするとユーザーが予想点数を入力できます。</div>
             <div class="toggle-row">
-              <div>
-                <span class="status-dot" id="predict-dot"></span>
-                <span id="predict-label" style="font-size:13px"></span>
-              </div>
+              <div id="predict-status-row" class="status-row"><span class="sdot" id="predict-dot"></span><span id="predict-label">—</span></div>
               <label class="toggle-switch">
-                <input type="checkbox" id="toggle-predict" onchange="toggleSetting('predictionOpen', this.checked)">
-                <span class="toggle-slider"></span>
+                <input type="checkbox" id="toggle-predict" onchange="toggleSetting('predictionOpen', this.checked, this)">
+                <span class="tslider"></span>
               </label>
             </div>
           </div>
-          <div class="control-card">
-            <div class="control-card-title">テスト結果入力フェーズ</div>
-            <div class="control-card-desc">ONにするとユーザーが実際のテスト点数を入力できます。テスト返却後のフェーズです。</div>
+          <div class="card">
+            <div class="card-label">テスト結果入力フェーズ</div>
+            <div class="card-desc">ONにするとユーザーが実際の点数を入力できます。</div>
             <div class="toggle-row">
-              <div>
-                <span class="status-dot" id="result-dot"></span>
-                <span id="result-label" style="font-size:13px"></span>
-              </div>
+              <div class="status-row"><span class="sdot" id="result-dot"></span><span id="result-label">—</span></div>
               <label class="toggle-switch">
-                <input type="checkbox" id="toggle-result" onchange="toggleSetting('resultInputOpen', this.checked)">
-                <span class="toggle-slider"></span>
+                <input type="checkbox" id="toggle-result" onchange="toggleSetting('resultInputOpen', this.checked, this)">
+                <span class="tslider"></span>
               </label>
             </div>
           </div>
@@ -628,90 +677,62 @@
 
       <!-- SUBJECTS -->
       <div class="admin-page" id="page-subjects">
-        <div class="page-title">📚 教科管理</div>
-        <div class="page-subtitle">教科名と満点を設定します。変更はリアルタイムで全ユーザーに反映されます。</div>
-        <div class="control-card" style="max-width:600px">
+        <div class="page-title">教科管理</div>
+        <div class="page-sub">教科名と満点を設定します。保存するとリアルタイムで全ユーザーに反映されます。</div>
+        <div class="card" style="max-width:560px">
           <div id="subjects-list"></div>
-          <button class="btn-add-subject" onclick="addSubjectRow()">＋ 教科を追加</button>
-          <button class="btn-save-subjects" onclick="saveSubjects()">💾 教科設定を保存・反映</button>
+          <button class="btn-add" onclick="addSubjectRow()">+ 教科を追加</button>
+          <button class="btn-save-primary" onclick="saveSubjects()">保存して反映</button>
         </div>
       </div>
 
-      <!-- PREDICTIONS DATA -->
+      <!-- PREDICTIONS -->
       <div class="admin-page" id="page-predictions">
-        <div class="page-title">🎯 予想データ一覧</div>
-        <div class="page-subtitle">全ユーザーの予想点数を確認・編集できます</div>
-        <div id="predictions-table-wrap">
-          <div style="color:var(--text2)">読み込み中...</div>
-        </div>
+        <div class="page-title">予想データ</div>
+        <div class="page-sub">全ユーザーの予想点数を確認・削除できます</div>
+        <div id="predictions-table-wrap"><div style="color:var(--text2);font-size:13px">読み込み中...</div></div>
       </div>
 
-      <!-- RESULTS DATA -->
+      <!-- RESULTS -->
       <div class="admin-page" id="page-results">
-        <div class="page-title">📋 テスト結果データ一覧</div>
-        <div class="page-subtitle">全ユーザーの実際の点数を確認・編集できます</div>
-        <div id="results-table-wrap">
-          <div style="color:var(--text2)">読み込み中...</div>
-        </div>
+        <div class="page-title">テスト結果データ</div>
+        <div class="page-sub">全ユーザーの実際の点数を確認・削除できます</div>
+        <div id="results-table-wrap"><div style="color:var(--text2);font-size:13px">読み込み中...</div></div>
       </div>
 
       <!-- SCORES -->
       <div class="admin-page" id="page-scores">
-        <div class="page-title">🏆 スコア管理</div>
-        <div class="page-subtitle">スコアの計算・公開を管理します</div>
-        <div class="control-grid" style="max-width:700px">
-          <div class="control-card" style="grid-column:1/-1">
-            <div class="control-card-title">スコア公開設定</div>
-            <div class="control-card-desc" style="margin-bottom:16px">
-              スコアを公開するとユーザー側サイトの「スコア結果」タブに全員のスコアが表示されます。<br>
-              スコアはFirebase上でリアルタイムに計算されます。
-            </div>
-            <div class="toggle-row">
-              <div>
-                <span class="status-dot" id="score-dot"></span>
-                <span id="score-release-label" style="font-size:13px"></span>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="toggle-scores" onchange="toggleSetting('scoresReleased', this.checked)">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
+        <div class="page-title">スコア管理</div>
+        <div class="page-sub">スコアの公開を管理します</div>
+        <div class="card" style="max-width:480px">
+          <div class="card-label">スコア公開設定</div>
+          <div class="card-desc">公開すると全ユーザーのスコア結果タブに順位・スコアが表示されます。</div>
+          <div class="toggle-row">
+            <div class="status-row"><span class="sdot" id="score-dot"></span><span id="score-release-label">—</span></div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-scores" onchange="toggleSetting('scoresReleased', this.checked, this)">
+              <span class="tslider"></span>
+            </label>
           </div>
         </div>
 
-        <div class="page-title" style="font-size:16px;margin-top:32px">📈 現在のスコアプレビュー</div>
-        <div id="scores-preview" style="margin-top:16px">
-          <div style="color:var(--text2)">スコアが公開されていないか、データが不足しています</div>
+        <div class="section-title">スコアプレビュー</div>
+        <div id="scores-preview" style="margin-top:8px">
+          <div style="color:var(--text2);font-size:13px">予想データがありません</div>
         </div>
       </div>
 
-    </div>
-  </div>
-</div>
-
-<!-- Confirm Dialog -->
-<div class="confirm-overlay" id="confirm-overlay">
-  <div class="confirm-box">
-    <h3 id="confirm-title"></h3>
-    <p id="confirm-msg"></p>
-    <div class="confirm-actions">
-      <button class="btn-confirm-yes" id="confirm-yes">確認</button>
-      <button class="btn-confirm-no" onclick="closeConfirm()">キャンセル</button>
     </div>
   </div>
 </div>
 
 <div id="toast"></div>
 
-<!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
 
-// =============================
-// 🔧 Firebase設定をここに入力
-// =============================
 const firebaseConfig = {
   apiKey: "AIzaSyAejIT2YtEDLgEpMN-w5V99m_VWIGN0BSk",
   authDomain: "testbattle-2bac6.firebaseapp.com",
@@ -723,9 +744,6 @@ const firebaseConfig = {
   measurementId: "G-SJ2VR99P16"
 };
 
-// =============================
-// 🔧 管理者UID一覧（Firebaseコンソールで確認）
-// =============================
 const ADMIN_UIDS = ['NxRGRKh9hWOQkOogI1TSN04h84u1'];
 
 const app = initializeApp(firebaseConfig);
@@ -740,25 +758,17 @@ let allPredictions = {};
 let allResults = {};
 let localSubjects = [];
 
-// ===== AUTH =====
+// ── AUTH ──────────────────────────────────
 window.loginAdmin = async () => {
-  const email = document.getElementById('login-email').value;
+  const email    = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (e) {
-    const el = document.getElementById('auth-error');
-    el.textContent = e.message;
-    el.style.display = 'block';
-  }
+  try { await signInWithEmailAndPassword(auth, email, password); }
+  catch(e) { showAuthErr(e.message); }
 };
 
 window.loginGoogle = async () => {
-  try {
-    await signInWithPopup(auth, googleProvider);
-  } catch (e) {
-    showAuthErr(e.message);
-  }
+  try { await signInWithPopup(auth, googleProvider); }
+  catch(e) { showAuthErr(e.message); }
 };
 
 window.logout = () => signOut(auth);
@@ -767,330 +777,262 @@ onAuthStateChanged(auth, async (user) => {
   if (user && ADMIN_UIDS.includes(user.uid)) {
     currentUser = user;
     document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    document.getElementById('admin-name').textContent = user.email;
+    document.getElementById('main-app').style.display    = 'block';
+    document.getElementById('admin-name').textContent    = user.displayName || user.email;
     initAdmin();
   } else if (user) {
     await signOut(auth);
-    showAuthErr('管理者アカウントではありません');
+    showAuthErr('このアカウントは管理者権限がありません');
   } else {
     document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('main-app').style.display = 'none';
+    document.getElementById('main-app').style.display    = 'none';
   }
 });
 
 function showAuthErr(msg) {
   const el = document.getElementById('auth-error');
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
 }
 
-// ===== INIT =====
+// ── INIT ──────────────────────────────────
 function initAdmin() {
-  onValue(ref(db, 'settings'), snap => {
+  onValue(ref(db,'settings'), snap => {
     appSettings = snap.val() || {};
     updateControls();
     renderDashboard();
     renderScoresPreview();
   });
-  onValue(ref(db, 'subjects'), snap => {
+  onValue(ref(db,'subjects'), snap => {
     subjects = snap.val() || {};
-    localSubjects = Object.entries(subjects).map(([id, v]) => ({ id, ...v }));
+    localSubjects = Object.entries(subjects).map(([id,v]) => ({ id, ...v }));
     renderSubjectsList();
     renderPredictionsTable();
     renderResultsTable();
     renderScoresPreview();
   });
-  onValue(ref(db, 'predictions'), snap => {
+  onValue(ref(db,'predictions'), snap => {
     allPredictions = snap.val() || {};
     renderDashboard();
     renderPredictionsTable();
     renderScoresPreview();
   });
-  onValue(ref(db, 'results'), snap => {
+  onValue(ref(db,'results'), snap => {
     allResults = snap.val() || {};
     renderDashboard();
     renderResultsTable();
     renderScoresPreview();
   });
-  onValue(ref(db, 'users'), snap => {
-    const users = snap.val() || {};
-    document.getElementById('dash-users').textContent = Object.keys(users).length;
+  onValue(ref(db,'users'), snap => {
+    document.getElementById('dash-users').textContent = Object.keys(snap.val()||{}).length;
   });
 }
 
-// ===== NAVIGATION =====
+// ── NAV ───────────────────────────────────
 window.showPage = (page) => {
   document.querySelectorAll('.admin-page').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active');
   const pages = ['dashboard','controls','subjects','predictions','results','scores'];
-  const idx = pages.indexOf(page);
-  document.querySelectorAll('.sidebar-item')[idx]?.classList.add('active');
+  document.querySelectorAll('.sidebar-item')[pages.indexOf(page)]?.classList.add('active');
 };
 
-// ===== UPDATE CONTROLS =====
+// ── CONTROLS ──────────────────────────────
 function updateControls() {
-  const toggles = {
-    'toggle-predict': appSettings.predictionOpen,
-    'toggle-result': appSettings.resultInputOpen,
-    'toggle-scores': appSettings.scoresReleased
-  };
-  Object.entries(toggles).forEach(([id, val]) => {
+  [
+    ['toggle-predict', appSettings.predictionOpen],
+    ['toggle-result',  appSettings.resultInputOpen],
+    ['toggle-scores',  appSettings.scoresReleased],
+  ].forEach(([id, val]) => {
     const el = document.getElementById(id);
-    if (el) el.checked = !!val;
+    if (el && !el.disabled) el.checked = !!val;
   });
-  setDot('predict-dot', 'predict-label', appSettings.predictionOpen, '予想入力中', '締め切り');
-  setDot('result-dot', 'result-label', appSettings.resultInputOpen, '結果入力中', '締め切り');
-  setDot('score-dot', 'score-release-label', appSettings.scoresReleased, '公開中', '非公開');
+  setDot('predict-dot', 'predict-label', appSettings.predictionOpen, '入力受付中', '締め切り');
+  setDot('result-dot',  'result-label',  appSettings.resultInputOpen, '入力受付中', '締め切り');
+  setDot('score-dot',   'score-release-label', appSettings.scoresReleased, '公開中', '非公開');
 }
 
 function setDot(dotId, labelId, val, onText, offText) {
-  const dot = document.getElementById(dotId);
+  const dot   = document.getElementById(dotId);
   const label = document.getElementById(labelId);
   if (!dot || !label) return;
-  dot.className = 'status-dot ' + (val ? 'on' : 'off');
+  dot.className    = 'sdot ' + (val ? 'on' : 'off');
   label.textContent = val ? onText : offText;
   label.style.color = val ? 'var(--success)' : 'var(--text2)';
 }
 
-window.toggleSetting = async (key, val) => {
-  await update(ref(db, 'settings'), { [key]: val });
-  showToast(`${key}: ${val ? 'ON' : 'OFF'}`, 'success');
+window.toggleSetting = async (key, val, checkboxEl) => {
+  if (checkboxEl) checkboxEl.disabled = true;
+  try {
+    await set(ref(db, `settings/${key}`), val);
+    showToast(val ? 'ONにしました' : 'OFFにしました', 'success');
+  } catch(e) {
+    if (checkboxEl) checkboxEl.checked = !val;
+    showToast('書き込み失敗: ' + e.message, 'error');
+    if (e.message?.includes('PERMISSION_DENIED') || e.message?.includes('permission')) {
+      document.getElementById('db-rule-warning').style.display = 'block';
+    }
+  } finally {
+    if (checkboxEl) checkboxEl.disabled = false;
+  }
 };
 
-// ===== DASHBOARD =====
+// ── DASHBOARD ─────────────────────────────
 function renderDashboard() {
   document.getElementById('dash-predictions').textContent = Object.keys(allPredictions).length;
-  document.getElementById('dash-results').textContent = Object.keys(allResults).length;
-  setDot('dash-predict-status', null, appSettings.predictionOpen, '', '');
-  const statusMap = [
-    ['dash-predict-status', appSettings.predictionOpen, '入力受付中', '締め切り'],
-    ['dash-result-status', appSettings.resultInputOpen, '入力受付中', '締め切り'],
-    ['dash-score-status', appSettings.scoresReleased, '公開中', '非公開'],
-  ];
-  statusMap.forEach(([id, val, on, off]) => {
+  document.getElementById('dash-results').textContent     = Object.keys(allResults).length;
+  [
+    ['dash-predict-status', appSettings.predictionOpen,  '入力受付中', '締め切り'],
+    ['dash-result-status',  appSettings.resultInputOpen, '入力受付中', '締め切り'],
+    ['dash-score-status',   appSettings.scoresReleased,  '公開中',    '非公開'],
+  ].forEach(([id, val, on, off]) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.innerHTML = `<span class="status-dot ${val ? 'on' : 'off'}"></span><span style="font-size:15px;color:${val ? 'var(--success)' : 'var(--text2)'}">${val ? on : off}</span>`;
+    el.innerHTML = `<span class="sdot ${val?'on':'off'}"></span><span style="color:${val?'var(--success)':'var(--text2)'}">${val?on:off}</span>`;
   });
 }
 
-// ===== SUBJECTS =====
+// ── SUBJECTS ──────────────────────────────
 function renderSubjectsList() {
   const list = document.getElementById('subjects-list');
   if (localSubjects.length === 0) {
-    list.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:12px 0">まだ教科が登録されていません</div>';
+    list.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:8px 0">まだ教科が登録されていません</div>';
     return;
   }
   list.innerHTML = localSubjects.map((s, i) => `
-    <div class="subject-row" data-index="${i}">
-      <input type="text" value="${s.name || ''}" placeholder="教科名" onchange="updateLocalSubject(${i},'name',this.value)">
-      <input type="number" value="${s.maxScore || ''}" placeholder="満点" min="1" onchange="updateLocalSubject(${i},'maxScore',parseInt(this.value))">
+    <div class="subject-row">
+      <input type="text"   value="${s.name||''}"     placeholder="教科名" onchange="updateLocalSubject(${i},'name',this.value)">
+      <input type="number" value="${s.maxScore||''}" placeholder="満点"   min="1" onchange="updateLocalSubject(${i},'maxScore',parseInt(this.value))">
       <button class="btn-del" onclick="removeSubject(${i})">×</button>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-window.updateLocalSubject = (i, key, val) => {
-  localSubjects[i][key] = val;
-};
-
-window.addSubjectRow = () => {
-  localSubjects.push({ id: `sub_${Date.now()}`, name: '', maxScore: 100 });
-  renderSubjectsList();
-};
-
-window.removeSubject = (i) => {
-  localSubjects.splice(i, 1);
-  renderSubjectsList();
-};
+window.updateLocalSubject = (i, key, val) => { localSubjects[i][key] = val; };
+window.addSubjectRow      = () => { localSubjects.push({ id:`sub_${Date.now()}`, name:'', maxScore:100 }); renderSubjectsList(); };
+window.removeSubject      = (i) => { localSubjects.splice(i,1); renderSubjectsList(); };
 
 window.saveSubjects = async () => {
-  const newSubjects = {};
+  const obj = {};
   for (const s of localSubjects) {
     if (!s.name) continue;
-    newSubjects[s.id] = { name: s.name, maxScore: s.maxScore || 100 };
+    obj[s.id] = { name: s.name, maxScore: s.maxScore || 100 };
   }
-  await set(ref(db, 'subjects'), newSubjects);
+  await set(ref(db,'subjects'), obj);
   showToast('教科設定を保存・反映しました', 'success');
 };
 
-// ===== PREDICTIONS TABLE =====
+// ── PREDICTIONS TABLE ─────────────────────
 function renderPredictionsTable() {
-  const wrap = document.getElementById('predictions-table-wrap');
-  const users = Object.values(allPredictions);
-  if (users.length === 0) {
-    wrap.innerHTML = '<div style="color:var(--text2)">まだデータがありません</div>';
-    return;
-  }
+  const wrap    = document.getElementById('predictions-table-wrap');
+  const users   = Object.values(allPredictions);
   const subList = Object.entries(subjects);
+  if (users.length === 0) { wrap.innerHTML='<div style="color:var(--text2);font-size:13px">まだデータがありません</div>'; return; }
   wrap.innerHTML = `
-    <div class="data-table-wrap">
-      <table class="data-table">
-        <thead>
+    <div class="table-wrap">
+      <table class="dtable">
+        <thead><tr>
+          <th>名前</th><th>合計予想</th>
+          ${subList.map(([,s])=>`<th>${s.name}</th>`).join('')}
+          <th>更新日時</th><th>操作</th>
+        </tr></thead>
+        <tbody>${users.map(u=>`
           <tr>
-            <th>名前</th>
-            <th>合計予想</th>
-            ${subList.map(([,s]) => `<th>${s.name}</th>`).join('')}
-            <th>更新日時</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${users.map(u => `
-            <tr>
-              <td>${u.displayName || '不明'}</td>
-              <td class="mono">${u.total ?? '-'}</td>
-              ${subList.map(([id]) => `<td class="mono">${u.subjects?.[id] ?? '-'}</td>`).join('')}
-              <td style="font-size:11px;color:var(--text2)">${u.updatedAt ? new Date(u.updatedAt).toLocaleString('ja') : '-'}</td>
-              <td>
-                <button class="btn-sm" style="color:var(--danger);border-color:rgba(255,76,76,0.3)" 
-                  onclick="deletePrediction('${u.uid}')">削除</button>
-              </td>
-            </tr>
-          `).join('')}
+            <td>${u.displayName||'不明'}</td>
+            <td class="mono">${u.total??'—'}</td>
+            ${subList.map(([id])=>`<td class="mono">${u.subjects?.[id]??'—'}</td>`).join('')}
+            <td style="font-size:11px;color:var(--text3)">${u.updatedAt?new Date(u.updatedAt).toLocaleString('ja'):'—'}</td>
+            <td><button class="btn-sm danger" onclick="deletePrediction('${u.uid}')">削除</button></td>
+          </tr>`).join('')}
         </tbody>
       </table>
     </div>`;
 }
 
-window.deletePrediction = async (uid) => {
-  await remove(ref(db, `predictions/${uid}`));
-  showToast('削除しました', 'success');
-};
+window.deletePrediction = async (uid) => { await remove(ref(db,`predictions/${uid}`)); showToast('削除しました','success'); };
 
-// ===== RESULTS TABLE =====
+// ── RESULTS TABLE ─────────────────────────
 function renderResultsTable() {
-  const wrap = document.getElementById('results-table-wrap');
-  const users = Object.values(allResults);
-  if (users.length === 0) {
-    wrap.innerHTML = '<div style="color:var(--text2)">まだデータがありません</div>';
-    return;
-  }
+  const wrap    = document.getElementById('results-table-wrap');
+  const users   = Object.values(allResults);
   const subList = Object.entries(subjects);
+  if (users.length === 0) { wrap.innerHTML='<div style="color:var(--text2);font-size:13px">まだデータがありません</div>'; return; }
   wrap.innerHTML = `
-    <div class="data-table-wrap">
-      <table class="data-table">
-        <thead>
+    <div class="table-wrap">
+      <table class="dtable">
+        <thead><tr>
+          <th>UID</th><th>合計点</th>
+          ${subList.map(([,s])=>`<th>${s.name}</th>`).join('')}
+          <th>更新日時</th><th>操作</th>
+        </tr></thead>
+        <tbody>${users.map(u=>`
           <tr>
-            <th>UID</th>
-            <th>合計点</th>
-            ${subList.map(([,s]) => `<th>${s.name}</th>`).join('')}
-            <th>更新日時</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${users.map(u => `
-            <tr>
-              <td style="font-size:11px;font-family:'IBM Plex Mono',monospace">${u.uid}</td>
-              <td class="mono">${u.total ?? '-'}</td>
-              ${subList.map(([id]) => `<td class="mono">${u.subjects?.[id] ?? '-'}</td>`).join('')}
-              <td style="font-size:11px;color:var(--text2)">${u.updatedAt ? new Date(u.updatedAt).toLocaleString('ja') : '-'}</td>
-              <td>
-                <button class="btn-sm" style="color:var(--danger);border-color:rgba(255,76,76,0.3)" 
-                  onclick="deleteResult('${u.uid}')">削除</button>
-              </td>
-            </tr>
-          `).join('')}
+            <td style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3)">${u.uid}</td>
+            <td class="mono">${u.total??'—'}</td>
+            ${subList.map(([id])=>`<td class="mono">${u.subjects?.[id]??'—'}</td>`).join('')}
+            <td style="font-size:11px;color:var(--text3)">${u.updatedAt?new Date(u.updatedAt).toLocaleString('ja'):'—'}</td>
+            <td><button class="btn-sm danger" onclick="deleteResult('${u.uid}')">削除</button></td>
+          </tr>`).join('')}
         </tbody>
       </table>
     </div>`;
 }
 
-window.deleteResult = async (uid) => {
-  await remove(ref(db, `results/${uid}`));
-  showToast('削除しました', 'success');
-};
+window.deleteResult = async (uid) => { await remove(ref(db,`results/${uid}`)); showToast('削除しました','success'); };
 
-// ===== SCORES PREVIEW =====
-function calcTotalBonus(predicted, actual) {
-  if (predicted === null || actual === null) return null;
-  const diff = Math.abs(predicted - actual);
-  if (diff === 0) return 50;
-  if (diff <= 5) return 50;
-  if (diff <= 10) return 30;
-  if (diff <= 15) return 10;
-  return -diff;
+// ── SCORES PREVIEW ────────────────────────
+function calcTotalBonus(p, a) {
+  if (p===null||a===null) return null;
+  const d = Math.abs(p-a);
+  if (d===0) return 50; if (d<=5) return 50; if (d<=10) return 30; if (d<=15) return 10; return -d;
 }
-function calcSubjectBonus(predicted, actual, maxScore) {
-  if (predicted === null || actual === null) return null;
-  const diff = Math.abs(predicted - actual);
-  const ratio = maxScore > 0 ? diff / maxScore : 0;
-  if (diff === 0) return 20;
-  if (ratio <= 0.05) return 15;
-  if (ratio <= 0.10) return 10;
-  if (ratio <= 0.15) return 5;
-  return -diff;
+function calcSubjectBonus(p, a, max) {
+  if (p===null||a===null) return null;
+  const d = Math.abs(p-a), r = max>0?d/max:0;
+  if (d===0) return 20; if (r<=0.05) return 15; if (r<=0.10) return 10; if (r<=0.15) return 5; return -d;
 }
 
 function renderScoresPreview() {
-  const wrap = document.getElementById('scores-preview');
+  const wrap    = document.getElementById('scores-preview');
+  const users   = Object.values(allPredictions);
   const subList = Object.entries(subjects);
-  const users = Object.values(allPredictions);
-  if (users.length === 0) {
-    wrap.innerHTML = '<div style="color:var(--text2)">予想データがありません</div>';
-    return;
-  }
-
+  if (users.length===0) { wrap.innerHTML='<div style="color:var(--text2);font-size:13px">予想データがありません</div>'; return; }
   const scored = users.map(u => {
-    const result = allResults[u.uid];
-    const actualTotal = result?.total ?? null;
-    const totalBonus = actualTotal !== null ? calcTotalBonus(u.total, actualTotal) : null;
-    let totalSubBonus = 0;
-    subList.forEach(([id, sub]) => {
-      const pred = u.subjects?.[id] ?? null;
-      const act = result?.subjects?.[id] ?? null;
-      const b = calcSubjectBonus(pred, act, sub.maxScore);
-      if (b !== null) totalSubBonus += b;
+    const result     = allResults[u.uid];
+    const actualTotal= result?.total??null;
+    const totalBonus = actualTotal!==null ? calcTotalBonus(u.total, actualTotal) : null;
+    let subBonus = 0;
+    subList.forEach(([id,sub]) => {
+      const b = calcSubjectBonus(u.subjects?.[id]??null, result?.subjects?.[id]??null, sub.maxScore);
+      if (b!==null) subBonus += b;
     });
-    const finalScore = actualTotal !== null && totalBonus !== null ? actualTotal + totalBonus + totalSubBonus : null;
-    return { ...u, actualTotal, totalBonus, totalSubBonus, finalScore };
-  }).sort((a, b) => (b.finalScore ?? -9999) - (a.finalScore ?? -9999));
+    const final = actualTotal!==null&&totalBonus!==null ? actualTotal+totalBonus+subBonus : null;
+    return { ...u, actualTotal, totalBonus, subBonus, final };
+  }).sort((a,b)=>(b.final??-9999)-(a.final??-9999));
 
+  const ranks = ['1st','2nd','3rd'];
   wrap.innerHTML = `
-    <div class="data-table-wrap">
-      <table class="data-table">
-        <thead>
+    <div class="table-wrap">
+      <table class="dtable">
+        <thead><tr><th>順位</th><th>名前</th><th>予想合計</th><th>実際合計</th><th>合計ボーナス</th><th>教科別ボーナス</th><th>最終スコア</th></tr></thead>
+        <tbody>${scored.map((u,i)=>`
           <tr>
-            <th>順位</th>
-            <th>名前</th>
-            <th>予想合計</th>
-            <th>実際合計</th>
-            <th>合計ボーナス</th>
-            <th>教科別ボーナス</th>
-            <th>🏆 最終スコア</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${scored.map((u, i) => `
-            <tr>
-              <td class="mono">${['🥇','🥈','🥉'][i] || `#${i+1}`}</td>
-              <td>${u.displayName || '不明'}</td>
-              <td class="mono">${u.total ?? '-'}</td>
-              <td class="mono">${u.actualTotal ?? '未入力'}</td>
-              <td class="mono" style="color:${(u.totalBonus??0)>=0?'var(--success)':'var(--danger)'}">${u.totalBonus !== null ? (u.totalBonus >= 0 ? '+' : '') + u.totalBonus : '-'}</td>
-              <td class="mono" style="color:${(u.totalSubBonus)>=0?'var(--success)':'var(--danger)'}">${u.totalSubBonus >= 0 ? '+' : ''}${u.totalSubBonus}</td>
-              <td class="mono" style="font-size:16px;font-weight:700;color:var(--accent)">${u.finalScore ?? '未確定'}</td>
-            </tr>
-          `).join('')}
+            <td class="mono" style="color:var(--text2)">${ranks[i]||'#'+(i+1)}</td>
+            <td>${u.displayName||'不明'}</td>
+            <td class="mono">${u.total??'—'}</td>
+            <td class="mono">${u.actualTotal??'未入力'}</td>
+            <td class="mono ${(u.totalBonus??0)>=0?'c-success':'c-danger'}">${u.totalBonus!==null?(u.totalBonus>=0?'+':'')+u.totalBonus:'—'}</td>
+            <td class="mono ${u.subBonus>=0?'c-success':'c-danger'}">${u.subBonus>=0?'+':''}${u.subBonus}</td>
+            <td class="mono c-accent" style="font-size:15px">${u.final??'未確定'}</td>
+          </tr>`).join('')}
         </tbody>
       </table>
     </div>`;
 }
 
-// ===== CONFIRM =====
-window.closeConfirm = () => {
-  document.getElementById('confirm-overlay').style.display = 'none';
-};
-
-// ===== TOAST =====
-function showToast(msg, type = 'success') {
+// ── TOAST ─────────────────────────────────
+function showToast(msg, type='success') {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = `show ${type}`;
-  setTimeout(() => el.className = '', 2800);
+  el.textContent = msg; el.className = `show ${type}`;
+  setTimeout(() => el.className='', 2600);
 }
 </script>
 </body>
