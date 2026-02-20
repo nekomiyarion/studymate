@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理者パネル - テスト予想ゲーム</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Zen+Kaku+Gothic+New:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06070d;
+    --surface: #0d0e18;
+    --surface2: #141520;
+    --surface3: #1c1d2b;
+    --accent: #00d4ff;
+    --accent2: #ff4c7a;
+    --accent3: #7cff6a;
+    --warn: #ffb347;
+    --text: #c8d0e8;
+    --text2: #606880;
+    --border: #1e2030;
+    --danger: #ff4c4c;
+    --success: #4cffaa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    min-height: 100vh;
+  }
+  body::before {
+    content: 'ADMIN';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%) rotate(-30deg);
+    font-size: 200px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    color: rgba(0,212,255,0.015);
+    pointer-events: none;
+    z-index: 0;
+    letter-spacing: -10px;
+  }
+
+  /* AUTH */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+  .auth-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    width: 380px;
+    max-width: 95vw;
+    position: relative;
+  }
+  .auth-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .auth-logo {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .auth-logo h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+  .auth-logo p { color: var(--text2); font-size: 12px; margin-top: 6px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    color: var(--text2);
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .form-group input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus { border-color: var(--accent); }
+  .btn-login {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-login:hover { background: rgba(0,212,255,0.08); }
+  .error-msg {
+    background: rgba(255,76,76,0.1);
+    border: 1px solid rgba(255,76,76,0.3);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--danger);
+    margin-bottom: 14px;
+    display: none;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* MAIN */
+  #main-app { display: none; position: relative; z-index: 1; }
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+  .btn-sm {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-sm:hover { color: var(--text); border-color: var(--text2); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 56px);
+  }
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+  }
+  .sidebar-section {
+    padding: 8px 16px;
+    font-size: 10px;
+    color: var(--text2);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: 12px;
+  }
+  .sidebar-item {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text2);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 3px solid transparent;
+  }
+  .sidebar-item:hover { color: var(--text); background: var(--surface2); }
+  .sidebar-item.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(0,212,255,0.05);
+  }
+
+  .main-content { padding: 32px; overflow-x: hidden; }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .page-subtitle { color: var(--text2); font-size: 13px; margin-bottom: 32px; }
+
+  /* CONTROL CARDS */
+  .control-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .control-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .control-card-title {
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .control-card-desc { font-size: 14px; line-height: 1.5; }
+
+  /* TOGGLE SWITCH */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--surface3);
+    border-radius: 28px;
+    transition: 0.3s;
+    border: 1px solid var(--border);
+  }
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 20px; width: 20px;
+    left: 3px; bottom: 3px;
+    background: var(--text2);
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+  input:checked + .toggle-slider { background: rgba(76,255,170,0.15); border-color: var(--success); }
+  input:checked + .toggle-slider::before { transform: translateX(24px); background: var(--success); }
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .status-dot.on { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .status-dot.off { background: var(--text2); }
+
+  /* BIG ACTION BUTTON */
+  .btn-action {
+    background: transparent;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 28px;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-action:hover { background: rgba(0,212,255,0.08); transform: translateY(-1px); }
+  .btn-action.danger { border-color: var(--danger); color: var(--danger); }
+  .btn-action.danger:hover { background: rgba(255,76,76,0.08); }
+  .btn-action.success-btn { border-color: var(--success); color: var(--success); }
+  .btn-action.success-btn:hover { background: rgba(76,255,170,0.08); }
+
+  /* DATA TABLE */
+  .data-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .data-table th {
+    background: var(--surface2);
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 400;
+  }
+  .data-table td {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  .editable-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    width: 90px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .editable-input:focus { border-color: var(--accent); }
+
+  /* SUBJECT MANAGEMENT */
+  .subject-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .subject-row:last-child { border-bottom: none; }
+  .subject-row input[type="text"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 14px;
+    outline: none;
+    flex: 1;
+    transition: border-color 0.2s;
+  }
+  .subject-row input[type="text"]:focus { border-color: var(--accent); }
+  .subject-row input[type="number"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    width: 100px;
+    transition: border-color 0.2s;
+  }
+  .subject-row input[type="number"]:focus { border-color: var(--accent); }
+  .btn-del {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .btn-del:hover { border-color: var(--danger); color: var(--danger); }
+  .btn-add-subject {
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    width: 100%;
+    text-align: center;
+    margin-top: 12px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+  .btn-add-subject:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-save-subjects {
+    background: transparent;
+    border: 1px solid var(--success);
+    border-radius: 8px;
+    padding: 10px 24px;
+    color: var(--success);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    margin-top: 16px;
+  }
+  .btn-save-subjects:hover { background: rgba(76,255,170,0.08); }
+
+  /* PAGE PANELS */
+  .admin-page { display: none; }
+  .admin-page.active { display: block; }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 999;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--success); color: var(--success); }
+  #toast.error { border-color: var(--danger); color: var(--danger); }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    display: none;
+  }
+  .confirm-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    width: 360px;
+    text-align: center;
+  }
+  .confirm-box h3 { font-size: 18px; margin-bottom: 12px; }
+  .confirm-box p { color: var(--text2); font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+  .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+  .btn-confirm-yes {
+    background: var(--danger);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    color: white;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-confirm-no {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 24px;
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: flex; overflow-x: auto; padding: 0; border-right: none; border-bottom: 1px solid var(--border); }
+    .sidebar-section { display: none; }
+    .sidebar-item { border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+    .sidebar-item.active { border-bottom-color: var(--accent); }
+    .main-content { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <h1>⚡ ADMIN PANEL</h1>
+      <p>管理者アカウントでログインしてください</p>
+    </div>
+    <div id="auth-error" class="error-msg"></div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="admin@example.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="loginAdmin()">LOGIN →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app">
+  <div class="topbar">
+    <div class="topbar-logo">⚡ ADMIN PANEL</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span id="admin-name" style="font-size:12px;color:var(--text2);font-family:'IBM Plex Mono',monospace"></span>
+      <button class="btn-sm" onclick="logout()">LOGOUT</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sidebar-section">メイン</div>
+      <div class="sidebar-item active" onclick="showPage('dashboard')">📊 <span>ダッシュボード</span></div>
+      <div class="sidebar-item" onclick="showPage('controls')">🎛️ <span>入力制御</span></div>
+      <div class="sidebar-section">データ</div>
+      <div class="sidebar-item" onclick="showPage('subjects')">📚 <span>教科管理</span></div>
+      <div class="sidebar-item" onclick="showPage('predictions')">🎯 <span>予想データ</span></div>
+      <div class="sidebar-item" onclick="showPage('results')">📋 <span>結果データ</span></div>
+      <div class="sidebar-section">スコア</div>
+      <div class="sidebar-item" onclick="showPage('scores')">🏆 <span>スコア管理</span></div>
+    </div>
+
+    <div class="main-content">
+
+      <!-- DASHBOARD -->
+      <div class="admin-page active" id="page-dashboard">
+        <div class="page-title">📊 ダッシュボード</div>
+        <div class="page-subtitle">全体の状況を確認できます</div>
+        <div class="control-grid">
+          <div class="control-card">
+            <div class="control-card-title">予想入力</div>
+            <div id="dash-predict-status"></div>
+          </div>
+          <div class="control-card">
+            <div class="control-card-title">テスト結果入力</div>
+            <div id="dash-result-status"></div>
+          </div>
+          <div class="control-card">
+            <div class="control-card-title">スコア公開</div>
+            <div id="dash-score-status"></div>
+          </div>
+          <div class="control-card">
+            <div class="control-card-title">参加者数</div>
+            <div id="dash-users" style="font-size:32px;font-family:'IBM Plex Mono',monospace;color:var(--accent)">-</div>
+          </div>
+          <div class="control-card">
+            <div class="control-card-title">予想入力済み</div>
+            <div id="dash-predictions" style="font-size:32px;font-family:'IBM Plex Mono',monospace;color:var(--accent)">-</div>
+          </div>
+          <div class="control-card">
+            <div class="control-card-title">結果入力済み</div>
+            <div id="dash-results" style="font-size:32px;font-family:'IBM Plex Mono',monospace;color:var(--accent)">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTROLS -->
+      <div class="admin-page" id="page-controls">
+        <div class="page-title">🎛️ 入力制御</div>
+        <div class="page-subtitle">各フェーズの入力許可・不許可を制御します</div>
+        <div class="control-grid">
+          <div class="control-card">
+            <div class="control-card-title">予想入力フェーズ</div>
+            <div class="control-card-desc">ONにするとユーザーが予想点数を入力できます。テスト前のフェーズです。</div>
+            <div class="toggle-row">
+              <div>
+                <span class="status-dot" id="predict-dot"></span>
+                <span id="predict-label" style="font-size:13px"></span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-predict" onchange="toggleSetting('predictionOpen', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="control-card">
+            <div class="control-card-title">テスト結果入力フェーズ</div>
+            <div class="control-card-desc">ONにするとユーザーが実際のテスト点数を入力できます。テスト返却後のフェーズです。</div>
+            <div class="toggle-row">
+              <div>
+                <span class="status-dot" id="result-dot"></span>
+                <span id="result-label" style="font-size:13px"></span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-result" onchange="toggleSetting('resultInputOpen', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBJECTS -->
+      <div class="admin-page" id="page-subjects">
+        <div class="page-title">📚 教科管理</div>
+        <div class="page-subtitle">教科名と満点を設定します。変更はリアルタイムで全ユーザーに反映されます。</div>
+        <div class="control-card" style="max-width:600px">
+          <div id="subjects-list"></div>
+          <button class="btn-add-subject" onclick="addSubjectRow()">＋ 教科を追加</button>
+          <button class="btn-save-subjects" onclick="saveSubjects()">💾 教科設定を保存・反映</button>
+        </div>
+      </div>
+
+      <!-- PREDICTIONS DATA -->
+      <div class="admin-page" id="page-predictions">
+        <div class="page-title">🎯 予想データ一覧</div>
+        <div class="page-subtitle">全ユーザーの予想点数を確認・編集できます</div>
+        <div id="predictions-table-wrap">
+          <div style="color:var(--text2)">読み込み中...</div>
+        </div>
+      </div>
+
+      <!-- RESULTS DATA -->
+      <div class="admin-page" id="page-results">
+        <div class="page-title">📋 テスト結果データ一覧</div>
+        <div class="page-subtitle">全ユーザーの実際の点数を確認・編集できます</div>
+        <div id="results-table-wrap">
+          <div style="color:var(--text2)">読み込み中...</div>
+        </div>
+      </div>
+
+      <!-- SCORES -->
+      <div class="admin-page" id="page-scores">
+        <div class="page-title">🏆 スコア管理</div>
+        <div class="page-subtitle">スコアの計算・公開を管理します</div>
+        <div class="control-grid" style="max-width:700px">
+          <div class="control-card" style="grid-column:1/-1">
+            <div class="control-card-title">スコア公開設定</div>
+            <div class="control-card-desc" style="margin-bottom:16px">
+              スコアを公開するとユーザー側サイトの「スコア結果」タブに全員のスコアが表示されます。<br>
+              スコアはFirebase上でリアルタイムに計算されます。
+            </div>
+            <div class="toggle-row">
+              <div>
+                <span class="status-dot" id="score-dot"></span>
+                <span id="score-release-label" style="font-size:13px"></span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-scores" onchange="toggleSetting('scoresReleased', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-title" style="font-size:16px;margin-top:32px">📈 現在のスコアプレビュー</div>
+        <div id="scores-preview" style="margin-top:16px">
+          <div style="color:var(--text2)">スコアが公開されていないか、データが不足しています</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Dialog -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <h3 id="confirm-title"></h3>
+    <p id="confirm-msg"></p>
+    <div class="confirm-actions">
+      <button class="btn-confirm-yes" id="confirm-yes">確認</button>
+      <button class="btn-confirm-no" onclick="closeConfirm()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+
+// =============================
+// 🔧 Firebase設定をここに入力
+// =============================
+const firebaseConfig = {
+  apiKey: "AIzaSyAejIT2YtEDLgEpMN-w5V99m_VWIGN0BSk",
+  authDomain: "testbattle-2bac6.firebaseapp.com",
+  databaseURL: "https://testbattle-2bac6-default-rtdb.firebaseio.com",
+  projectId: "testbattle-2bac6",
+  storageBucket: "testbattle-2bac6.firebasestorage.app",
+  messagingSenderId: "625752500752",
+  appId: "1:625752500752:web:4727cfc9f8c173d079f895",
+  measurementId: "G-SJ2VR99P16"
+};
+
+// =============================
+// 🔧 管理者UID一覧（Firebaseコンソールで確認）
+// =============================
+const ADMIN_UIDS = ['YOUR_ADMIN_UID_HERE'];
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+let currentUser = null;
+let appSettings = {};
+let subjects = {};
+let allPredictions = {};
+let allResults = {};
+let localSubjects = [];
+
+// ===== AUTH =====
+window.loginAdmin = async () => {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (e) {
+    const el = document.getElementById('auth-error');
+    el.textContent = e.message;
+    el.style.display = 'block';
+  }
+};
+
+window.logout = () => signOut(auth);
+
+onAuthStateChanged(auth, async (user) => {
+  if (user && ADMIN_UIDS.includes(user.uid)) {
+    currentUser = user;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('admin-name').textContent = user.email;
+    initAdmin();
+  } else if (user) {
+    await signOut(auth);
+    showAuthErr('管理者アカウントではありません');
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('main-app').style.display = 'none';
+  }
+});
+
+function showAuthErr(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ===== INIT =====
+function initAdmin() {
+  onValue(ref(db, 'settings'), snap => {
+    appSettings = snap.val() || {};
+    updateControls();
+    renderDashboard();
+    renderScoresPreview();
+  });
+  onValue(ref(db, 'subjects'), snap => {
+    subjects = snap.val() || {};
+    localSubjects = Object.entries(subjects).map(([id, v]) => ({ id, ...v }));
+    renderSubjectsList();
+    renderPredictionsTable();
+    renderResultsTable();
+    renderScoresPreview();
+  });
+  onValue(ref(db, 'predictions'), snap => {
+    allPredictions = snap.val() || {};
+    renderDashboard();
+    renderPredictionsTable();
+    renderScoresPreview();
+  });
+  onValue(ref(db, 'results'), snap => {
+    allResults = snap.val() || {};
+    renderDashboard();
+    renderResultsTable();
+    renderScoresPreview();
+  });
+  onValue(ref(db, 'users'), snap => {
+    const users = snap.val() || {};
+    document.getElementById('dash-users').textContent = Object.keys(users).length;
+  });
+}
+
+// ===== NAVIGATION =====
+window.showPage = (page) => {
+  document.querySelectorAll('.admin-page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  const pages = ['dashboard','controls','subjects','predictions','results','scores'];
+  const idx = pages.indexOf(page);
+  document.querySelectorAll('.sidebar-item')[idx]?.classList.add('active');
+};
+
+// ===== UPDATE CONTROLS =====
+function updateControls() {
+  const toggles = {
+    'toggle-predict': appSettings.predictionOpen,
+    'toggle-result': appSettings.resultInputOpen,
+    'toggle-scores': appSettings.scoresReleased
+  };
+  Object.entries(toggles).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!val;
+  });
+  setDot('predict-dot', 'predict-label', appSettings.predictionOpen, '予想入力中', '締め切り');
+  setDot('result-dot', 'result-label', appSettings.resultInputOpen, '結果入力中', '締め切り');
+  setDot('score-dot', 'score-release-label', appSettings.scoresReleased, '公開中', '非公開');
+}
+
+function setDot(dotId, labelId, val, onText, offText) {
+  const dot = document.getElementById(dotId);
+  const label = document.getElementById(labelId);
+  if (!dot || !label) return;
+  dot.className = 'status-dot ' + (val ? 'on' : 'off');
+  label.textContent = val ? onText : offText;
+  label.style.color = val ? 'var(--success)' : 'var(--text2)';
+}
+
+window.toggleSetting = async (key, val) => {
+  await update(ref(db, 'settings'), { [key]: val });
+  showToast(`${key}: ${val ? 'ON' : 'OFF'}`, 'success');
+};
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  document.getElementById('dash-predictions').textContent = Object.keys(allPredictions).length;
+  document.getElementById('dash-results').textContent = Object.keys(allResults).length;
+  setDot('dash-predict-status', null, appSettings.predictionOpen, '', '');
+  const statusMap = [
+    ['dash-predict-status', appSettings.predictionOpen, '入力受付中', '締め切り'],
+    ['dash-result-status', appSettings.resultInputOpen, '入力受付中', '締め切り'],
+    ['dash-score-status', appSettings.scoresReleased, '公開中', '非公開'],
+  ];
+  statusMap.forEach(([id, val, on, off]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = `<span class="status-dot ${val ? 'on' : 'off'}"></span><span style="font-size:15px;color:${val ? 'var(--success)' : 'var(--text2)'}">${val ? on : off}</span>`;
+  });
+}
+
+// ===== SUBJECTS =====
+function renderSubjectsList() {
+  const list = document.getElementById('subjects-list');
+  if (localSubjects.length === 0) {
+    list.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:12px 0">まだ教科が登録されていません</div>';
+    return;
+  }
+  list.innerHTML = localSubjects.map((s, i) => `
+    <div class="subject-row" data-index="${i}">
+      <input type="text" value="${s.name || ''}" placeholder="教科名" onchange="updateLocalSubject(${i},'name',this.value)">
+      <input type="number" value="${s.maxScore || ''}" placeholder="満点" min="1" onchange="updateLocalSubject(${i},'maxScore',parseInt(this.value))">
+      <button class="btn-del" onclick="removeSubject(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+window.updateLocalSubject = (i, key, val) => {
+  localSubjects[i][key] = val;
+};
+
+window.addSubjectRow = () => {
+  localSubjects.push({ id: `sub_${Date.now()}`, name: '', maxScore: 100 });
+  renderSubjectsList();
+};
+
+window.removeSubject = (i) => {
+  localSubjects.splice(i, 1);
+  renderSubjectsList();
+};
+
+window.saveSubjects = async () => {
+  const newSubjects = {};
+  for (const s of localSubjects) {
+    if (!s.name) continue;
+    newSubjects[s.id] = { name: s.name, maxScore: s.maxScore || 100 };
+  }
+  await set(ref(db, 'subjects'), newSubjects);
+  showToast('教科設定を保存・反映しました', 'success');
+};
+
+// ===== PREDICTIONS TABLE =====
+function renderPredictionsTable() {
+  const wrap = document.getElementById('predictions-table-wrap');
+  const users = Object.values(allPredictions);
+  if (users.length === 0) {
+    wrap.innerHTML = '<div style="color:var(--text2)">まだデータがありません</div>';
+    return;
+  }
+  const subList = Object.entries(subjects);
+  wrap.innerHTML = `
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>名前</th>
+            <th>合計予想</th>
+            ${subList.map(([,s]) => `<th>${s.name}</th>`).join('')}
+            <th>更新日時</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(u => `
+            <tr>
+              <td>${u.displayName || '不明'}</td>
+              <td class="mono">${u.total ?? '-'}</td>
+              ${subList.map(([id]) => `<td class="mono">${u.subjects?.[id] ?? '-'}</td>`).join('')}
+              <td style="font-size:11px;color:var(--text2)">${u.updatedAt ? new Date(u.updatedAt).toLocaleString('ja') : '-'}</td>
+              <td>
+                <button class="btn-sm" style="color:var(--danger);border-color:rgba(255,76,76,0.3)" 
+                  onclick="deletePrediction('${u.uid}')">削除</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+window.deletePrediction = async (uid) => {
+  await remove(ref(db, `predictions/${uid}`));
+  showToast('削除しました', 'success');
+};
+
+// ===== RESULTS TABLE =====
+function renderResultsTable() {
+  const wrap = document.getElementById('results-table-wrap');
+  const users = Object.values(allResults);
+  if (users.length === 0) {
+    wrap.innerHTML = '<div style="color:var(--text2)">まだデータがありません</div>';
+    return;
+  }
+  const subList = Object.entries(subjects);
+  wrap.innerHTML = `
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>UID</th>
+            <th>合計点</th>
+            ${subList.map(([,s]) => `<th>${s.name}</th>`).join('')}
+            <th>更新日時</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(u => `
+            <tr>
+              <td style="font-size:11px;font-family:'IBM Plex Mono',monospace">${u.uid}</td>
+              <td class="mono">${u.total ?? '-'}</td>
+              ${subList.map(([id]) => `<td class="mono">${u.subjects?.[id] ?? '-'}</td>`).join('')}
+              <td style="font-size:11px;color:var(--text2)">${u.updatedAt ? new Date(u.updatedAt).toLocaleString('ja') : '-'}</td>
+              <td>
+                <button class="btn-sm" style="color:var(--danger);border-color:rgba(255,76,76,0.3)" 
+                  onclick="deleteResult('${u.uid}')">削除</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+window.deleteResult = async (uid) => {
+  await remove(ref(db, `results/${uid}`));
+  showToast('削除しました', 'success');
+};
+
+// ===== SCORES PREVIEW =====
+function calcTotalBonus(predicted, actual) {
+  if (predicted === null || actual === null) return null;
+  const diff = Math.abs(predicted - actual);
+  if (diff === 0) return 50;
+  if (diff <= 5) return 50;
+  if (diff <= 10) return 30;
+  if (diff <= 15) return 10;
+  return -diff;
+}
+function calcSubjectBonus(predicted, actual, maxScore) {
+  if (predicted === null || actual === null) return null;
+  const diff = Math.abs(predicted - actual);
+  const ratio = maxScore > 0 ? diff / maxScore : 0;
+  if (diff === 0) return 20;
+  if (ratio <= 0.05) return 15;
+  if (ratio <= 0.10) return 10;
+  if (ratio <= 0.15) return 5;
+  return -diff;
+}
+
+function renderScoresPreview() {
+  const wrap = document.getElementById('scores-preview');
+  const subList = Object.entries(subjects);
+  const users = Object.values(allPredictions);
+  if (users.length === 0) {
+    wrap.innerHTML = '<div style="color:var(--text2)">予想データがありません</div>';
+    return;
+  }
+
+  const scored = users.map(u => {
+    const result = allResults[u.uid];
+    const actualTotal = result?.total ?? null;
+    const totalBonus = actualTotal !== null ? calcTotalBonus(u.total, actualTotal) : null;
+    let totalSubBonus = 0;
+    subList.forEach(([id, sub]) => {
+      const pred = u.subjects?.[id] ?? null;
+      const act = result?.subjects?.[id] ?? null;
+      const b = calcSubjectBonus(pred, act, sub.maxScore);
+      if (b !== null) totalSubBonus += b;
+    });
+    const finalScore = actualTotal !== null && totalBonus !== null ? actualTotal + totalBonus + totalSubBonus : null;
+    return { ...u, actualTotal, totalBonus, totalSubBonus, finalScore };
+  }).sort((a, b) => (b.finalScore ?? -9999) - (a.finalScore ?? -9999));
+
+  wrap.innerHTML = `
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>順位</th>
+            <th>名前</th>
+            <th>予想合計</th>
+            <th>実際合計</th>
+            <th>合計ボーナス</th>
+            <th>教科別ボーナス</th>
+            <th>🏆 最終スコア</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${scored.map((u, i) => `
+            <tr>
+              <td class="mono">${['🥇','🥈','🥉'][i] || `#${i+1}`}</td>
+              <td>${u.displayName || '不明'}</td>
+              <td class="mono">${u.total ?? '-'}</td>
+              <td class="mono">${u.actualTotal ?? '未入力'}</td>
+              <td class="mono" style="color:${(u.totalBonus??0)>=0?'var(--success)':'var(--danger)'}">${u.totalBonus !== null ? (u.totalBonus >= 0 ? '+' : '') + u.totalBonus : '-'}</td>
+              <td class="mono" style="color:${(u.totalSubBonus)>=0?'var(--success)':'var(--danger)'}">${u.totalSubBonus >= 0 ? '+' : ''}${u.totalSubBonus}</td>
+              <td class="mono" style="font-size:16px;font-weight:700;color:var(--accent)">${u.finalScore ?? '未確定'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ===== CONFIRM =====
+window.closeConfirm = () => {
+  document.getElementById('confirm-overlay').style.display = 'none';
+};
+
+// ===== TOAST =====
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  setTimeout(() => el.className = '', 2800);
+}
+</script>
+</body>
+</html>
