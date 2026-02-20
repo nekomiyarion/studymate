@@ -547,6 +547,109 @@
   }
   .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
 
+  /* ======== USERNAME MODAL ======== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    backdrop-filter: blur(4px);
+  }
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    width: 400px;
+    max-width: 95vw;
+    position: relative;
+    animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.88) translateY(20px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 20px 20px 0 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+  }
+  .modal-title {
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .modal-subtitle {
+    color: var(--text2);
+    font-size: 13px;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .modal-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 10px; }
+  .btn-modal-primary {
+    flex: 1;
+    background: linear-gradient(135deg, var(--accent), #5a4adf);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    color: white;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-modal-primary:hover { opacity: 0.9; }
+  .btn-modal-cancel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    color: var(--text2);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-modal-cancel:hover { color: var(--text); border-color: var(--text2); }
+
+  /* 名前変更ボタン */
+  .btn-edit-name {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 10px;
+    color: var(--text2);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .btn-edit-name:hover { border-color: var(--accent); color: var(--accent); }
+
   @media (max-width: 600px) {
     .content { padding: 16px; }
     nav.tabs { overflow-x: auto; }
@@ -609,6 +712,7 @@
     <div class="topbar-user">
       <div class="user-avatar" id="user-avatar-text">?</div>
       <span id="user-display-name" style="font-size:14px;color:var(--text2)"></span>
+      <button class="btn-edit-name" onclick="openUsernameModal(false)" title="ユーザーネームを変更">✏️ 名前変更</button>
       <button class="btn-logout" onclick="logout()">ログアウト</button>
     </div>
   </div>
@@ -708,6 +812,23 @@
   </div>
 </div>
 
+<!-- USERNAME MODAL -->
+<div class="modal-overlay" id="username-modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title" id="username-modal-title">🎮 ユーザーネームを設定</div>
+    <div class="modal-subtitle" id="username-modal-subtitle">
+      Googleアカウント名とは別に、ゲーム内で表示される名前を設定してください。<br>
+      あとからでも変更できます。
+    </div>
+    <input class="modal-input" type="text" id="username-input" placeholder="ニックネームを入力" maxlength="20">
+    <div id="username-modal-error" style="color:var(--danger);font-size:12px;margin-bottom:12px;display:none"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-primary" onclick="saveUsername()">✅ 保存する</button>
+      <button class="btn-modal-cancel" id="username-modal-cancel" onclick="closeUsernameModal()" style="display:none">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <!-- Firebase SDK -->
@@ -781,9 +902,8 @@ window.registerEmail = async () => {
 
 window.loginGoogle = async () => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-    await set(ref(db, `users/${user.uid}`), { displayName: user.displayName, email: user.email });
+    await signInWithPopup(auth, googleProvider);
+    // onAuthStateChanged が発火してモーダル制御する
   } catch (e) {
     showAuthError(e.message);
   }
@@ -798,6 +918,88 @@ function showAuthError(msg) {
 }
 
 // =============================
+// USERNAME MODAL
+// =============================
+// isRequired: trueのとき「キャンセル」ボタンを非表示（初回必須設定）
+window.openUsernameModal = (isRequired = false, preset = '') => {
+  const modal = document.getElementById('username-modal');
+  const cancelBtn = document.getElementById('username-modal-cancel');
+  const title = document.getElementById('username-modal-title');
+  const subtitle = document.getElementById('username-modal-subtitle');
+  const input = document.getElementById('username-input');
+  const errEl = document.getElementById('username-modal-error');
+
+  if (isRequired) {
+    title.textContent = '🎮 ユーザーネームを設定';
+    subtitle.textContent = 'ゲーム内で表示される名前を設定してください。あとからでも変更できます。';
+    cancelBtn.style.display = 'none';
+  } else {
+    title.textContent = '✏️ ユーザーネームを変更';
+    subtitle.textContent = '新しいニックネームを入力してください（最大20文字）。';
+    cancelBtn.style.display = 'block';
+  }
+
+  // 現在の名前をプリセット
+  if (preset) {
+    input.value = preset;
+  } else if (currentUser) {
+    const curName = document.getElementById('user-display-name').textContent;
+    input.value = curName === currentUser.email ? '' : curName;
+  }
+
+  errEl.style.display = 'none';
+  modal.style.display = 'flex';
+  setTimeout(() => input.focus(), 100);
+
+  // Enterキーで保存
+  input.onkeydown = (e) => { if (e.key === 'Enter') saveUsername(); };
+};
+
+window.closeUsernameModal = () => {
+  document.getElementById('username-modal').style.display = 'none';
+};
+
+window.saveUsername = async () => {
+  const input = document.getElementById('username-input');
+  const errEl = document.getElementById('username-modal-error');
+  const name = input.value.trim();
+
+  if (!name) {
+    errEl.textContent = '名前を入力してください';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (name.length > 20) {
+    errEl.textContent = '20文字以内で入力してください';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    // Firebase Auth の displayName も更新
+    await updateProfile(currentUser, { displayName: name });
+    // DB にカスタム名を保存
+    await set(ref(db, `users/${currentUser.uid}`), {
+      displayName: name,
+      email: currentUser.email,
+      updatedAt: Date.now()
+    });
+    // 予想データの displayName も更新（すでに入力済みの場合）
+    const predSnap = await get(ref(db, `predictions/${currentUser.uid}`));
+    if (predSnap.exists()) {
+      await update(ref(db, `predictions/${currentUser.uid}`), { displayName: name });
+    }
+
+    updateTopbarName(name);
+    closeUsernameModal();
+    showToast('ユーザーネームを更新しました ✨', 'success');
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+};
+
+// =============================
 // AUTH STATE
 // =============================
 onAuthStateChanged(auth, async (user) => {
@@ -805,9 +1007,24 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
-    const name = user.displayName || user.email;
-    document.getElementById('user-display-name').textContent = name;
-    document.getElementById('user-avatar-text').textContent = name.charAt(0).toUpperCase();
+
+    // DBからカスタムユーザーネームを取得
+    const userSnap = await get(ref(db, `users/${user.uid}`));
+    const userData = userSnap.val();
+    const customName = userData?.displayName;
+
+    if (customName) {
+      // カスタムネームあり → そのまま表示
+      updateTopbarName(customName);
+    } else {
+      // カスタムネームなし（Googleアカウントor未設定）→ モーダルを強制表示
+      // Google の displayName をプリセットとして入れておく
+      const preset = user.displayName || '';
+      openUsernameModal(true, preset);
+      // モーダル中もUIは使える状態にする（名前は仮表示）
+      updateTopbarName(preset || user.email);
+    }
+
     await initApp();
   } else {
     currentUser = null;
@@ -815,6 +1032,11 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('main-app').style.display = 'none';
   }
 });
+
+function updateTopbarName(name) {
+  document.getElementById('user-display-name').textContent = name;
+  document.getElementById('user-avatar-text').textContent = name.charAt(0).toUpperCase();
+}
 
 // =============================
 // APP INIT
@@ -961,7 +1183,9 @@ window.savePrediction = async () => {
     const el = document.getElementById(`sub-pred-${id}`);
     if (el && el.value !== '') subData[id] = parseInt(el.value);
   });
-  const displayName = currentUser.displayName || currentUser.email;
+  // DBのカスタムユーザーネームを優先して使用
+  const userSnap = await get(ref(db, `users/${currentUser.uid}`));
+  const displayName = userSnap.val()?.displayName || currentUser.displayName || currentUser.email;
   await set(ref(db, `predictions/${currentUser.uid}`), {
     total,
     subjects: subData,
