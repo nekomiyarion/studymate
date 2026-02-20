@@ -829,7 +829,7 @@
             <input type="number" id="total-prediction" min="0" placeholder="000" oninput="onTotalInput()">
             <span class="tmax" id="total-max-label">/ ---</span>
           </div>
-          <div class="score-hint">
+          <div class="score-hint" id="total-score-hint">
             <span class="hl pos">+50</span><span class="dim">ぴったり or ±5点以内</span>
             <span class="hl pos">+30</span><span class="dim">±10点以内</span>
             <span class="hl pos">+10</span><span class="dim">±15点以内</span>
@@ -942,6 +942,21 @@ let appSettings = {};
 let subjects = {};
 let allPredictions = {};
 let allResults = {};
+let scoringRules = {};
+
+// デフォルトのスコアルール（DBに設定がない場合のフォールバック）
+const DEFAULT_TOTAL_RULES = [
+  { maxDiff: 0,  pts: 50 },
+  { maxDiff: 5,  pts: 50 },
+  { maxDiff: 10, pts: 30 },
+  { maxDiff: 15, pts: 10 },
+];
+const DEFAULT_SUBJECT_RULES = [
+  { maxPct: 0,  pts: 20 },
+  { maxPct: 5,  pts: 15 },
+  { maxPct: 10, pts: 10 },
+  { maxPct: 15, pts: 5  },
+];
 
 // ── AUTH ──────────────────────────────────
 window.switchAuthTab = (tab) => {
@@ -1073,6 +1088,8 @@ async function initApp() {
     updatePredictBanner();
     updateResultSection();
     updateScoresTab();
+    renderSubjectsGrid();
+    renderResultSubjectsGrid();
   });
   onValue(ref(db, 'subjects'), (snap) => {
     subjects = snap.val() || {};
@@ -1089,6 +1106,11 @@ async function initApp() {
   onValue(ref(db, 'results'), (snap) => {
     allResults = snap.val() || {};
     renderScores();
+  });
+  onValue(ref(db, 'scoringRules'), (snap) => {
+    scoringRules = snap.val() || {};
+    renderScores();
+    renderScoreHint();
   });
 }
 
@@ -1138,15 +1160,15 @@ function renderSubjectsGrid() {
       <input class="subject-input" type="number" id="sub-pred-${id}" min="0" max="${sub.maxScore}" placeholder="---">
     </div>`).join('');
 
-  const totalMax = subList.reduce((s,[,v]) => s+(v.maxScore||0), 0);
-  document.getElementById('total-max-label').textContent = `/ ${totalMax}`;
+  const totalMax = appSettings.totalMax || subList.reduce((s,[,v]) => s+(v.maxScore||0), 0);
+  document.getElementById('total-max-label').textContent = `/ ${totalMax}点`;
 }
 
 function renderResultSubjectsGrid() {
   const grid    = document.getElementById('result-subjects-grid');
   const subList = Object.entries(subjects);
-  const totalMax = subList.reduce((s,[,v]) => s+(v.maxScore||0), 0);
-  document.getElementById('total-result-max-label').textContent = `/ ${totalMax}`;
+  const totalMax = appSettings.totalMax || subList.reduce((s,[,v]) => s+(v.maxScore||0), 0);
+  document.getElementById('total-result-max-label').textContent = `/ ${totalMax}点`;
   grid.innerHTML = subList.map(([id, sub]) => `
     <div class="subject-card">
       <div class="subject-card-name">
@@ -1265,24 +1287,35 @@ function updateScoresTab() {
   }
 }
 
+// ── SCORE HINT ───────────────────────────
+function renderScoreHint() {
+  const hintEl = document.getElementById('total-score-hint');
+  if (!hintEl) return;
+  const rules = (scoringRules.total || DEFAULT_TOTAL_RULES).slice().sort((a,b)=>a.maxDiff-b.maxDiff);
+  let html = '';
+  rules.forEach(r => {
+    const cls = r.pts >= 0 ? 'pos' : 'neg';
+    const label = r.note || (r.maxDiff === 0 ? 'ぴったり' : `±${r.maxDiff}点以内`);
+    html += `<span class="hl ${cls}">${r.pts>=0?'+':''}${r.pts}</span><span class="dim">${label}</span>`;
+  });
+  html += `<span class="hl neg">-差分</span><span class="dim">それ以上ズレた場合</span>`;
+  hintEl.innerHTML = html;
+}
+
 function calcTotalBonus(predicted, actual) {
   if (predicted===null||actual===null) return 0;
-  const diff = Math.abs(predicted-actual);
-  if (diff===0)   return 50;
-  if (diff<=5)    return 50;
-  if (diff<=10)   return 30;
-  if (diff<=15)   return 10;
+  const diff  = Math.abs(predicted-actual);
+  const rules = (scoringRules.total || DEFAULT_TOTAL_RULES).slice().sort((a,b)=>a.maxDiff-b.maxDiff);
+  for (const r of rules) { if (diff <= r.maxDiff) return r.pts; }
   return -diff;
 }
 
 function calcSubjectBonus(predicted, actual, maxScore) {
   if (predicted===null||actual===null) return 0;
-  const diff  = Math.abs(predicted-actual);
-  const ratio = maxScore>0 ? diff/maxScore : 0;
-  if (diff===0)      return 20;
-  if (ratio<=0.05)   return 15;
-  if (ratio<=0.10)   return 10;
-  if (ratio<=0.15)   return 5;
+  const diff = Math.abs(predicted-actual);
+  const pct  = maxScore>0 ? (diff/maxScore)*100 : 0;
+  const rules = (scoringRules.subject || DEFAULT_SUBJECT_RULES).slice().sort((a,b)=>a.maxPct-b.maxPct);
+  for (const r of rules) { if (pct <= r.maxPct) return r.pts; }
   return -diff;
 }
 
