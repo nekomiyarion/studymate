@@ -463,9 +463,22 @@ function initAdmin() {
   });
 
   onValue(ref(db,'scoringRules'), snap => {
-    scoringRules = snap.val() || {};
+    const raw = snap.val() || {};
+    // Firebaseは配列をオブジェクト{0:...,1:...}として保存することがある → 確実に配列化
+    const toArray = v => {
+      if (!v) return null;
+      if (Array.isArray(v)) return v;
+      // オブジェクト形式 {0:{...}, 1:{...}} を配列に変換
+      return Object.keys(v).sort((a,b)=>Number(a)-Number(b)).map(k=>v[k]);
+    };
+    scoringRules = {
+      total:    toArray(raw.total),
+      subject:  toArray(raw.subject),
+      subjects: raw.subjects ? Object.fromEntries(
+        Object.entries(raw.subjects).map(([k,v])=>[k, toArray(v)])
+      ) : {},
+    };
     // localTotalRules / localSubjectRules は未初期化のときだけ DBから読む
-    // → 一度初期化したら「保存」ボタンを押すまで DB変更で上書きしない
     if (localTotalRules === null) {
       localTotalRules = scoringRules.total
         ? scoringRules.total.map(r=>({...r}))
@@ -476,7 +489,7 @@ function initAdmin() {
         ? scoringRules.subject.map(r=>({...r}))
         : DEFAULT_SUBJECT_RULES.map(r=>({...r}));
     }
-    // 教科ごとのルールも同様
+    // 教科ごとの個別ルールも同様
     const subRules = scoringRules.subjects || {};
     Object.keys(subRules).forEach(sid => {
       if (!localSubjectScoringRules[sid]) {
@@ -742,16 +755,14 @@ function renderTotalRules() {
   const list = document.getElementById('total-rules-list');
   if(!list||localTotalRules===null) return;
   list.innerHTML = localTotalRules.map((r,i)=>`
-    <div class="rule-row">
+    <div class="rule-row" data-idx="${i}">
       <span class="rule-sep">差が</span>
-      <input class="rule-input" type="number" value="${r.maxDiff}" min="0"
-        onchange="localTotalRules[${i}].maxDiff=parseInt(this.value)||0">
+      <input class="rule-input" type="number" data-key="maxDiff" value="${r.maxDiff}" min="0">
       <span class="rule-sep">点以内 →</span>
-      <input class="rule-pt-input ${r.pts>=0?'pos':'neg'}" type="number" value="${r.pts}"
-        oninput="localTotalRules[${i}].pts=parseInt(this.value)||0;this.className='rule-pt-input '+(parseInt(this.value)||0>=0?'pos':'neg')">
+      <input class="rule-pt-input ${r.pts>=0?'pos':'neg'}" type="number" data-key="pts" value="${r.pts}"
+        oninput="this.className='rule-pt-input '+(parseFloat(this.value)<0?'neg':'pos')">
       <span class="rule-sep">pt</span>
-      <input class="rule-note-input" type="text" value="${r.note||''}" placeholder="ラベル（任意）"
-        onchange="localTotalRules[${i}].note=this.value">
+      <input class="rule-note-input" type="text" data-key="note" value="${r.note||''}" placeholder="ラベル（任意）">
       <button class="btn-del" onclick="localTotalRules.splice(${i},1);renderTotalRules()">×</button>
     </div>`).join('');
 }
@@ -760,34 +771,55 @@ function renderSubjectRules() {
   const list = document.getElementById('subject-rules-list');
   if(!list||localSubjectRules===null) return;
   list.innerHTML = localSubjectRules.map((r,i)=>`
-    <div class="rule-row">
+    <div class="rule-row" data-idx="${i}">
       <span class="rule-sep">差が満点の</span>
-      <input class="rule-input" type="number" value="${r.maxPct}" min="0" max="100"
-        onchange="localSubjectRules[${i}].maxPct=parseInt(this.value)||0">
+      <input class="rule-input" type="number" data-key="maxPct" value="${r.maxPct}" min="0" max="100">
       <span class="rule-sep">%以内 →</span>
-      <input class="rule-pt-input ${r.pts>=0?'pos':'neg'}" type="number" value="${r.pts}"
-        oninput="localSubjectRules[${i}].pts=parseInt(this.value)||0;this.className='rule-pt-input '+(parseInt(this.value)||0>=0?'pos':'neg')">
+      <input class="rule-pt-input ${r.pts>=0?'pos':'neg'}" type="number" data-key="pts" value="${r.pts}"
+        oninput="this.className='rule-pt-input '+(parseFloat(this.value)<0?'neg':'pos')">
       <span class="rule-sep">pt</span>
-      <input class="rule-note-input" type="text" value="${r.note||''}" placeholder="ラベル（任意）"
-        onchange="localSubjectRules[${i}].note=this.value">
+      <input class="rule-note-input" type="text" data-key="note" value="${r.note||''}" placeholder="ラベル（任意）">
       <button class="btn-del" onclick="localSubjectRules.splice(${i},1);renderSubjectRules()">×</button>
     </div>`).join('');
+}
+
+// 保存前にDOMから値を直接収集（ローカル配列の同期ずれを防ぐ）
+function collectRulesFromDOM(containerId, numKey) {
+  const rows = document.querySelectorAll(`#${containerId} .rule-row`);
+  return Array.from(rows).map(row => {
+    const numVal = parseFloat(row.querySelector(`[data-key="${numKey}"]`)?.value ?? 0);
+    const pts    = parseFloat(row.querySelector('[data-key="pts"]')?.value ?? 0);
+    const note   = row.querySelector('[data-key="note"]')?.value ?? '';
+    return { [numKey]: isNaN(numVal)?0:numVal, pts: isNaN(pts)?0:pts, note };
+  });
 }
 
 window.addTotalRule   = ()=>{ localTotalRules.push({maxDiff:0,pts:0,note:''}); renderTotalRules(); };
 window.addSubjectRule = ()=>{ localSubjectRules.push({maxPct:0,pts:0,note:''}); renderSubjectRules(); };
 
 window.saveTotalRules = async () => {
-  const sorted = [...localTotalRules].sort((a,b)=>a.maxDiff-b.maxDiff);
-  await set(ref(db,'scoringRules/total'), sorted);
-  localTotalRules = sorted.map(r=>({...r})); // DBに保存した値で確定
-  showToast('合計点ルールを保存しました','success');
+  const rules  = collectRulesFromDOM('total-rules-list', 'maxDiff');
+  const sorted = rules.sort((a,b)=>a.maxDiff-b.maxDiff);
+  try {
+    await set(ref(db,'scoringRules/total'), sorted);
+    localTotalRules = sorted.map(r=>({...r}));
+    showToast('合計点ルールを保存しました ✓','success');
+  } catch(e) {
+    showToast('保存失敗: '+e.message,'error');
+    console.error(e);
+  }
 };
 window.saveSubjectRules = async () => {
-  const sorted = [...localSubjectRules].sort((a,b)=>a.maxPct-b.maxPct);
-  await set(ref(db,'scoringRules/subject'), sorted);
-  localSubjectRules = sorted.map(r=>({...r}));
-  showToast('教科別共通ルールを保存しました','success');
+  const rules  = collectRulesFromDOM('subject-rules-list', 'maxPct');
+  const sorted = rules.sort((a,b)=>a.maxPct-b.maxPct);
+  try {
+    await set(ref(db,'scoringRules/subject'), sorted);
+    localSubjectRules = sorted.map(r=>({...r}));
+    showToast('教科別共通ルールを保存しました ✓','success');
+  } catch(e) {
+    showToast('保存失敗: '+e.message,'error');
+    console.error(e);
+  }
 };
 
 // ── SCORING RULES (per-subject) ───────────────────
@@ -845,16 +877,14 @@ function renderCustomRuleList(subjectId) {
   if(!el) return;
   const rules = getLocalSubjectRules(subjectId);
   el.innerHTML = rules.map((r,i)=>`
-    <div class="rule-row">
+    <div class="rule-row" data-idx="${i}">
       <span class="rule-sep">差が満点の</span>
-      <input class="rule-input" type="number" value="${r.maxPct}" min="0" max="100"
-        onchange="localSubjectScoringRules['${subjectId}'][${i}].maxPct=parseInt(this.value)||0">
+      <input class="rule-input" type="number" data-key="maxPct" value="${r.maxPct}" min="0" max="100">
       <span class="rule-sep">%以内 →</span>
-      <input class="rule-pt-input ${r.pts>=0?'pos':'neg'}" type="number" value="${r.pts}"
-        oninput="localSubjectScoringRules['${subjectId}'][${i}].pts=parseInt(this.value)||0;this.className='rule-pt-input '+(parseInt(this.value)||0>=0?'pos':'neg')">
+      <input class="rule-pt-input ${r.pts>=0?'pos':'neg'}" type="number" data-key="pts" value="${r.pts}"
+        oninput="this.className='rule-pt-input '+(parseFloat(this.value)<0?'neg':'pos')">
       <span class="rule-sep">pt</span>
-      <input class="rule-note-input" type="text" value="${r.note||''}" placeholder="ラベル（任意）"
-        onchange="localSubjectScoringRules['${subjectId}'][${i}].note=this.value">
+      <input class="rule-note-input" type="text" data-key="note" value="${r.note||''}" placeholder="ラベル（任意）">
       <button class="btn-del" onclick="localSubjectScoringRules['${subjectId}'].splice(${i},1);renderCustomRuleList('${subjectId}')">×</button>
     </div>`).join('');
 }
@@ -875,12 +905,18 @@ window.addCustomSubjectRule = id => {
 };
 
 window.saveCustomSubjectRule = async id => {
-  const rules = getLocalSubjectRules(id);
-  const sorted = [...rules].sort((a,b)=>a.maxPct-b.maxPct);
-  await set(ref(db,`scoringRules/subjects/${id}`), sorted);
-  localSubjectScoringRules[id] = sorted.map(r=>({...r}));
-  showToast('個別ルールを保存しました','success');
-  renderSubjectScoringList();
+  // DOMから直接収集
+  const rules  = collectRulesFromDOM(`custom-rules-list-${id}`, 'maxPct');
+  const sorted = rules.sort((a,b)=>a.maxPct-b.maxPct);
+  try {
+    await set(ref(db,`scoringRules/subjects/${id}`), sorted);
+    localSubjectScoringRules[id] = sorted.map(r=>({...r}));
+    showToast('個別ルールを保存しました ✓','success');
+    renderSubjectScoringList();
+  } catch(e) {
+    showToast('保存失敗: '+e.message,'error');
+    console.error(e);
+  }
 };
 
 window.deleteCustomSubjectRule = async id => {

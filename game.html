@@ -1111,7 +1111,19 @@ async function initApp() {
     renderScores();
   });
   onValue(ref(db, 'scoringRules'), (snap) => {
-    scoringRules = snap.val() || {};
+    const raw = snap.val() || {};
+    const toArray = v => {
+      if (!v) return null;
+      if (Array.isArray(v)) return v;
+      return Object.keys(v).sort((a,b)=>Number(a)-Number(b)).map(k=>v[k]);
+    };
+    scoringRules = {
+      total:   toArray(raw.total),
+      subject: toArray(raw.subject),
+      subjects: raw.subjects ? Object.fromEntries(
+        Object.entries(raw.subjects).map(([k,v])=>[k, toArray(v)])
+      ) : {},
+    };
     renderScores();
     renderScoreHint();
   });
