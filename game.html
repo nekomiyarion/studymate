@@ -463,6 +463,8 @@
   }
   .subject-input:focus { border-color: var(--accent); }
   .subject-input::placeholder { color: var(--text3); }
+  .subject-card.is-closed { border-color: rgba(217,91,91,0.25); background: rgba(217,91,91,0.04); }
+  .subject-closed-msg { font-size: 11px; font-weight: 600; color: var(--danger); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
 
   /* ─── SAVE BUTTON ───────────────────────── */
   .btn-save {
@@ -943,6 +945,7 @@ let subjects = {};
 let allPredictions = {};
 let allResults = {};
 let scoringRules = {};
+let subjectSettings = {};  // 教科ごとのフェーズ設定
 
 // デフォルトのスコアルール（DBに設定がない場合のフォールバック）
 const DEFAULT_TOTAL_RULES = [
@@ -1112,6 +1115,13 @@ async function initApp() {
     renderScores();
     renderScoreHint();
   });
+  onValue(ref(db, 'subjectSettings'), (snap) => {
+    subjectSettings = snap.val() || {};
+    renderSubjectsGrid();
+    renderResultSubjectsGrid();
+    // 予想入力ボタンの状態を更新（教科別制御）
+    updateSavePredictBtn();
+  });
 }
 
 // ── TABS ──────────────────────────────────
@@ -1143,6 +1153,13 @@ function updateResultSection() {
     appSettings.resultInputOpen ? 'block' : 'none';
 }
 
+function updateSavePredictBtn() {
+  // 全体設定がOFFなら常に無効
+  const btn = document.getElementById('save-predict-btn');
+  if (!btn) return;
+  btn.disabled = !appSettings.predictionOpen;
+}
+
 // ── SUBJECTS ──────────────────────────────
 function renderSubjectsGrid() {
   const grid    = document.getElementById('subjects-grid');
@@ -1151,14 +1168,27 @@ function renderSubjectsGrid() {
     grid.innerHTML = '<div style="color:var(--text2);font-size:13px">教科がまだ設定されていません</div>';
     return;
   }
-  grid.innerHTML = subList.map(([id, sub]) => `
-    <div class="subject-card">
+  // 全体フェーズが開いているかどうか
+  const globalOpen = !!appSettings.predictionOpen;
+
+  grid.innerHTML = subList.map(([id, sub]) => {
+    // 教科ごとの設定。設定がない場合は全体設定に従う
+    const ss = subjectSettings[id] || {};
+    const subOpen = ss.predictionOpen !== undefined ? !!ss.predictionOpen : true;
+    const isOpen = globalOpen && subOpen;
+    return `
+    <div class="subject-card ${isOpen ? '' : 'is-closed'}">
       <div class="subject-card-name">
         <span>${sub.name}</span>
         <span class="smax">${sub.maxScore}点</span>
       </div>
-      <input class="subject-input" type="number" id="sub-pred-${id}" min="0" max="${sub.maxScore}" placeholder="---">
-    </div>`).join('');
+      ${isOpen
+        ? `<input class="subject-input" type="number" id="sub-pred-${id}" min="0" max="${sub.maxScore}" placeholder="---">`
+        : `<div class="subject-closed-msg">締め切り</div>
+           <input class="subject-input" type="number" id="sub-pred-${id}" min="0" max="${sub.maxScore}" placeholder="---" disabled style="opacity:.3">`
+      }
+    </div>`;
+  }).join('');
 
   const totalMax = appSettings.totalMax || subList.reduce((s,[,v]) => s+(v.maxScore||0), 0);
   document.getElementById('total-max-label').textContent = `/ ${totalMax}点`;
@@ -1169,14 +1199,24 @@ function renderResultSubjectsGrid() {
   const subList = Object.entries(subjects);
   const totalMax = appSettings.totalMax || subList.reduce((s,[,v]) => s+(v.maxScore||0), 0);
   document.getElementById('total-result-max-label').textContent = `/ ${totalMax}点`;
-  grid.innerHTML = subList.map(([id, sub]) => `
-    <div class="subject-card">
+  const globalOpen = !!appSettings.resultInputOpen;
+  grid.innerHTML = subList.map(([id, sub]) => {
+    const ss = subjectSettings[id] || {};
+    const subOpen = ss.resultInputOpen !== undefined ? !!ss.resultInputOpen : true;
+    const isOpen = globalOpen && subOpen;
+    return `
+    <div class="subject-card ${isOpen ? '' : 'is-closed'}">
       <div class="subject-card-name">
         <span>${sub.name}</span>
         <span class="smax">${sub.maxScore}点</span>
       </div>
-      <input class="subject-input" type="number" id="sub-res-${id}" min="0" max="${sub.maxScore}" placeholder="---">
-    </div>`).join('');
+      ${isOpen
+        ? `<input class="subject-input" type="number" id="sub-res-${id}" min="0" max="${sub.maxScore}" placeholder="---">`
+        : `<div class="subject-closed-msg">締め切り</div>
+           <input class="subject-input" type="number" id="sub-res-${id}" min="0" max="${sub.maxScore}" placeholder="---" disabled style="opacity:.3">`
+      }
+    </div>`;
+  }).join('');
 }
 
 async function loadMyPrediction() {
@@ -1310,11 +1350,13 @@ function calcTotalBonus(predicted, actual) {
   return -diff;
 }
 
-function calcSubjectBonus(predicted, actual, maxScore) {
+function calcSubjectBonus(predicted, actual, maxScore, subjectId) {
   if (predicted===null||actual===null) return 0;
   const diff = Math.abs(predicted-actual);
   const pct  = maxScore>0 ? (diff/maxScore)*100 : 0;
-  const rules = (scoringRules.subject || DEFAULT_SUBJECT_RULES).slice().sort((a,b)=>a.maxPct-b.maxPct);
+  // 教科ごとの個別ルールがあればそちらを優先
+  const subRules = scoringRules.subjects?.[subjectId];
+  const rules = (subRules || scoringRules.subject || DEFAULT_SUBJECT_RULES).slice().sort((a,b)=>a.maxPct-b.maxPct);
   for (const r of rules) { if (pct <= r.maxPct) return r.pts; }
   return -diff;
 }
@@ -1331,14 +1373,19 @@ function renderScores() {
     const actualTotal= result?.total ?? null;
     const totalBonus = calcTotalBonus(u.total, actualTotal);
     const subBonuses = {};
+    const subBonusVisible = {};
     let   totalSubBonus = 0;
     subList.forEach(([id,sub]) => {
-      const b = calcSubjectBonus(u.subjects?.[id]??null, result?.subjects?.[id]??null, sub.maxScore);
+      // 教科ごとのスコア公開設定を確認 (全体公開 AND 教科公開)
+      const ss = subjectSettings[id] || {};
+      const subPub = ss.scoresReleased !== undefined ? !!ss.scoresReleased : true;
+      const b = subPub ? calcSubjectBonus(u.subjects?.[id]??null, result?.subjects?.[id]??null, sub.maxScore, id) : 0;
       subBonuses[id] = b;
+      subBonusVisible[id] = subPub;
       totalSubBonus += b;
     });
     const grandTotal = actualTotal!==null ? actualTotal+totalBonus+totalSubBonus : null;
-    return { ...u, actualTotal, totalBonus, subBonuses, totalSubBonus, grandTotal };
+    return { ...u, actualTotal, totalBonus, subBonuses, subBonusVisible, totalSubBonus, grandTotal };
   }).sort((a,b)=>(b.grandTotal??-9999)-(a.grandTotal??-9999));
 
   const rankClass = ['top1','top2','top3'];
@@ -1359,7 +1406,10 @@ function renderScores() {
         ${subList.map(([id,sub])=>`
           <div class="brow sub-row">
             <span class="bl" style="font-size:11px">${sub.name}</span>
-            <span class="bv ${(u.subBonuses[id]||0)>=0?'pos':'neg'}" style="font-size:11px">${(u.subBonuses[id]||0)>=0?'+':''}${u.subBonuses[id]||0}</span>
+            ${u.subBonusVisible?.[id]===false
+              ? `<span class="bv" style="font-size:11px;color:var(--text3)">非公開</span>`
+              : `<span class="bv ${(u.subBonuses[id]||0)>=0?'pos':'neg'}" style="font-size:11px">${(u.subBonuses[id]||0)>=0?'+':''}${u.subBonuses[id]||0}</span>`
+            }
           </div>`).join('')}
       </div>
     </div>`).join('');

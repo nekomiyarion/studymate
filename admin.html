@@ -11,19 +11,18 @@
     --accent:#4f7fe8; --accent-dim:rgba(79,127,232,0.1); --accent-border:rgba(79,127,232,0.3);
     --text:#d8dcef; --text2:#757a94; --text3:#44475a;
     --border:#1e1f2b; --border2:#282938;
-    --success:#4db870; --success-dim:rgba(77,184,112,0.1);
-    --danger:#d95b5b; --danger-dim:rgba(217,91,91,0.1);
-    --warn:#c49a3a; --warn-dim:rgba(196,154,58,0.1);
+    --success:#4db870; --danger:#d95b5b; --warn:#c49a3a;
+    --warn-dim:rgba(196,154,58,0.1);
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-weight:400;min-height:100vh;-webkit-font-smoothing:antialiased;}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;}
   body::after{content:'';position:fixed;top:0;left:0;right:0;height:1px;background:var(--accent);opacity:.5;z-index:200;}
 
-  /* AUTH */
+  /* ─── AUTH ───────────────────────────── */
   #auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;}
   .auth-box{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:40px 36px;width:380px;max-width:95vw;}
   .auth-logo{margin-bottom:28px;}
-  .auth-logo h1{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.2px;}
+  .auth-logo h1{font-size:18px;font-weight:700;}
   .auth-logo .sub{font-size:12px;color:var(--text2);margin-top:4px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;}
   .form-group{margin-bottom:13px;}
   .form-group label{display:block;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
@@ -34,26 +33,26 @@
   .btn-login:hover{opacity:.85;}
   .divider{text-align:center;color:var(--text3);font-size:10px;letter-spacing:1px;text-transform:uppercase;margin:16px 0;position:relative;}
   .divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border2);}
-  .divider::before{left:0;} .divider::after{right:0;}
-  .btn-oauth{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:10px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:border-color .18s,background .18s;}
+  .divider::before{left:0;}.divider::after{right:0;}
+  .btn-oauth{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:10px;color:var(--text);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:border-color .18s,background .18s;}
   .btn-oauth:hover{border-color:var(--text2);background:var(--surface3);}
-  .error-msg{background:var(--danger-dim);border:1px solid rgba(217,91,91,.3);border-radius:7px;padding:10px 13px;font-size:12px;color:var(--danger);margin-bottom:13px;display:none;line-height:1.5;font-family:'JetBrains Mono',monospace;}
+  .error-msg{background:rgba(217,91,91,.1);border:1px solid rgba(217,91,91,.3);border-radius:7px;padding:10px 13px;font-size:12px;color:var(--danger);margin-bottom:13px;display:none;line-height:1.5;}
   .warn-msg{background:var(--warn-dim);border:1px solid rgba(196,154,58,.35);border-radius:7px;padding:10px 13px;font-size:11px;color:var(--warn);margin-bottom:13px;display:none;line-height:1.7;font-family:'JetBrains Mono',monospace;}
-  .warn-msg code{color:var(--success);font-size:11px;}
+  .warn-msg code{color:var(--success);}
 
-  /* LAYOUT */
+  /* ─── LAYOUT ─────────────────────────── */
   #main-app{display:none;}
   .topbar{background:var(--surface);border-bottom:1px solid var(--border);height:52px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-  .topbar-logo{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.2px;}
+  .topbar-logo{font-size:14px;font-weight:700;}
   .topbar-logo span{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;}
   .topbar-right{display:flex;align-items:center;gap:10px;}
   .admin-badge{background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:5px;padding:3px 9px;font-size:10px;font-weight:600;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:.8px;text-transform:uppercase;}
   #admin-name{font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace;}
-  .btn-sm{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;color:var(--text2);font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;transition:all .18s;}
+  .btn-sm{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;color:var(--text2);font-size:12px;cursor:pointer;transition:all .18s;}
   .btn-sm:hover{color:var(--text);border-color:var(--text2);}
   .btn-sm.danger:hover{color:var(--danger);border-color:rgba(217,91,91,.4);}
-  .layout{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 52px);}
-  .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:16px 0;}
+  .layout{display:grid;grid-template-columns:210px 1fr;min-height:calc(100vh - 52px);}
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;}
   .sidebar-group{padding:14px 16px 5px;font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;font-family:'JetBrains Mono',monospace;}
   .sidebar-item{padding:9px 18px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);transition:all .15s;border-left:2px solid transparent;display:flex;align-items:center;gap:9px;user-select:none;}
   .sidebar-item svg{opacity:.5;flex-shrink:0;}
@@ -61,26 +60,27 @@
   .sidebar-item.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-dim);}
   .sidebar-item.active svg{opacity:1;}
   .main-content{padding:28px 24px;overflow-x:hidden;}
+  .admin-page{display:none;} .admin-page.active{display:block;}
 
-  /* PAGE */
-  .page-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.2px;}
+  /* ─── TYPOGRAPHY ─────────────────────── */
+  .page-title{font-size:18px;font-weight:700;margin-bottom:4px;letter-spacing:-.2px;}
   .page-sub{font-size:13px;color:var(--text2);margin-bottom:24px;}
-  .section-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;margin-top:28px;}
+  .section-title{font-size:14px;font-weight:700;margin:28px 0 12px;color:var(--text);}
+  .card-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-family:'JetBrains Mono',monospace;}
 
-  /* CARDS */
+  /* ─── CARDS ──────────────────────────── */
   .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px;}
-  .card-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;font-family:'JetBrains Mono',monospace;}
-  .card-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px;}
-  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:20px;}
+  .card-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px;}
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:20px;}
   .stat-val{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:600;color:var(--accent);margin-top:4px;}
 
-  /* STATUS */
+  /* ─── STATUS DOT ─────────────────────── */
   .status-row{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;}
   .sdot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;}
   .sdot.on{background:var(--success);box-shadow:0 0 5px rgba(77,184,112,.5);}
 
-  /* TOGGLE */
-  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  /* ─── TOGGLE ─────────────────────────── */
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:12px;}
   .toggle-switch{position:relative;width:48px;height:26px;flex-shrink:0;}
   .toggle-switch input{opacity:0;width:0;height:0;}
   .tslider{position:absolute;cursor:pointer;inset:0;background:var(--surface3);border:1px solid var(--border2);border-radius:26px;transition:.25s;}
@@ -88,57 +88,61 @@
   input:checked+.tslider{background:rgba(77,184,112,.15);border-color:var(--success);}
   input:checked+.tslider::before{transform:translateX(22px);background:var(--success);}
 
-  /* SUBJECTS */
+  /* ─── SUBJECT ROWS ───────────────────── */
   .subject-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
   .subject-row:last-child{border-bottom:none;}
-  .subject-row input[type="text"],.subject-row input[type="number"]{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:8px 11px;color:var(--text);font-family:inherit;font-size:13px;outline:none;transition:border-color .18s;}
-  .subject-row input[type="text"]{flex:1;}
-  .subject-row input[type="number"]{width:88px;font-family:'JetBrains Mono',monospace;}
-  .subject-row input:focus{border-color:var(--accent);}
+  .field{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:8px 11px;color:var(--text);font-size:13px;outline:none;transition:border-color .18s;}
+  .field:focus{border-color:var(--accent);}
+  .field.text{flex:1;}
+  .field.num{width:90px;font-family:'JetBrains Mono',monospace;}
   .btn-del{background:none;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text3);font-size:14px;cursor:pointer;transition:all .18s;line-height:1;flex-shrink:0;}
   .btn-del:hover{border-color:rgba(217,91,91,.4);color:var(--danger);}
-  .btn-add{width:100%;background:none;border:1px dashed var(--border2);border-radius:7px;padding:9px;color:var(--text2);font-size:13px;cursor:pointer;transition:all .18s;text-align:center;margin-top:10px;font-family:'Noto Sans JP',sans-serif;}
+  .btn-add{width:100%;background:none;border:1px dashed var(--border2);border-radius:7px;padding:9px;color:var(--text2);font-size:13px;cursor:pointer;transition:all .18s;text-align:center;margin-top:10px;}
   .btn-add:hover{border-color:var(--accent);color:var(--accent);}
-  .btn-save-primary{background:var(--accent);border:none;border-radius:7px;padding:9px 22px;color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .18s;margin-top:14px;display:inline-block;}
-  .btn-save-primary:hover{opacity:.85;}
+  .btn-primary{background:var(--accent);border:none;border-radius:7px;padding:9px 22px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .18s;margin-top:14px;display:inline-block;}
+  .btn-primary:hover{opacity:.85;}
 
-  /* SCORING RULES */
-  .rules-section{margin-top:24px;}
-  .rules-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px;}
-  .rule-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+  /* ─── PER-SUBJECT CONTROLS ───────────── */
+  /* subject control accordion */
+  .subctrl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;}
+  .subctrl-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;user-select:none;gap:12px;}
+  .subctrl-header:hover{background:var(--surface2);}
+  .subctrl-name{font-size:14px;font-weight:700;}
+  .subctrl-badges{display:flex;gap:8px;align-items:center;}
+  .phase-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;}
+  .phase-badge.on{background:rgba(77,184,112,.15);color:var(--success);border:1px solid rgba(77,184,112,.3);}
+  .phase-badge.off{background:var(--surface3);color:var(--text3);border:1px solid var(--border2);}
+  .subctrl-chevron{color:var(--text3);font-size:12px;transition:transform .2s;flex-shrink:0;}
+  .subctrl-body{display:none;padding:0 18px 18px;border-top:1px solid var(--border);}
+  .subctrl-body.open{display:block;}
+  .subctrl-section{margin-top:16px;}
+  .subctrl-section-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:'JetBrains Mono',monospace;}
+
+  /* ─── RULE ROWS ──────────────────────── */
+  .rule-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
   .rule-row:last-child{border-bottom:none;}
-  .rule-label{font-size:12px;color:var(--text2);flex-shrink:0;width:52px;text-align:right;}
   .rule-sep{font-size:12px;color:var(--text3);flex-shrink:0;}
-  .rule-input{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;outline:none;transition:border-color .18s;width:80px;text-align:center;}
+  .rule-input{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;outline:none;transition:border-color .18s;width:78px;text-align:center;}
   .rule-input:focus{border-color:var(--accent);}
-  .rule-pt-label{font-size:12px;color:var(--text2);flex-shrink:0;}
-  .rule-pt-input{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;outline:none;transition:border-color .18s;width:80px;text-align:center;}
+  .rule-pt-input{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;outline:none;transition:border-color .18s;width:78px;text-align:center;}
   .rule-pt-input:focus{border-color:var(--accent);}
-  .rule-pt-input.pos-val{color:var(--success);}
-  .rule-pt-input.neg-val{color:var(--danger);}
-  .rule-note{font-size:11px;color:var(--text3);flex:1;}
+  .rule-pt-input.pos{color:var(--success);}
+  .rule-pt-input.neg{color:var(--danger);}
+  .rule-note-input{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text2);font-size:12px;outline:none;transition:border-color .18s;flex:1;min-width:0;}
+  .rule-note-input:focus{border-color:var(--accent);}
+  .rule-fallback{font-size:12px;color:var(--text3);padding:8px 0;font-style:italic;}
 
-  /* TOTAL CONFIG */
-  .total-config-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
-  .total-config-row label{font-size:12px;color:var(--text2);flex-shrink:0;}
-  .total-config-input{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;outline:none;transition:border-color .18s;width:100px;}
-  .total-config-input:focus{border-color:var(--accent);}
-
-  /* TABLE */
+  /* ─── TABLE ──────────────────────────── */
   .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:9px;}
   table.dtable{width:100%;border-collapse:collapse;font-size:13px;}
   .dtable th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
-  .dtable td{padding:10px 14px;border-top:1px solid var(--border);color:var(--text);}
+  .dtable td{padding:10px 14px;border-top:1px solid var(--border);}
   .dtable tr:hover td{background:rgba(255,255,255,.015);}
   .mono{font-family:'JetBrains Mono',monospace;font-weight:600;}
-  .c-success{color:var(--success);} .c-danger{color:var(--danger);} .c-accent{color:var(--accent);}
+  .c-success{color:var(--success);}.c-danger{color:var(--danger);}.c-accent{color:var(--accent);}
 
-  /* PAGES */
-  .admin-page{display:none;}
-  .admin-page.active{display:block;}
-
-  /* TOAST */
-  #toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border2);border-radius:9px;padding:11px 17px;font-size:13px;font-weight:500;transform:translateY(70px);opacity:0;transition:all .26s cubic-bezier(.34,1.2,.64,1);z-index:999;max-width:300px;}
+  /* ─── TOAST ──────────────────────────── */
+  #toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border2);border-radius:9px;padding:11px 17px;font-size:13px;font-weight:500;transform:translateY(70px);opacity:0;transition:all .26s cubic-bezier(.34,1.2,.64,1);z-index:999;max-width:320px;}
   #toast.show{transform:translateY(0);opacity:1;}
   #toast.success{border-color:rgba(77,184,112,.4);color:var(--success);}
   #toast.error{border-color:rgba(217,91,91,.4);color:var(--danger);}
@@ -169,14 +173,8 @@
       Firebase Console → Realtime Database → ルール を変更してください：<br>
       <code>{ "rules": { ".read": "auth != null", ".write": "auth != null" } }</code>
     </div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="login-email" placeholder="admin@example.com" autocomplete="email">
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="login-password" autocomplete="current-password">
-    </div>
+    <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="admin@example.com" autocomplete="email"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="login-password" autocomplete="current-password"></div>
     <button class="btn-login" onclick="loginAdmin()">ログイン</button>
     <div class="divider">または</div>
     <button class="btn-oauth" onclick="loginGoogle()">
@@ -201,35 +199,31 @@
     <div class="sidebar">
       <div class="sidebar-group">メイン</div>
       <div class="sidebar-item active" onclick="showPage('dashboard')">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        ダッシュボード
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>ダッシュボード
       </div>
       <div class="sidebar-item" onclick="showPage('controls')">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
-        入力制御
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>全体フェーズ制御
       </div>
       <div class="sidebar-group">設定</div>
       <div class="sidebar-item" onclick="showPage('subjects')">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-        教科・合計点管理
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>教科・合計点管理
+      </div>
+      <div class="sidebar-item" onclick="showPage('subject-controls')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="18" y2="18"/></svg>教科ごとのフェーズ
       </div>
       <div class="sidebar-item" onclick="showPage('scoring')">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        スコア計算ルール
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>スコア計算ルール
       </div>
       <div class="sidebar-group">データ</div>
       <div class="sidebar-item" onclick="showPage('predictions')">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        予想データ
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>予想データ
       </div>
       <div class="sidebar-item" onclick="showPage('results')">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        結果データ
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>結果データ
       </div>
       <div class="sidebar-group">スコア</div>
       <div class="sidebar-item" onclick="showPage('scores')">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        スコア管理
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>スコア管理
       </div>
     </div>
 
@@ -240,31 +234,33 @@
         <div class="page-title">ダッシュボード</div>
         <div class="page-sub">全体の状況を確認できます</div>
         <div class="cards-grid">
-          <div class="card"><div class="card-label">予想入力</div><div id="dash-predict-status" class="status-row"><span class="sdot"></span><span>—</span></div></div>
-          <div class="card"><div class="card-label">テスト結果入力</div><div id="dash-result-status" class="status-row"><span class="sdot"></span><span>—</span></div></div>
+          <div class="card"><div class="card-label">予想入力（全体）</div><div id="dash-predict-status" class="status-row"><span class="sdot"></span><span>—</span></div></div>
+          <div class="card"><div class="card-label">結果入力（全体）</div><div id="dash-result-status" class="status-row"><span class="sdot"></span><span>—</span></div></div>
           <div class="card"><div class="card-label">スコア公開</div><div id="dash-score-status" class="status-row"><span class="sdot"></span><span>—</span></div></div>
           <div class="card"><div class="card-label">参加者数</div><div id="dash-users" class="stat-val">—</div></div>
           <div class="card"><div class="card-label">予想入力済み</div><div id="dash-predictions" class="stat-val">—</div></div>
           <div class="card"><div class="card-label">結果入力済み</div><div id="dash-results" class="stat-val">—</div></div>
         </div>
+        <div class="section-title">教科ごとのフェーズ状況</div>
+        <div id="dash-subject-status"><div style="color:var(--text2);font-size:13px">教科データを読み込み中...</div></div>
       </div>
 
-      <!-- CONTROLS -->
+      <!-- GLOBAL CONTROLS -->
       <div class="admin-page" id="page-controls">
-        <div class="page-title">入力制御</div>
-        <div class="page-sub">各フェーズの入力を許可・禁止します</div>
+        <div class="page-title">全体フェーズ制御</div>
+        <div class="page-sub">全教科に一括適用されるフェーズを制御します。個別設定は「教科ごとのフェーズ」から行えます。</div>
         <div class="cards-grid" style="max-width:640px">
           <div class="card">
-            <div class="card-label">予想入力フェーズ</div>
-            <div class="card-desc">ONにするとユーザーが予想点数を入力できます。</div>
+            <div class="card-label">予想入力フェーズ（全体）</div>
+            <div class="card-desc">ONにするとユーザーが全教科の予想を入力できます。</div>
             <div class="toggle-row">
               <div class="status-row"><span class="sdot" id="predict-dot"></span><span id="predict-label">—</span></div>
               <label class="toggle-switch"><input type="checkbox" id="toggle-predict" onchange="toggleSetting('predictionOpen',this.checked,this)"><span class="tslider"></span></label>
             </div>
           </div>
           <div class="card">
-            <div class="card-label">テスト結果入力フェーズ</div>
-            <div class="card-desc">ONにするとユーザーが実際の点数を入力できます。</div>
+            <div class="card-label">結果入力フェーズ（全体）</div>
+            <div class="card-desc">ONにするとユーザーが全教科の実際の点数を入力できます。</div>
             <div class="toggle-row">
               <div class="status-row"><span class="sdot" id="result-dot"></span><span id="result-label">—</span></div>
               <label class="toggle-switch"><input type="checkbox" id="toggle-result" onchange="toggleSetting('resultInputOpen',this.checked,this)"><span class="tslider"></span></label>
@@ -273,51 +269,59 @@
         </div>
       </div>
 
+      <!-- SUBJECT CONTROLS (per-subject phase & scoring) -->
+      <div class="admin-page" id="page-subject-controls">
+        <div class="page-title">教科ごとのフェーズ設定</div>
+        <div class="page-sub">教科ごとに予想入力・結果入力・スコア公開と、スコアボーダーを個別に設定できます。全体設定とAND条件で動作します（全体がOFFなら教科がONでも不可）。</div>
+        <div id="subject-controls-list"><div style="color:var(--text2);font-size:13px">教科データを読み込み中...</div></div>
+      </div>
+
       <!-- SUBJECTS -->
       <div class="admin-page" id="page-subjects">
         <div class="page-title">教科・合計点管理</div>
-        <div class="page-sub">教科と合計点の上限を設定します。保存するとリアルタイムで全ユーザーに反映されます。</div>
-
+        <div class="page-sub">教科の追加・削除と合計点の上限を設定します。</div>
         <div class="card" style="max-width:480px;margin-bottom:20px">
           <div class="card-label">合計点の上限</div>
-          <div class="card-desc">合計点予想・結果入力の上限値です。教科の満点の合計と合わせるのが一般的です。</div>
-          <div class="total-config-row">
-            <label>合計点の上限</label>
-            <input type="number" class="total-config-input" id="total-max-input" min="1" placeholder="500">
-            <span style="font-size:13px;color:var(--text2)">点</span>
+          <div class="card-desc">合計点予想・結果入力の上限値です。</div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <input type="number" class="field num" id="total-max-input" min="1" placeholder="500" style="width:120px">
+            <span style="font-size:13px;color:var(--text2)">点満点</span>
+            <button class="btn-primary" style="margin-top:0" onclick="saveTotalMax()">保存</button>
           </div>
-          <button class="btn-save-primary" onclick="saveTotalMax()">保存</button>
         </div>
-
         <div class="card" style="max-width:560px">
           <div class="card-label">教科一覧</div>
           <div id="subjects-list"></div>
           <button class="btn-add" onclick="addSubjectRow()">+ 教科を追加</button>
-          <button class="btn-save-primary" onclick="saveSubjects()">保存して反映</button>
+          <button class="btn-primary" onclick="saveSubjects()">保存して反映</button>
         </div>
       </div>
 
-      <!-- SCORING RULES -->
+      <!-- SCORING RULES (global + per-subject) -->
       <div class="admin-page" id="page-scoring">
         <div class="page-title">スコア計算ルール</div>
-        <div class="page-sub">予想と実際の差によるボーナス/ペナルティを設定します。上から順に評価され、最初に一致した条件が適用されます。</div>
+        <div class="page-sub">予想と実際の差によるボーナス/ペナルティを設定します。条件は小さい値から順に評価され、最初に一致したものが適用されます。どれにも当てはまらない場合は「−差分pt」です。</div>
 
-        <!-- 合計点ルール -->
-        <div class="card" style="max-width:640px">
-          <div class="card-label">合計点予想のスコアルール</div>
-          <div class="rules-desc">「差が〇点以内」の場合に与えるポイントを設定します。どの条件にも当てはまらない場合は「-差分pt」になります。</div>
+        <div class="section-title">合計点のボーダー設定</div>
+        <div class="card" style="max-width:620px">
+          <div class="card-label">合計点予想ルール（全体共通）</div>
           <div id="total-rules-list"></div>
-          <button class="btn-add" style="margin-top:10px" onclick="addTotalRule()">+ 条件を追加</button>
-          <button class="btn-save-primary" onclick="saveTotalRules()">保存して反映</button>
+          <div class="rule-fallback">上記に当てはまらない場合 → −差分 pt（ペナルティ）</div>
+          <button class="btn-add" onclick="addTotalRule()">+ 条件を追加</button>
+          <button class="btn-primary" onclick="saveTotalRules()">保存して反映</button>
         </div>
 
-        <!-- 教科別ルール -->
-        <div class="card" style="max-width:640px;margin-top:16px">
-          <div class="card-label">教科別予想のスコアルール</div>
-          <div class="rules-desc">「差が満点の〇%以内」の場合に与えるポイントを設定します。どの条件にも当てはまらない場合は「-差分pt」になります。</div>
+        <div class="section-title">教科別のボーダー設定</div>
+        <div class="page-sub" style="margin-bottom:16px;margin-top:-8px">教科ごとに個別ルールを設定できます。設定しない教科は下の「全教科共通ルール」が適用されます。</div>
+        <div id="subject-scoring-list"><div style="color:var(--text2);font-size:13px">教科データを読み込み中...</div></div>
+
+        <div class="section-title" style="margin-top:32px">全教科共通ルール（教科別デフォルト）</div>
+        <div class="card" style="max-width:620px">
+          <div class="card-label">差が満点の何%以内かで判定</div>
           <div id="subject-rules-list"></div>
-          <button class="btn-add" style="margin-top:10px" onclick="addSubjectRule()">+ 条件を追加</button>
-          <button class="btn-save-primary" onclick="saveSubjectRules()">保存して反映</button>
+          <div class="rule-fallback">上記に当てはまらない場合 → −差分 pt（ペナルティ）</div>
+          <button class="btn-add" onclick="addSubjectRule()">+ 条件を追加</button>
+          <button class="btn-primary" onclick="saveSubjectRules()">保存して反映</button>
         </div>
       </div>
 
@@ -341,7 +345,7 @@
         <div class="page-sub">スコアの公開を管理します</div>
         <div class="card" style="max-width:480px">
           <div class="card-label">スコア公開設定</div>
-          <div class="card-desc">公開すると全ユーザーのスコア結果タブに順位・スコアが表示されます。</div>
+          <div class="card-desc">公開するとスコア結果タブに全員の順位・スコアが表示されます。</div>
           <div class="toggle-row">
             <div class="status-row"><span class="sdot" id="score-dot"></span><span id="score-release-label">—</span></div>
             <label class="toggle-switch"><input type="checkbox" id="toggle-scores" onchange="toggleSetting('scoresReleased',this.checked,this)"><span class="tslider"></span></label>
@@ -356,96 +360,96 @@
 </div>
 
 <div id="toast"></div>
-
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAejIT2YtEDLgEpMN-w5V99m_VWIGN0BSk",
-  authDomain: "testbattle-2bac6.firebaseapp.com",
-  databaseURL: "https://testbattle-2bac6-default-rtdb.firebaseio.com",
-  projectId: "testbattle-2bac6",
-  storageBucket: "testbattle-2bac6.firebasestorage.app",
-  messagingSenderId: "625752500752",
-  appId: "1:625752500752:web:4727cfc9f8c173d079f895",
-  measurementId: "G-SJ2VR99P16"
+  apiKey:"AIzaSyAejIT2YtEDLgEpMN-w5V99m_VWIGN0BSk",
+  authDomain:"testbattle-2bac6.firebaseapp.com",
+  databaseURL:"https://testbattle-2bac6-default-rtdb.firebaseio.com",
+  projectId:"testbattle-2bac6",
+  storageBucket:"testbattle-2bac6.firebasestorage.app",
+  messagingSenderId:"625752500752",
+  appId:"1:625752500752:web:4727cfc9f8c173d079f895",
+  measurementId:"G-SJ2VR99P16"
 };
-
 const ADMIN_UIDS = ['NxRGRKh9hWOQkOogI1TSN04h84u1'];
 
-// デフォルトのスコアルール
-const DEFAULT_TOTAL_RULES = [
-  { maxDiff: 0,  pts: 50, note: 'ぴったり' },
-  { maxDiff: 5,  pts: 50, note: '±5点以内' },
-  { maxDiff: 10, pts: 30, note: '±10点以内' },
-  { maxDiff: 15, pts: 10, note: '±15点以内' },
-];
-// 教科別は % で判定（満点に対する割合）
-const DEFAULT_SUBJECT_RULES = [
-  { maxPct: 0,  pts: 20, note: 'ぴったり' },
-  { maxPct: 5,  pts: 15, note: '±5%以内' },
-  { maxPct: 10, pts: 10, note: '±10%以内' },
-  { maxPct: 15, pts: 5,  note: '±15%以内' },
-];
+const DEFAULT_TOTAL_RULES   = [{maxDiff:0,pts:50,note:'ぴったり'},{maxDiff:5,pts:50,note:'±5点以内'},{maxDiff:10,pts:30,note:'±10点以内'},{maxDiff:15,pts:10,note:'±15点以内'}];
+const DEFAULT_SUBJECT_RULES = [{maxPct:0,pts:20,note:'ぴったり'},{maxPct:5,pts:15,note:'±5%以内'},{maxPct:10,pts:10,note:'±10%以内'},{maxPct:15,pts:5,note:'±15%以内'}];
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getDatabase(app);
+const db   = getDatabase(app);
 const googleProvider = new GoogleAuthProvider();
 
-let currentUser = null;
-let appSettings = {};
-let subjects = {};
+let currentUser    = null;
+let appSettings    = {};
+let subjects       = {};     // DB から来る最新値
 let allPredictions = {};
-let allResults = {};
-let localSubjects = [];
-let localTotalRules = [];
-let localSubjectRules = [];
-let scoringRules = {};
+let allResults     = {};
+let scoringRules   = {};     // DB から来る最新値
 
-// ── AUTH ──────────────────────────────────
+// ローカル編集バッファ（DBリスナーとは切り離す）
+let localSubjects      = [];
+let localTotalRules    = null;  // null = 未初期化
+let localSubjectRules  = null;
+// 教科ごとの個別ルールバッファ  key=subjectId
+let localSubjectScoringRules = {};
+
+// ── AUTH ─────────────────────────────────────────
 window.loginAdmin = async () => {
   try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); }
   catch(e) { showAuthErr(e.message); }
 };
 window.loginGoogle = async () => {
-  try { await signInWithPopup(auth, googleProvider); }
-  catch(e) { showAuthErr(e.message); }
+  try { await signInWithPopup(auth, googleProvider); } catch(e) { showAuthErr(e.message); }
 };
 window.logout = () => signOut(auth);
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(auth, async user => {
   if (user && ADMIN_UIDS.includes(user.uid)) {
     currentUser = user;
     document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    document.getElementById('admin-name').textContent = user.displayName || user.email;
+    document.getElementById('main-app').style.display    = 'block';
+    document.getElementById('admin-name').textContent    = user.displayName || user.email;
     initAdmin();
   } else if (user) {
-    await signOut(auth); showAuthErr('このアカウントは管理者権限がありません');
+    await signOut(auth); showAuthErr('管理者権限がありません');
   } else {
     document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('main-app').style.display = 'none';
+    document.getElementById('main-app').style.display    = 'none';
   }
 });
-function showAuthErr(msg) { const el=document.getElementById('auth-error'); el.textContent=msg; el.style.display='block'; }
+function showAuthErr(msg){ const el=document.getElementById('auth-error'); el.textContent=msg; el.style.display='block'; }
 
-// ── INIT ──────────────────────────────────
+// ── INIT ─────────────────────────────────────────
 function initAdmin() {
   onValue(ref(db,'settings'), snap => {
     appSettings = snap.val() || {};
     updateControls(); renderDashboard(); renderScoresPreview();
-    // 合計点上限を反映
     const inp = document.getElementById('total-max-input');
-    if (inp && appSettings.totalMax) inp.value = appSettings.totalMax;
+    if(inp && appSettings.totalMax && !inp.dataset.dirty) inp.value = appSettings.totalMax;
   });
+
   onValue(ref(db,'subjects'), snap => {
     subjects = snap.val() || {};
-    localSubjects = Object.entries(subjects).map(([id,v]) => ({ id, ...v }));
-    renderSubjectsList(); renderPredictionsTable(); renderResultsTable(); renderScoresPreview();
+    // localSubjects は「保存して反映」ボタンを押すまで上書きしない
+    // → 初回だけ同期、以降はユーザー操作に委ねる
+    if (localSubjects.length === 0) {
+      localSubjects = Object.entries(subjects).map(([id,v])=>({id,...v}));
+    }
+    renderSubjectsList();
+    renderSubjectControlsList();
+    renderSubjectScoringList();
+    renderDashboardSubjectStatus();
+    renderPredictionsTable();
+    renderResultsTable();
+    renderScoresPreview();
   });
+
   onValue(ref(db,'predictions'), snap => {
     allPredictions = snap.val() || {};
     renderDashboard(); renderPredictionsTable(); renderScoresPreview();
@@ -457,36 +461,57 @@ function initAdmin() {
   onValue(ref(db,'users'), snap => {
     document.getElementById('dash-users').textContent = Object.keys(snap.val()||{}).length;
   });
+
   onValue(ref(db,'scoringRules'), snap => {
     scoringRules = snap.val() || {};
-    localTotalRules   = scoringRules.total   ? [...scoringRules.total]   : DEFAULT_TOTAL_RULES.map(r=>({...r}));
-    localSubjectRules = scoringRules.subject ? [...scoringRules.subject] : DEFAULT_SUBJECT_RULES.map(r=>({...r}));
-    renderTotalRules(); renderSubjectRules(); renderScoresPreview();
+    // localTotalRules / localSubjectRules は未初期化のときだけ DBから読む
+    // → 一度初期化したら「保存」ボタンを押すまで DB変更で上書きしない
+    if (localTotalRules === null) {
+      localTotalRules = scoringRules.total
+        ? scoringRules.total.map(r=>({...r}))
+        : DEFAULT_TOTAL_RULES.map(r=>({...r}));
+    }
+    if (localSubjectRules === null) {
+      localSubjectRules = scoringRules.subject
+        ? scoringRules.subject.map(r=>({...r}))
+        : DEFAULT_SUBJECT_RULES.map(r=>({...r}));
+    }
+    // 教科ごとのルールも同様
+    const subRules = scoringRules.subjects || {};
+    Object.keys(subRules).forEach(sid => {
+      if (!localSubjectScoringRules[sid]) {
+        localSubjectScoringRules[sid] = subRules[sid].map(r=>({...r}));
+      }
+    });
+    renderTotalRules();
+    renderSubjectRules();
+    renderSubjectScoringList();
+    renderScoresPreview();
   });
 }
 
-// ── NAV ───────────────────────────────────
-window.showPage = (page) => {
-  document.querySelectorAll('.admin-page').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+// ── NAV ──────────────────────────────────────────
+window.showPage = page => {
+  document.querySelectorAll('.admin-page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active');
-  const pages = ['dashboard','controls','subjects','scoring','predictions','results','scores'];
+  const pages=['dashboard','controls','subjects','subject-controls','scoring','predictions','results','scores'];
   document.querySelectorAll('.sidebar-item')[pages.indexOf(page)]?.classList.add('active');
 };
 
-// ── CONTROLS ──────────────────────────────
+// ── CONTROLS ─────────────────────────────────────
 function updateControls() {
   [['toggle-predict',appSettings.predictionOpen],['toggle-result',appSettings.resultInputOpen],['toggle-scores',appSettings.scoresReleased]].forEach(([id,val])=>{
     const el=document.getElementById(id); if(el&&!el.disabled) el.checked=!!val;
   });
-  setDot('predict-dot','predict-label',appSettings.predictionOpen,'入力受付中','締め切り');
-  setDot('result-dot','result-label',appSettings.resultInputOpen,'入力受付中','締め切り');
+  setDot('predict-dot','predict-label',appSettings.predictionOpen,'受付中','締め切り');
+  setDot('result-dot','result-label',appSettings.resultInputOpen,'受付中','締め切り');
   setDot('score-dot','score-release-label',appSettings.scoresReleased,'公開中','非公開');
 }
-function setDot(dotId,labelId,val,onT,offT) {
-  const dot=document.getElementById(dotId),label=document.getElementById(labelId);
-  if(!dot||!label)return;
-  dot.className='sdot '+(val?'on':'off'); label.textContent=val?onT:offT; label.style.color=val?'var(--success)':'var(--text2)';
+function setDot(dotId,labelId,val,on,off) {
+  const d=document.getElementById(dotId),l=document.getElementById(labelId);
+  if(!d||!l)return;
+  d.className='sdot '+(val?'on':'off'); l.textContent=val?on:off; l.style.color=val?'var(--success)':'var(--text2)';
 }
 window.toggleSetting = async (key,val,cb) => {
   if(cb) cb.disabled=true;
@@ -501,137 +526,350 @@ window.toggleSetting = async (key,val,cb) => {
   } finally { if(cb) cb.disabled=false; }
 };
 
-// ── DASHBOARD ─────────────────────────────
+// 教科ごとのフェーズ切り替え
+window.toggleSubjectSetting = async (subjectId, key, val, cb) => {
+  if(cb) cb.disabled=true;
+  try {
+    await set(ref(db,`subjectSettings/${subjectId}/${key}`), val);
+    showToast(val?'ONにしました':'OFFにしました','success');
+  } catch(e) {
+    if(cb) cb.checked=!val;
+    showToast('書き込み失敗: '+e.message,'error');
+  } finally { if(cb) cb.disabled=false; }
+};
+
+// ── DASHBOARD ────────────────────────────────────
 function renderDashboard() {
   document.getElementById('dash-predictions').textContent=Object.keys(allPredictions).length;
   document.getElementById('dash-results').textContent=Object.keys(allResults).length;
-  [['dash-predict-status',appSettings.predictionOpen,'入力受付中','締め切り'],
-   ['dash-result-status',appSettings.resultInputOpen,'入力受付中','締め切り'],
+  [['dash-predict-status',appSettings.predictionOpen,'受付中','締め切り'],
+   ['dash-result-status',appSettings.resultInputOpen,'受付中','締め切り'],
    ['dash-score-status',appSettings.scoresReleased,'公開中','非公開']].forEach(([id,val,on,off])=>{
     const el=document.getElementById(id); if(!el)return;
     el.innerHTML=`<span class="sdot ${val?'on':'off'}"></span><span style="color:${val?'var(--success)':'var(--text2)'}">${val?on:off}</span>`;
   });
+  renderDashboardSubjectStatus();
 }
 
-// ── TOTAL MAX ─────────────────────────────
+function renderDashboardSubjectStatus() {
+  const el = document.getElementById('dash-subject-status');
+  if(!el) return;
+  const subList = Object.entries(subjects);
+  if(subList.length===0){ el.innerHTML='<div style="color:var(--text2);font-size:13px">教科が未設定です</div>'; return; }
+  // subjectSettings をDBから読むのはリスナー経由が理想だが、ここでは appSettings に統合されている前提で
+  // subjectSettings は別途リッスンする
+  el.innerHTML=`<div class="cards-grid">${subList.map(([id,s])=>{
+    const ss = (appSettings._subjectSettings||{})[id]||{};
+    const pred = ss.predictionOpen; const res = ss.resultInputOpen; const pub = ss.scoresReleased;
+    return `<div class="card">
+      <div class="card-label">${s.name}</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+        <div class="status-row"><span class="sdot ${pred?'on':'off'}"></span><span style="font-size:12px;color:${pred?'var(--success)':'var(--text2)'}">予想入力: ${pred?'受付中':'停止'}</span></div>
+        <div class="status-row"><span class="sdot ${res?'on':'off'}"></span><span style="font-size:12px;color:${res?'var(--success)':'var(--text2)'}">結果入力: ${res?'受付中':'停止'}</span></div>
+        <div class="status-row"><span class="sdot ${pub?'on':'off'}"></span><span style="font-size:12px;color:${pub?'var(--success)':'var(--text2)'}">スコア公開: ${pub?'公開中':'非公開'}</span></div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// subjectSettings の変更を監視
+let subjectSettingsCache = {};
+onValue(ref(db,'subjectSettings'), snap => {
+  subjectSettingsCache = snap.val() || {};
+  // dashboard の教科状況を更新
+  appSettings._subjectSettings = subjectSettingsCache;
+  renderDashboardSubjectStatus();
+  renderSubjectControlsList();
+});
+
+// ── TOTAL MAX ────────────────────────────────────
 window.saveTotalMax = async () => {
-  const val = parseInt(document.getElementById('total-max-input').value);
-  if (!val||val<1) { showToast('正しい値を入力してください','error'); return; }
+  const inp = document.getElementById('total-max-input');
+  const val = parseInt(inp.value);
+  if(!val||val<1){ showToast('正しい値を入力してください','error'); return; }
   await set(ref(db,'settings/totalMax'), val);
+  inp.dataset.dirty = '';
   showToast(`合計点の上限を ${val}点 に設定しました`,'success');
 };
 
-// ── SUBJECTS ──────────────────────────────
+// ── SUBJECTS ─────────────────────────────────────
 function renderSubjectsList() {
   const list = document.getElementById('subjects-list');
-  if (localSubjects.length===0) {
-    list.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0">まだ教科が登録されていません</div>';
-    return;
-  }
-  list.innerHTML = localSubjects.map((s,i) => `
+  if(localSubjects.length===0){ list.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0">教科が登録されていません</div>'; return; }
+  list.innerHTML = localSubjects.map((s,i)=>`
     <div class="subject-row">
-      <input type="text"   value="${s.name||''}"     placeholder="教科名" onchange="updateLocalSubject(${i},'name',this.value)">
-      <input type="number" value="${s.maxScore||''}" placeholder="満点"   min="1" onchange="updateLocalSubject(${i},'maxScore',parseInt(this.value))">
+      <input class="field text" type="text"   value="${s.name||''}"     placeholder="教科名" onchange="updateLocalSubject(${i},'name',this.value)">
+      <input class="field num"  type="number" value="${s.maxScore||''}" placeholder="満点" min="1" onchange="updateLocalSubject(${i},'maxScore',parseInt(this.value))">
       <button class="btn-del" onclick="removeSubject(${i})">×</button>
     </div>`).join('');
 }
-window.updateLocalSubject = (i,key,val) => { localSubjects[i][key]=val; };
-window.addSubjectRow = () => { localSubjects.push({id:`sub_${Date.now()}`,name:'',maxScore:100}); renderSubjectsList(); };
-window.removeSubject = (i) => { localSubjects.splice(i,1); renderSubjectsList(); };
+window.updateLocalSubject = (i,key,val)=>{ localSubjects[i][key]=val; };
+window.addSubjectRow = ()=>{ localSubjects.push({id:`sub_${Date.now()}`,name:'',maxScore:100}); renderSubjectsList(); };
+window.removeSubject = (i)=>{ localSubjects.splice(i,1); renderSubjectsList(); };
 
 window.saveSubjects = async () => {
-  // 現在のDBのキーを取得して、削除されたものをnullで上書き
   const currentSnap = await get(ref(db,'subjects'));
   const currentKeys = currentSnap.exists() ? Object.keys(currentSnap.val()) : [];
-
   const newObj = {};
-  for (const s of localSubjects) {
-    if (!s.name) continue;
-    newObj[s.id] = { name: s.name, maxScore: s.maxScore || 100 };
-  }
-  const newKeys = Object.keys(newObj);
-
-  // 削除されたキーをnullにしてupdateで消す
-  const updateObj = { ...newObj };
-  currentKeys.forEach(k => { if (!newKeys.includes(k)) updateObj[k] = null; });
-
-  await update(ref(db,'subjects'), updateObj);
+  for(const s of localSubjects){ if(!s.name) continue; newObj[s.id]={name:s.name,maxScore:s.maxScore||100}; }
+  const upd = {...newObj};
+  currentKeys.forEach(k=>{ if(!newObj[k]) upd[k]=null; });
+  await update(ref(db,'subjects'), upd);
+  // 削除された教科のsubjectSettingsも掃除
+  currentKeys.forEach(async k=>{ if(!newObj[k]) await remove(ref(db,`subjectSettings/${k}`)); });
   showToast('教科設定を保存・反映しました','success');
 };
 
-// ── SCORING RULES ─────────────────────────
+// ── SUBJECT CONTROLS (per-subject phase) ─────────
+function renderSubjectControlsList() {
+  const el = document.getElementById('subject-controls-list');
+  if(!el) return;
+  const subList = Object.entries(subjects);
+  if(subList.length===0){ el.innerHTML='<div style="color:var(--text2);font-size:13px">教科が未設定です</div>'; return; }
+
+  el.innerHTML = subList.map(([id,s])=>{
+    const ss = subjectSettingsCache[id] || {};
+    const pred = !!ss.predictionOpen, res = !!ss.resultInputOpen, pub = !!ss.scoresReleased;
+    return `
+    <div class="subctrl-card">
+      <div class="subctrl-header" onclick="toggleSubjectAccordion('acc-${id}', this)">
+        <span class="subctrl-name">${s.name}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="subctrl-badges">
+            <span class="phase-badge ${pred?'on':'off'}">予想${pred?'受付中':'停止'}</span>
+            <span class="phase-badge ${res?'on':'off'}">結果${res?'受付中':'停止'}</span>
+            <span class="phase-badge ${pub?'on':'off'}">スコア${pub?'公開':'非公開'}</span>
+          </div>
+          <span class="subctrl-chevron">▼</span>
+        </div>
+      </div>
+      <div class="subctrl-body" id="acc-${id}">
+        <div class="subctrl-section">
+          <div class="subctrl-section-label">フェーズ制御（全体設定と AND 動作）</div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
+              <div>
+                <div style="font-size:12px;font-weight:600">予想入力</div>
+                <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科の予想入力を受け付ける</div>
+              </div>
+              <label class="toggle-switch" style="flex-shrink:0">
+                <input type="checkbox" ${pred?'checked':''} onchange="toggleSubjectSetting('${id}','predictionOpen',this.checked,this)">
+                <span class="tslider"></span>
+              </label>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
+              <div>
+                <div style="font-size:12px;font-weight:600">結果入力</div>
+                <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科の結果入力を受け付ける</div>
+              </div>
+              <label class="toggle-switch" style="flex-shrink:0">
+                <input type="checkbox" ${res?'checked':''} onchange="toggleSubjectSetting('${id}','resultInputOpen',this.checked,this)">
+                <span class="tslider"></span>
+              </label>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
+              <div>
+                <div style="font-size:12px;font-weight:600">スコア公開</div>
+                <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科のスコアを公開する</div>
+              </div>
+              <label class="toggle-switch" style="flex-shrink:0">
+                <input type="checkbox" ${pub?'checked':''} onchange="toggleSubjectSetting('${id}','scoresReleased',this.checked,this)">
+                <span class="tslider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.toggleSubjectAccordion = (bodyId, header) => {
+  const body = document.getElementById(bodyId);
+  if(!body) return;
+  const open = body.classList.toggle('open');
+  header.querySelector('.subctrl-chevron').style.transform = open ? 'rotate(180deg)' : '';
+};
+
+// ── SCORING RULES (global) ────────────────────────
+// ★ リアクティブ再レンダーを防ぐため、操作中はローカル配列だけを変更
+
 function renderTotalRules() {
   const list = document.getElementById('total-rules-list');
-  list.innerHTML = localTotalRules.map((r,i) => `
+  if(!list||localTotalRules===null) return;
+  list.innerHTML = localTotalRules.map((r,i)=>`
     <div class="rule-row">
-      <span class="rule-label">差が</span>
-      <input class="rule-input" type="number" value="${r.maxDiff}" min="0" onchange="localTotalRules[${i}].maxDiff=parseInt(this.value)||0;updateRuleInputColors()">
-      <span class="rule-sep">点以内</span>
-      <span class="rule-sep">→</span>
-      <input class="rule-pt-input ${r.pts>=0?'pos-val':'neg-val'}" type="number" value="${r.pts}" onchange="localTotalRules[${i}].pts=parseInt(this.value)||0;updateRuleInputColors()">
-      <span class="rule-pt-label">pt</span>
-      <input type="text" class="rule-input" style="flex:1;width:auto;text-align:left" value="${r.note||''}" placeholder="説明（任意）" onchange="localTotalRules[${i}].note=this.value">
+      <span class="rule-sep">差が</span>
+      <input class="rule-input" type="number" value="${r.maxDiff}" min="0"
+        onchange="localTotalRules[${i}].maxDiff=parseInt(this.value)||0">
+      <span class="rule-sep">点以内 →</span>
+      <input class="rule-pt-input ${r.pts>=0?'pos':'neg'}" type="number" value="${r.pts}"
+        oninput="localTotalRules[${i}].pts=parseInt(this.value)||0;this.className='rule-pt-input '+(parseInt(this.value)||0>=0?'pos':'neg')">
+      <span class="rule-sep">pt</span>
+      <input class="rule-note-input" type="text" value="${r.note||''}" placeholder="ラベル（任意）"
+        onchange="localTotalRules[${i}].note=this.value">
       <button class="btn-del" onclick="localTotalRules.splice(${i},1);renderTotalRules()">×</button>
     </div>`).join('');
-  updateRuleInputColors();
 }
 
 function renderSubjectRules() {
   const list = document.getElementById('subject-rules-list');
-  list.innerHTML = localSubjectRules.map((r,i) => `
+  if(!list||localSubjectRules===null) return;
+  list.innerHTML = localSubjectRules.map((r,i)=>`
     <div class="rule-row">
-      <span class="rule-label">差が</span>
-      <input class="rule-input" type="number" value="${r.maxPct}" min="0" max="100" onchange="localSubjectRules[${i}].maxPct=parseInt(this.value)||0;updateRuleInputColors()">
-      <span class="rule-sep">%以内</span>
-      <span class="rule-sep">→</span>
-      <input class="rule-pt-input ${r.pts>=0?'pos-val':'neg-val'}" type="number" value="${r.pts}" onchange="localSubjectRules[${i}].pts=parseInt(this.value)||0;updateRuleInputColors()">
-      <span class="rule-pt-label">pt</span>
-      <input type="text" class="rule-input" style="flex:1;width:auto;text-align:left" value="${r.note||''}" placeholder="説明（任意）" onchange="localSubjectRules[${i}].note=this.value">
+      <span class="rule-sep">差が満点の</span>
+      <input class="rule-input" type="number" value="${r.maxPct}" min="0" max="100"
+        onchange="localSubjectRules[${i}].maxPct=parseInt(this.value)||0">
+      <span class="rule-sep">%以内 →</span>
+      <input class="rule-pt-input ${r.pts>=0?'pos':'neg'}" type="number" value="${r.pts}"
+        oninput="localSubjectRules[${i}].pts=parseInt(this.value)||0;this.className='rule-pt-input '+(parseInt(this.value)||0>=0?'pos':'neg')">
+      <span class="rule-sep">pt</span>
+      <input class="rule-note-input" type="text" value="${r.note||''}" placeholder="ラベル（任意）"
+        onchange="localSubjectRules[${i}].note=this.value">
       <button class="btn-del" onclick="localSubjectRules.splice(${i},1);renderSubjectRules()">×</button>
     </div>`).join('');
-  updateRuleInputColors();
 }
 
-function updateRuleInputColors() {
-  document.querySelectorAll('.rule-pt-input').forEach(inp => {
-    const v = parseInt(inp.value)||0;
-    inp.classList.toggle('pos-val', v>=0);
-    inp.classList.toggle('neg-val', v<0);
-  });
-}
-
-window.addTotalRule   = () => { localTotalRules.push({maxDiff:0,pts:0,note:''}); renderTotalRules(); };
-window.addSubjectRule = () => { localSubjectRules.push({maxPct:0,pts:0,note:''}); renderSubjectRules(); };
+window.addTotalRule   = ()=>{ localTotalRules.push({maxDiff:0,pts:0,note:''}); renderTotalRules(); };
+window.addSubjectRule = ()=>{ localSubjectRules.push({maxPct:0,pts:0,note:''}); renderSubjectRules(); };
 
 window.saveTotalRules = async () => {
   const sorted = [...localTotalRules].sort((a,b)=>a.maxDiff-b.maxDiff);
   await set(ref(db,'scoringRules/total'), sorted);
+  localTotalRules = sorted.map(r=>({...r})); // DBに保存した値で確定
   showToast('合計点ルールを保存しました','success');
 };
 window.saveSubjectRules = async () => {
   const sorted = [...localSubjectRules].sort((a,b)=>a.maxPct-b.maxPct);
   await set(ref(db,'scoringRules/subject'), sorted);
-  showToast('教科別ルールを保存しました','success');
+  localSubjectRules = sorted.map(r=>({...r}));
+  showToast('教科別共通ルールを保存しました','success');
 };
 
-// ── CALC (using DB rules) ─────────────────
+// ── SCORING RULES (per-subject) ───────────────────
+function renderSubjectScoringList() {
+  const el = document.getElementById('subject-scoring-list');
+  if(!el) return;
+  const subList = Object.entries(subjects);
+  if(subList.length===0){ el.innerHTML='<div style="color:var(--text2);font-size:13px">教科が未設定です</div>'; return; }
+
+  el.innerHTML = subList.map(([id,s])=>{
+    const hasCustom = !!(scoringRules.subjects && scoringRules.subjects[id]);
+    return `
+    <div class="subctrl-card">
+      <div class="subctrl-header" onclick="toggleSubjectAccordion('sacc-${id}', this)">
+        <span class="subctrl-name">${s.name}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="phase-badge ${hasCustom?'on':'off'}">${hasCustom?'個別設定あり':'共通ルール使用'}</span>
+          <span class="subctrl-chevron">▼</span>
+        </div>
+      </div>
+      <div class="subctrl-body" id="sacc-${id}">
+        <div style="margin-top:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:12px;color:var(--text2)">この教科に個別ルールを設定する</span>
+          <input type="checkbox" id="custom-toggle-${id}" ${hasCustom?'checked':''} onchange="onCustomRuleToggle('${id}',this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)">
+        </div>
+        <div id="custom-rules-${id}" style="${hasCustom?'':'display:none'}">
+          <div class="card-label" style="margin-top:12px">差が満点の何%以内かで判定</div>
+          <div id="custom-rules-list-${id}"></div>
+          <div class="rule-fallback">上記に当てはまらない場合 → −差分 pt</div>
+          <button class="btn-add" style="margin-top:8px" onclick="addCustomSubjectRule('${id}')">+ 条件を追加</button>
+          <button class="btn-primary" onclick="saveCustomSubjectRule('${id}')">保存して反映</button>
+          <button class="btn-sm" style="margin-top:14px;margin-left:8px;color:var(--danger)" onclick="deleteCustomSubjectRule('${id}')">個別設定を削除（共通ルールに戻す）</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // 各教科の個別ルールを描画
+  subList.forEach(([id])=>{ renderCustomRuleList(id); });
+}
+
+function getLocalSubjectRules(id) {
+  if(!localSubjectScoringRules[id]) {
+    // DBから初期化
+    const dbRules = scoringRules.subjects?.[id];
+    localSubjectScoringRules[id] = dbRules
+      ? dbRules.map(r=>({...r}))
+      : DEFAULT_SUBJECT_RULES.map(r=>({...r}));
+  }
+  return localSubjectScoringRules[id];
+}
+
+function renderCustomRuleList(subjectId) {
+  const el = document.getElementById(`custom-rules-list-${subjectId}`);
+  if(!el) return;
+  const rules = getLocalSubjectRules(subjectId);
+  el.innerHTML = rules.map((r,i)=>`
+    <div class="rule-row">
+      <span class="rule-sep">差が満点の</span>
+      <input class="rule-input" type="number" value="${r.maxPct}" min="0" max="100"
+        onchange="localSubjectScoringRules['${subjectId}'][${i}].maxPct=parseInt(this.value)||0">
+      <span class="rule-sep">%以内 →</span>
+      <input class="rule-pt-input ${r.pts>=0?'pos':'neg'}" type="number" value="${r.pts}"
+        oninput="localSubjectScoringRules['${subjectId}'][${i}].pts=parseInt(this.value)||0;this.className='rule-pt-input '+(parseInt(this.value)||0>=0?'pos':'neg')">
+      <span class="rule-sep">pt</span>
+      <input class="rule-note-input" type="text" value="${r.note||''}" placeholder="ラベル（任意）"
+        onchange="localSubjectScoringRules['${subjectId}'][${i}].note=this.value">
+      <button class="btn-del" onclick="localSubjectScoringRules['${subjectId}'].splice(${i},1);renderCustomRuleList('${subjectId}')">×</button>
+    </div>`).join('');
+}
+
+window.onCustomRuleToggle = (id, checked) => {
+  const wrap = document.getElementById(`custom-rules-${id}`);
+  if(!wrap) return;
+  wrap.style.display = checked ? 'block' : 'none';
+  if(checked && !localSubjectScoringRules[id]) {
+    localSubjectScoringRules[id] = DEFAULT_SUBJECT_RULES.map(r=>({...r}));
+    renderCustomRuleList(id);
+  }
+};
+
+window.addCustomSubjectRule = id => {
+  getLocalSubjectRules(id).push({maxPct:0,pts:0,note:''});
+  renderCustomRuleList(id);
+};
+
+window.saveCustomSubjectRule = async id => {
+  const rules = getLocalSubjectRules(id);
+  const sorted = [...rules].sort((a,b)=>a.maxPct-b.maxPct);
+  await set(ref(db,`scoringRules/subjects/${id}`), sorted);
+  localSubjectScoringRules[id] = sorted.map(r=>({...r}));
+  showToast('個別ルールを保存しました','success');
+  renderSubjectScoringList();
+};
+
+window.deleteCustomSubjectRule = async id => {
+  await remove(ref(db,`scoringRules/subjects/${id}`));
+  delete localSubjectScoringRules[id];
+  showToast('共通ルールに戻しました','success');
+  renderSubjectScoringList();
+};
+
+// ── CALC ─────────────────────────────────────────
 function calcTotalBonus(p, a) {
-  if (p===null||a===null) return null;
-  const diff = Math.abs(p-a);
+  if(p===null||a===null) return null;
+  const diff  = Math.abs(p-a);
   const rules = (scoringRules.total||DEFAULT_TOTAL_RULES).slice().sort((x,y)=>x.maxDiff-y.maxDiff);
-  for (const r of rules) { if (diff<=r.maxDiff) return r.pts; }
+  for(const r of rules){ if(diff<=r.maxDiff) return r.pts; }
   return -diff;
 }
-function calcSubjectBonus(p, a, max) {
-  if (p===null||a===null) return null;
+function calcSubjectBonus(p, a, max, subjectId) {
+  if(p===null||a===null) return null;
   const diff = Math.abs(p-a);
   const pct  = max>0 ? (diff/max)*100 : 0;
-  const rules = (scoringRules.subject||DEFAULT_SUBJECT_RULES).slice().sort((x,y)=>x.maxPct-y.maxPct);
-  for (const r of rules) { if (pct<=r.maxPct) return r.pts; }
+  // 教科ごとの個別ルールを優先、なければ共通ルール
+  const subRules = scoringRules.subjects?.[subjectId];
+  const rules = (subRules || scoringRules.subject || DEFAULT_SUBJECT_RULES).slice().sort((x,y)=>x.maxPct-y.maxPct);
+  for(const r of rules){ if(pct<=r.maxPct) return r.pts; }
   return -diff;
 }
 
-// ── PREDICTIONS TABLE ─────────────────────
+// ── PREDICTIONS TABLE ─────────────────────────────
 function renderPredictionsTable() {
   const wrap=document.getElementById('predictions-table-wrap');
   const users=Object.values(allPredictions),subList=Object.entries(subjects);
@@ -647,7 +885,7 @@ function renderPredictionsTable() {
 }
 window.deletePrediction = async uid => { await remove(ref(db,`predictions/${uid}`)); showToast('削除しました','success'); };
 
-// ── RESULTS TABLE ─────────────────────────
+// ── RESULTS TABLE ─────────────────────────────────
 function renderResultsTable() {
   const wrap=document.getElementById('results-table-wrap');
   const users=Object.values(allResults),subList=Object.entries(subjects);
@@ -664,7 +902,7 @@ function renderResultsTable() {
 }
 window.deleteResult = async uid => { await remove(ref(db,`results/${uid}`)); showToast('削除しました','success'); };
 
-// ── SCORES PREVIEW ────────────────────────
+// ── SCORES PREVIEW ────────────────────────────────
 function renderScoresPreview() {
   const wrap=document.getElementById('scores-preview');
   const users=Object.values(allPredictions),subList=Object.entries(subjects);
@@ -673,9 +911,9 @@ function renderScoresPreview() {
     const result=allResults[u.uid],actualTotal=result?.total??null;
     const totalBonus=actualTotal!==null?calcTotalBonus(u.total,actualTotal):null;
     let subBonus=0;
-    subList.forEach(([id,sub])=>{const b=calcSubjectBonus(u.subjects?.[id]??null,result?.subjects?.[id]??null,sub.maxScore);if(b!==null)subBonus+=b;});
+    subList.forEach(([id,sub])=>{ const b=calcSubjectBonus(u.subjects?.[id]??null,result?.subjects?.[id]??null,sub.maxScore,id); if(b!==null)subBonus+=b; });
     const final=actualTotal!==null&&totalBonus!==null?actualTotal+totalBonus+subBonus:null;
-    return {...u,actualTotal,totalBonus,subBonus,final};
+    return{...u,actualTotal,totalBonus,subBonus,final};
   }).sort((a,b)=>(b.final??-9999)-(a.final??-9999));
   const ranks=['1st','2nd','3rd'];
   wrap.innerHTML=`<div class="table-wrap"><table class="dtable">
@@ -691,7 +929,7 @@ function renderScoresPreview() {
     </tr>`).join('')}</tbody></table></div>`;
 }
 
-// ── TOAST ─────────────────────────────────
+// ── TOAST ─────────────────────────────────────────
 function showToast(msg,type='success'){
   const el=document.getElementById('toast');
   el.textContent=msg; el.className=`show ${type}`;
