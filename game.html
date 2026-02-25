@@ -1172,9 +1172,9 @@ function renderSubjectsGrid() {
   const globalOpen = !!appSettings.predictionOpen;
 
   grid.innerHTML = subList.map(([id, sub]) => {
-    // 教科ごとの設定。設定がない場合は全体設定に従う
-    const ss = subjectSettings[id] || {};
-    const subOpen = ss.predictionOpen !== undefined ? !!ss.predictionOpen : true;
+    // 教科ごとの設定。キーが存在しない（未設定）= ON扱い（全体設定に従う）
+    const ss = subjectSettings[id];
+    const subOpen = (ss && ss.predictionOpen !== undefined) ? !!ss.predictionOpen : true;
     const isOpen = globalOpen && subOpen;
     return `
     <div class="subject-card ${isOpen ? '' : 'is-closed'}">
@@ -1201,8 +1201,8 @@ function renderResultSubjectsGrid() {
   document.getElementById('total-result-max-label').textContent = `/ ${totalMax}点`;
   const globalOpen = !!appSettings.resultInputOpen;
   grid.innerHTML = subList.map(([id, sub]) => {
-    const ss = subjectSettings[id] || {};
-    const subOpen = ss.resultInputOpen !== undefined ? !!ss.resultInputOpen : true;
+    const ss = subjectSettings[id];
+    const subOpen = (ss && ss.resultInputOpen !== undefined) ? !!ss.resultInputOpen : true;
     const isOpen = globalOpen && subOpen;
     return `
     <div class="subject-card ${isOpen ? '' : 'is-closed'}">
@@ -1377,8 +1377,8 @@ function renderScores() {
     let   totalSubBonus = 0;
     subList.forEach(([id,sub]) => {
       // 教科ごとのスコア公開設定を確認 (全体公開 AND 教科公開)
-      const ss = subjectSettings[id] || {};
-      const subPub = ss.scoresReleased !== undefined ? !!ss.scoresReleased : true;
+      const ss = subjectSettings[id];
+      const subPub = (ss && ss.scoresReleased !== undefined) ? !!ss.scoresReleased : true;
       const b = subPub ? calcSubjectBonus(u.subjects?.[id]??null, result?.subjects?.[id]??null, sub.maxScore, id) : 0;
       subBonuses[id] = b;
       subBonusVisible[id] = subPub;

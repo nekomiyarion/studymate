@@ -621,71 +621,111 @@ window.saveSubjects = async () => {
 };
 
 // ── SUBJECT CONTROLS (per-subject phase) ─────────
+// キーが存在しない（未設定）場合は true = 全体設定に従う
+function getSubjectFlag(id, key) {
+  const ss = subjectSettingsCache[id];
+  if (!ss || ss[key] === undefined) return true;  // 未設定 → ON扱い
+  return !!ss[key];
+}
+
 function renderSubjectControlsList() {
   const el = document.getElementById('subject-controls-list');
   if(!el) return;
   const subList = Object.entries(subjects);
   if(subList.length===0){ el.innerHTML='<div style="color:var(--text2);font-size:13px">教科が未設定です</div>'; return; }
 
-  el.innerHTML = subList.map(([id,s])=>{
-    const ss = subjectSettingsCache[id] || {};
-    const pred = !!ss.predictionOpen, res = !!ss.resultInputOpen, pub = !!ss.scoresReleased;
-    return `
-    <div class="subctrl-card">
-      <div class="subctrl-header" onclick="toggleSubjectAccordion('acc-${id}', this)">
-        <span class="subctrl-name">${s.name}</span>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="subctrl-badges">
-            <span class="phase-badge ${pred?'on':'off'}">予想${pred?'受付中':'停止'}</span>
-            <span class="phase-badge ${res?'on':'off'}">結果${res?'受付中':'停止'}</span>
-            <span class="phase-badge ${pub?'on':'off'}">スコア${pub?'公開':'非公開'}</span>
-          </div>
-          <span class="subctrl-chevron">▼</span>
-        </div>
-      </div>
-      <div class="subctrl-body" id="acc-${id}">
-        <div class="subctrl-section">
-          <div class="subctrl-section-label">フェーズ制御（全体設定と AND 動作）</div>
+  // 初回：HTMLを生成
+  // 2回目以降：既存のチェックボックス・バッジだけを更新（アコーディオン状態を保持）
+  const isFirstRender = !el.querySelector('.subctrl-card');
 
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
-
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
-              <div>
-                <div style="font-size:12px;font-weight:600">予想入力</div>
-                <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科の予想入力を受け付ける</div>
-              </div>
-              <label class="toggle-switch" style="flex-shrink:0">
-                <input type="checkbox" ${pred?'checked':''} onchange="toggleSubjectSetting('${id}','predictionOpen',this.checked,this)">
-                <span class="tslider"></span>
-              </label>
+  if (isFirstRender) {
+    el.innerHTML = subList.map(([id,s]) => {
+      const pred = getSubjectFlag(id,'predictionOpen');
+      const res  = getSubjectFlag(id,'resultInputOpen');
+      const pub  = getSubjectFlag(id,'scoresReleased');
+      return `
+      <div class="subctrl-card">
+        <div class="subctrl-header" onclick="toggleSubjectAccordion('acc-${id}', this)">
+          <span class="subctrl-name">${s.name}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="subctrl-badges" id="badges-${id}">
+              <span class="phase-badge ${pred?'on':'off'}">予想${pred?'受付中':'停止'}</span>
+              <span class="phase-badge ${res?'on':'off'}">結果${res?'受付中':'停止'}</span>
+              <span class="phase-badge ${pub?'on':'off'}">スコア${pub?'公開':'非公開'}</span>
             </div>
-
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
-              <div>
-                <div style="font-size:12px;font-weight:600">結果入力</div>
-                <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科の結果入力を受け付ける</div>
-              </div>
-              <label class="toggle-switch" style="flex-shrink:0">
-                <input type="checkbox" ${res?'checked':''} onchange="toggleSubjectSetting('${id}','resultInputOpen',this.checked,this)">
-                <span class="tslider"></span>
-              </label>
-            </div>
-
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
-              <div>
-                <div style="font-size:12px;font-weight:600">スコア公開</div>
-                <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科のスコアを公開する</div>
-              </div>
-              <label class="toggle-switch" style="flex-shrink:0">
-                <input type="checkbox" ${pub?'checked':''} onchange="toggleSubjectSetting('${id}','scoresReleased',this.checked,this)">
-                <span class="tslider"></span>
-              </label>
-            </div>
+            <span class="subctrl-chevron">▼</span>
           </div>
         </div>
-      </div>
-    </div>`;
-  }).join('');
+        <div class="subctrl-body" id="acc-${id}">
+          <div class="subctrl-section">
+            <div class="subctrl-section-label">フェーズ制御（全体設定と AND 動作）</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
+                <div>
+                  <div style="font-size:12px;font-weight:600">予想入力</div>
+                  <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科の予想入力を受け付ける</div>
+                </div>
+                <label class="toggle-switch" style="flex-shrink:0">
+                  <input type="checkbox" id="chk-${id}-predictionOpen" ${pred?'checked':''}
+                    onchange="toggleSubjectSetting('${id}','predictionOpen',this.checked,this)">
+                  <span class="tslider"></span>
+                </label>
+              </div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
+                <div>
+                  <div style="font-size:12px;font-weight:600">結果入力</div>
+                  <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科の結果入力を受け付ける</div>
+                </div>
+                <label class="toggle-switch" style="flex-shrink:0">
+                  <input type="checkbox" id="chk-${id}-resultInputOpen" ${res?'checked':''}
+                    onchange="toggleSubjectSetting('${id}','resultInputOpen',this.checked,this)">
+                  <span class="tslider"></span>
+                </label>
+              </div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
+                <div>
+                  <div style="font-size:12px;font-weight:600">スコア公開</div>
+                  <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科のスコアを公開する</div>
+                </div>
+                <label class="toggle-switch" style="flex-shrink:0">
+                  <input type="checkbox" id="chk-${id}-scoresReleased" ${pub?'checked':''}
+                    onchange="toggleSubjectSetting('${id}','scoresReleased',this.checked,this)">
+                  <span class="tslider"></span>
+                </label>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+  } else {
+    // 差分更新：チェックボックスとバッジのみ書き換え（DOMを再生成しない）
+    subList.forEach(([id, s]) => {
+      const pred = getSubjectFlag(id,'predictionOpen');
+      const res  = getSubjectFlag(id,'resultInputOpen');
+      const pub  = getSubjectFlag(id,'scoresReleased');
+
+      // チェックボックス（操作中（disabled）でなければ更新）
+      [['predictionOpen', pred], ['resultInputOpen', res], ['scoresReleased', pub]].forEach(([key, val]) => {
+        const chk = document.getElementById(`chk-${id}-${key}`);
+        if (chk && !chk.disabled) chk.checked = val;
+      });
+
+      // バッジ
+      const badges = document.getElementById(`badges-${id}`);
+      if (badges) {
+        badges.innerHTML = `
+          <span class="phase-badge ${pred?'on':'off'}">予想${pred?'受付中':'停止'}</span>
+          <span class="phase-badge ${res?'on':'off'}">結果${res?'受付中':'停止'}</span>
+          <span class="phase-badge ${pub?'on':'off'}">スコア${pub?'公開':'非公開'}</span>`;
+      }
+    });
+  }
 }
 
 window.toggleSubjectAccordion = (bodyId, header) => {
