@@ -222,7 +222,7 @@
     <div class="topbar-right">
       <div class="admin-badge">Admin</div>
       <span id="admin-name"></span>
-      <button class="btn-theme" id="admin-theme-btn" onclick="toggleAdminTheme()" title="テーマ切替">🌙</button>
+      <button class="btn-theme" id="admin-theme-btn" onclick="toggleAdminTheme()" title="テーマ切替">☀️</button>
       <button class="btn-sm" onclick="logout()">ログアウト</button>
     </div>
   </div>
@@ -403,27 +403,39 @@
       <!-- SEASONS -->
       <div class="admin-page" id="page-seasons">
         <div class="page-title">過去テスト記録</div>
-        <div class="page-sub">現在のスコアをシーズンとして保存し、通算ランキングを管理します</div>
+        <div class="page-sub">複数のテストを選択してアーカイブを作成できます。アーカイブはゲーム画面のスコアタブに表示されます。</div>
 
-        <div class="card" style="max-width:560px">
-          <div class="card-label">現在のシーズンを保存</div>
-          <div class="card-desc">現在の予想・結果データをスナップショットとして記録します。保存後もデータは消えません。</div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div>
-              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px">テスト名</div>
-              <input type="text" id="season-name-input" class="field text" placeholder="例：2025年 前期中間テスト" style="width:100%;max-width:400px">
+        <div class="card">
+          <div class="card-label">新規アーカイブを作成</div>
+          <div class="card-desc">アーカイブ名・日付を入力し、含めるテスト（ユーザー）を選択して保存します。</div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px">
+            <div style="flex:1;min-width:220px">
+              <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px">アーカイブ名</div>
+              <input type="text" id="season-name-input" class="field text" placeholder="例：2025年 前期中間テスト" style="width:100%">
             </div>
             <div>
-              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px">実施日</div>
-              <input type="date" id="season-date-input" class="field" style="width:200px">
-            </div>
-            <div>
-              <button class="btn-primary" onclick="saveSeason()" style="margin-top:4px">📸 このシーズンを保存</button>
+              <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px">実施日</div>
+              <input type="date" id="season-date-input" class="field" style="width:180px">
             </div>
           </div>
+
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px">含めるテスト（ユーザー）を選択</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
+            チェックを付けたユーザーの現在の予想・結果データをこのアーカイブに含めます。
+          </div>
+          <div id="season-user-checkboxes" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:16px;max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:12px">
+            <div style="color:var(--text2);font-size:13px">予想データを読み込み中...</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <button class="btn-sm" onclick="selectAllSeasonUsers(true)">すべて選択</button>
+            <button class="btn-sm" onclick="selectAllSeasonUsers(false)">すべて解除</button>
+          </div>
+
+          <button class="btn-primary" onclick="saveSeason()">📦 アーカイブを保存</button>
         </div>
 
-        <div class="section-title">保存済みシーズン一覧</div>
+        <div class="section-title">保存済みアーカイブ一覧</div>
         <div id="seasons-admin-list"><div style="color:var(--text2);font-size:13px">まだ保存されていません</div></div>
       </div>
 
@@ -527,11 +539,13 @@ function initAdmin() {
     allPredictions = snap.val() || {};
     appSettings._predictions = allPredictions;
     renderDashboard(); renderPredictionsTable(); renderScoresPreview();
+    renderSeasonUserCheckboxes();
   });
   onValue(ref(db,'results'), snap => {
     allResults = snap.val() || {};
     appSettings._results = allResults;
     renderDashboard(); renderResultsTable(); renderScoresPreview();
+    renderSeasonUserCheckboxes();
   });
   onValue(ref(db,'users'), snap => {
     document.getElementById('dash-users').textContent = Object.keys(snap.val()||{}).length;
@@ -1143,17 +1157,55 @@ function calcScoreForSeason() {
   });
 }
 
+// ユーザー選択チェックボックスを描画
+function renderSeasonUserCheckboxes() {
+  const wrap = document.getElementById('season-user-checkboxes');
+  if (!wrap) return;
+  const users = Object.values(allPredictions);
+  if (users.length === 0) {
+    wrap.innerHTML = '<div style="color:var(--text2);font-size:13px">予想データがありません</div>';
+    return;
+  }
+  wrap.innerHTML = users.map(u => {
+    const result = allResults[u.uid];
+    const hasResult = result?.total != null;
+    return `
+      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:7px 8px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);user-select:none">
+        <input type="checkbox" class="season-user-chk" data-uid="${u.uid}" checked
+          style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
+        <span style="flex:1;min-width:0">
+          <span style="font-size:13px;font-weight:600;color:var(--text);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u.displayName||'不明'}</span>
+          <span style="font-size:11px;color:${hasResult?'var(--success)':'var(--text3)'}">
+            ${hasResult ? `結果あり（合計 ${result.total}点）` : '結果未入力'}
+          </span>
+        </span>
+      </label>`;
+  }).join('');
+}
+
+window.selectAllSeasonUsers = (checked) => {
+  document.querySelectorAll('.season-user-chk').forEach(chk => chk.checked = checked);
+};
+
 window.saveSeason = async () => {
   const name = document.getElementById('season-name-input')?.value?.trim();
   const date = document.getElementById('season-date-input')?.value || '';
-  if (!name) { showToast('テスト名を入力してください', 'error'); return; }
+  if (!name) { showToast('アーカイブ名を入力してください', 'error'); return; }
 
+  // 選択されたUIDのみ取得
+  const selectedUids = new Set(
+    [...document.querySelectorAll('.season-user-chk:checked')].map(el => el.dataset.uid)
+  );
+  if (selectedUids.size === 0) { showToast('ユーザーを1人以上選択してください', 'error'); return; }
+
+  // 選択ユーザーのみでスコア計算
+  const allScores = calcScoreForSeason();
   const rankings = {};
-  calcScoreForSeason().forEach(r => { rankings[r.uid] = r; });
+  allScores.filter(r => selectedUids.has(r.uid)).forEach(r => { rankings[r.uid] = r; });
 
   const sid = `season_${Date.now()}`;
   await set(ref(db, `seasons/${sid}`), { name, date, createdAt: Date.now(), rankings });
-  showToast(`「${name}」を保存しました`, 'success');
+  showToast(`「${name}」を保存しました（${selectedUids.size}人）`, 'success');
   document.getElementById('season-name-input').value = '';
 };
 
@@ -1210,13 +1262,13 @@ window.toggleAdminTheme = () => {
   if (btn) btn.textContent = isLight ? '☀️' : '🌙';
 };
 (function(){
-  if (localStorage.getItem('adminTheme') === 'light') {
-    document.body.classList.add('light');
-    window.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('admin-theme-btn');
-      if (btn) btn.textContent = '☀️';
-    });
-  }
+  const saved = localStorage.getItem('adminTheme');
+  const isDark = saved === 'dark';
+  if (!isDark) document.body.classList.add('light');
+  window.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('admin-theme-btn');
+    if (btn) btn.textContent = isDark ? '🌙' : '☀️';
+  });
 })();
 
 // ── TOAST ─────────────────────────────────────────
