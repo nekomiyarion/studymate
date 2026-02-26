@@ -236,7 +236,8 @@
         <div class="cards-grid">
           <div class="card"><div class="card-label">予想入力（全体）</div><div id="dash-predict-status" class="status-row"><span class="sdot"></span><span>—</span></div></div>
           <div class="card"><div class="card-label">結果入力（全体）</div><div id="dash-result-status" class="status-row"><span class="sdot"></span><span>—</span></div></div>
-          <div class="card"><div class="card-label">スコア公開</div><div id="dash-score-status" class="status-row"><span class="sdot"></span><span>—</span></div></div>
+          <div class="card"><div class="card-label">ランキング公開</div><div id="dash-score-status" class="status-row"><span class="sdot"></span><span>—</span></div></div>
+          <div class="card"><div class="card-label">実際の点数公開</div><div id="dash-results-public-status" class="status-row"><span class="sdot"></span><span>—</span></div></div>
           <div class="card"><div class="card-label">参加者数</div><div id="dash-users" class="stat-val">—</div></div>
           <div class="card"><div class="card-label">予想入力済み</div><div id="dash-predictions" class="stat-val">—</div></div>
           <div class="card"><div class="card-label">結果入力済み</div><div id="dash-results" class="stat-val">—</div></div>
@@ -344,11 +345,20 @@
         <div class="page-title">スコア管理</div>
         <div class="page-sub">スコアの公開を管理します</div>
         <div class="card" style="max-width:480px">
-          <div class="card-label">スコア公開設定</div>
-          <div class="card-desc">公開するとスコア結果タブに全員の順位・スコアが表示されます。</div>
+          <div class="card-label">ランキング公開設定</div>
+          <div class="card-desc">公開すると全ユーザーのスコア結果タブにランキングが表示されます。</div>
           <div class="toggle-row">
             <div class="status-row"><span class="sdot" id="score-dot"></span><span id="score-release-label">—</span></div>
             <label class="toggle-switch"><input type="checkbox" id="toggle-scores" onchange="toggleSetting('scoresReleased',this.checked,this)"><span class="tslider"></span></label>
+          </div>
+        </div>
+
+        <div class="card" style="max-width:480px">
+          <div class="card-label">実際の点数の公開設定</div>
+          <div class="card-desc">ONにすると、スコアカードに「実際の合計点」が表示されます。OFFにすると非表示です。</div>
+          <div class="toggle-row">
+            <div class="status-row"><span class="sdot" id="results-public-dot"></span><span id="results-public-label">—</span></div>
+            <label class="toggle-switch"><input type="checkbox" id="toggle-results-public" onchange="toggleSetting('resultsPublic',this.checked,this)"><span class="tslider"></span></label>
           </div>
         </div>
         <div class="section-title">スコアプレビュー</div>
@@ -514,12 +524,13 @@ window.showPage = page => {
 
 // ── CONTROLS ─────────────────────────────────────
 function updateControls() {
-  [['toggle-predict',appSettings.predictionOpen],['toggle-result',appSettings.resultInputOpen],['toggle-scores',appSettings.scoresReleased]].forEach(([id,val])=>{
+  [['toggle-predict',appSettings.predictionOpen],['toggle-result',appSettings.resultInputOpen],['toggle-scores',appSettings.scoresReleased],['toggle-results-public',appSettings.resultsPublic]].forEach(([id,val])=>{
     const el=document.getElementById(id); if(el&&!el.disabled) el.checked=!!val;
   });
   setDot('predict-dot','predict-label',appSettings.predictionOpen,'受付中','締め切り');
   setDot('result-dot','result-label',appSettings.resultInputOpen,'受付中','締め切り');
   setDot('score-dot','score-release-label',appSettings.scoresReleased,'公開中','非公開');
+  setDot('results-public-dot','results-public-label',appSettings.resultsPublic,'公開中','非公開');
 }
 function setDot(dotId,labelId,val,on,off) {
   const d=document.getElementById(dotId),l=document.getElementById(labelId);
@@ -557,7 +568,8 @@ function renderDashboard() {
   document.getElementById('dash-results').textContent=Object.keys(allResults).length;
   [['dash-predict-status',appSettings.predictionOpen,'受付中','締め切り'],
    ['dash-result-status',appSettings.resultInputOpen,'受付中','締め切り'],
-   ['dash-score-status',appSettings.scoresReleased,'公開中','非公開']].forEach(([id,val,on,off])=>{
+   ['dash-score-status',appSettings.scoresReleased,'公開中','非公開'],
+   ['dash-results-public-status',appSettings.resultsPublic,'公開中','非公開']].forEach(([id,val,on,off])=>{
     const el=document.getElementById(id); if(!el)return;
     el.innerHTML=`<span class="sdot ${val?'on':'off'}"></span><span style="color:${val?'var(--success)':'var(--text2)'}">${val?on:off}</span>`;
   });
@@ -763,7 +775,7 @@ function renderTotalRules() {
         oninput="this.className='rule-pt-input '+(parseFloat(this.value)<0?'neg':'pos')">
       <span class="rule-sep">pt</span>
       <input class="rule-note-input" type="text" data-key="note" value="${r.note||''}" placeholder="ラベル（任意）">
-      <button class="btn-del" onclick="localTotalRules.splice(${i},1);renderTotalRules()">×</button>
+      <button class="btn-del" onclick="deleteTotalRule(${i})">×</button>
     </div>`).join('');
 }
 
@@ -779,7 +791,7 @@ function renderSubjectRules() {
         oninput="this.className='rule-pt-input '+(parseFloat(this.value)<0?'neg':'pos')">
       <span class="rule-sep">pt</span>
       <input class="rule-note-input" type="text" data-key="note" value="${r.note||''}" placeholder="ラベル（任意）">
-      <button class="btn-del" onclick="localSubjectRules.splice(${i},1);renderSubjectRules()">×</button>
+      <button class="btn-del" onclick="deleteSubjectRule(${i})">×</button>
     </div>`).join('');
 }
 
@@ -793,6 +805,16 @@ function collectRulesFromDOM(containerId, numKey) {
     return { [numKey]: isNaN(numVal)?0:numVal, pts: isNaN(pts)?0:pts, note };
   });
 }
+
+// onclick属性(type=module外)からアクセスできるようにwindowへ公開
+window.renderTotalRules   = () => renderTotalRules();
+window.renderSubjectRules = () => renderSubjectRules();
+window.renderCustomRuleList = (id) => renderCustomRuleList(id);
+
+// インラインonclickからlocalXxx配列を操作するためのヘルパー
+window.deleteTotalRule   = (i) => { localTotalRules.splice(i, 1);   renderTotalRules(); };
+window.deleteSubjectRule = (i) => { localSubjectRules.splice(i, 1); renderSubjectRules(); };
+window.deleteCustomRule  = (sid, i) => { localSubjectScoringRules[sid].splice(i, 1); renderCustomRuleList(sid); };
 
 window.addTotalRule   = ()=>{ localTotalRules.push({maxDiff:0,pts:0,note:''}); renderTotalRules(); };
 window.addSubjectRule = ()=>{ localSubjectRules.push({maxPct:0,pts:0,note:''}); renderSubjectRules(); };
@@ -885,7 +907,7 @@ function renderCustomRuleList(subjectId) {
         oninput="this.className='rule-pt-input '+(parseFloat(this.value)<0?'neg':'pos')">
       <span class="rule-sep">pt</span>
       <input class="rule-note-input" type="text" data-key="note" value="${r.note||''}" placeholder="ラベル（任意）">
-      <button class="btn-del" onclick="localSubjectScoringRules['${subjectId}'].splice(${i},1);renderCustomRuleList('${subjectId}')">×</button>
+      <button class="btn-del" onclick="deleteCustomRule('${subjectId}', ${i})">×</button>
     </div>`).join('');
 }
 

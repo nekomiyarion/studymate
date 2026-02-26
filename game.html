@@ -521,6 +521,57 @@
     margin-left: 5px;
   }
 
+  /* ─── MY SCORE PREVIEW ────────────────── */
+  .my-score-wrap {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .my-score-block {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .my-score-block.is-total {
+    border-color: var(--accent-border);
+    background: var(--accent-dim);
+  }
+  .my-score-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .my-score-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .my-score-val.pos-col { color: var(--success); }
+  .my-score-val.neg-col { color: var(--danger); }
+  .my-score-sub {
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 1.5;
+  }
+
+  .page-sub-label {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: -8px;
+    margin-bottom: 14px;
+  }
+  .big-score.pos-col { color: var(--success); }
+  .big-score.neg-col { color: var(--danger); }
+
   /* ─── SCORES ────────────────────────────── */
   .scores-grid {
     display: grid;
@@ -886,12 +937,48 @@
 
     <!-- SCORES TAB -->
     <div class="tab-panel" id="tab-scores">
-      <div class="section-title">スコア結果</div>
+
+      <!-- 自分のスコアプレビュー（常時表示） -->
+      <div id="my-score-preview" style="display:none">
+        <div class="section-title">あなたの現在スコア</div>
+        <div class="my-score-wrap">
+          <div class="my-score-block">
+            <div class="my-score-label">合計点ボーナス</div>
+            <div class="my-score-val" id="my-total-bonus">---</div>
+            <div class="my-score-sub" id="my-total-bonus-detail"></div>
+          </div>
+          <div class="my-score-block">
+            <div class="my-score-label">教科別ボーナス</div>
+            <div class="my-score-val" id="my-subject-bonus">---</div>
+            <div class="my-score-sub" id="my-subject-bonus-detail"></div>
+          </div>
+          <div class="my-score-block is-total">
+            <div class="my-score-label">総合スコア（暫定）</div>
+            <div class="my-score-val" id="my-grand-total">---</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;margin-bottom:24px">※ 結果が未入力の場合はボーナスが計算できません</div>
+      </div>
+
+      <!-- 全体ランキング（公開時のみ） -->
       <div id="scores-not-released" class="empty-state">
-        <div style="font-size:15px;font-weight:600;color:var(--text)">スコアはまだ公開されていません</div>
+        <div style="font-size:15px;font-weight:600;color:var(--text)">ランキングはまだ公開されていません</div>
         <div class="empty-label">管理者がスコアを公開すると表示されます</div>
       </div>
       <div id="scores-content" style="display:none">
+        <!-- 合計点ボーナスランキング -->
+        <div class="section-title">合計点ボーナス ランキング</div>
+        <div class="page-sub-label">合計点の予想精度で競います</div>
+        <div id="scores-total-grid" class="scores-grid" style="margin-bottom:32px"></div>
+
+        <!-- 教科別ボーナスランキング -->
+        <div class="section-title">教科別ボーナス ランキング</div>
+        <div class="page-sub-label">各教科の予想精度で競います</div>
+        <div id="scores-subject-grid" class="scores-grid" style="margin-bottom:32px"></div>
+
+        <!-- 総合ランキング -->
+        <div class="section-title">総合ランキング</div>
+        <div class="page-sub-label">合計点 ＋ 合計点ボーナス ＋ 教科別ボーナス</div>
         <div id="scores-grid" class="scores-grid"></div>
       </div>
     </div>
@@ -1109,6 +1196,7 @@ async function initApp() {
   onValue(ref(db, 'results'), (snap) => {
     allResults = snap.val() || {};
     renderScores();
+    renderMyScorePreview();
   });
   onValue(ref(db, 'scoringRules'), (snap) => {
     const raw = snap.val() || {};
@@ -1164,6 +1252,20 @@ function updateResultSection() {
   document.getElementById('result-input-section').style.display =
     appSettings.resultInputOpen ? 'block' : 'none';
 }
+
+// 教科別の実際点数が入力されたら合計に自動反映
+window.autoCalcResultTotal = () => {
+  const subList = Object.entries(subjects);
+  let sum = 0, hasAny = false;
+  subList.forEach(([id]) => {
+    const el = document.getElementById(`sub-res-${id}`);
+    if (el && el.value !== '') { sum += parseInt(el.value) || 0; hasAny = true; }
+  });
+  if (hasAny) {
+    const totalEl = document.getElementById('total-result');
+    if (totalEl) totalEl.value = sum;
+  }
+};
 
 function updateSavePredictBtn() {
   // 全体設定がOFFなら常に無効
@@ -1223,7 +1325,7 @@ function renderResultSubjectsGrid() {
         <span class="smax">${sub.maxScore}点</span>
       </div>
       ${isOpen
-        ? `<input class="subject-input" type="number" id="sub-res-${id}" min="0" max="${sub.maxScore}" placeholder="---">`
+        ? `<input class="subject-input" type="number" id="sub-res-${id}" min="0" max="${sub.maxScore}" placeholder="---" oninput="autoCalcResultTotal()">`
         : `<div class="subject-closed-msg">締め切り</div>
            <input class="subject-input" type="number" id="sub-res-${id}" min="0" max="${sub.maxScore}" placeholder="---" disabled style="opacity:.3">`
       }
@@ -1332,11 +1434,11 @@ function updateScoresTab() {
   if (appSettings.scoresReleased) {
     notReleased.style.display = 'none';
     content.style.display     = 'block';
-    renderScores();
   } else {
     notReleased.style.display = 'block';
     content.style.display     = 'none';
   }
+  renderScores();  // 自分のプレビューは常時更新
 }
 
 // ── SCORE HINT ───────────────────────────
@@ -1373,58 +1475,134 @@ function calcSubjectBonus(predicted, actual, maxScore, subjectId) {
   return -diff;
 }
 
-function renderScores() {
-  if (!appSettings.scoresReleased) return;
-  const grid    = document.getElementById('scores-grid');
+// スコア計算ヘルパー（全ユーザー分）
+function calcAllScores() {
   const users   = Object.values(allPredictions);
   const subList = Object.entries(subjects);
-  if (users.length===0) { grid.innerHTML='<div class="empty-state">データがありません</div>'; return; }
-
-  const scored = users.map(u => {
-    const result     = allResults[u.uid];
-    const actualTotal= result?.total ?? null;
-    const totalBonus = calcTotalBonus(u.total, actualTotal);
-    const subBonuses = {};
+  return users.map(u => {
+    const result      = allResults[u.uid];
+    const actualTotal = result?.total ?? null;
+    const totalBonus  = calcTotalBonus(u.total, actualTotal);
+    const subBonuses  = {};
     const subBonusVisible = {};
-    let   totalSubBonus = 0;
-    subList.forEach(([id,sub]) => {
-      // 教科ごとのスコア公開設定を確認 (全体公開 AND 教科公開)
-      const ss = subjectSettings[id];
+    let totalSubBonus = 0;
+    subList.forEach(([id, sub]) => {
+      const ss     = subjectSettings[id];
       const subPub = (ss && ss.scoresReleased !== undefined) ? !!ss.scoresReleased : true;
-      const b = subPub ? calcSubjectBonus(u.subjects?.[id]??null, result?.subjects?.[id]??null, sub.maxScore, id) : 0;
-      subBonuses[id] = b;
-      subBonusVisible[id] = subPub;
-      totalSubBonus += b;
+      const b      = subPub ? calcSubjectBonus(u.subjects?.[id]??null, result?.subjects?.[id]??null, sub.maxScore, id) : 0;
+      subBonuses[id]        = b;
+      subBonusVisible[id]   = subPub;
+      totalSubBonus        += b;
     });
-    const grandTotal = actualTotal!==null ? actualTotal+totalBonus+totalSubBonus : null;
+    const grandTotal = actualTotal !== null ? actualTotal + totalBonus + totalSubBonus : null;
     return { ...u, actualTotal, totalBonus, subBonuses, subBonusVisible, totalSubBonus, grandTotal };
-  }).sort((a,b)=>(b.grandTotal??-9999)-(a.grandTotal??-9999));
+  });
+}
 
-  const rankClass = ['top1','top2','top3'];
-  const rankLabel = ['1st','2nd','3rd'];
+// スコアカードHTML生成
+function scoreCardHTML(u, rank, mode) {
+  const rc = ['top1','top2','top3'];
+  const rl = ['1st','2nd','3rd'];
+  const isMe = u.uid === currentUser?.uid;
+  const isTop = rank === 0;
+  const subList = Object.entries(subjects);
+  const showResults = !!appSettings.resultsPublic;   // 実際の点数公開フラグ
 
-  grid.innerHTML = scored.map((u,i) => `
-    <div class="score-card ${u.uid===currentUser?.uid?'is-me':''} ${i===0?'is-top':''}">
-      <div class="rank-num ${rankClass[i]||''}">${rankLabel[i]||'#'+(i+1)}</div>
+  let mainVal, mainLabel, breakdown;
+
+  if (mode === 'total') {
+    mainVal   = u.totalBonus !== null ? (u.totalBonus >= 0 ? '+' : '') + u.totalBonus + ' pt' : '---';
+    mainLabel = '合計点ボーナス';
+    breakdown = `
+      ${showResults ? `<div class="brow"><span class="bl">実際の合計点</span><span class="bv">${u.actualTotal ?? '未入力'}</span></div>` : ''}
+      <div class="brow"><span class="bl">予想</span><span class="bv">${u.total ?? '---'}</span></div>
+      <div class="brow"><span class="bl">誤差</span><span class="bv">${u.actualTotal !== null && u.total !== null ? Math.abs(u.actualTotal - u.total) + '点' : '—'}</span></div>`;
+  } else if (mode === 'subject') {
+    mainVal   = (u.totalSubBonus >= 0 ? '+' : '') + u.totalSubBonus + ' pt';
+    mainLabel = '教科別ボーナス';
+    breakdown = subList.map(([id, sub]) => `
+      <div class="brow sub-row">
+        <span class="bl" style="font-size:11px">${sub.name}</span>
+        ${u.subBonusVisible?.[id] === false
+          ? `<span class="bv" style="font-size:11px;color:var(--text3)">非公開</span>`
+          : `<span class="bv ${(u.subBonuses[id]||0)>=0?'pos':'neg'}" style="font-size:11px">${(u.subBonuses[id]||0)>=0?'+':''}${u.subBonuses[id]||0}</span>`
+        }
+      </div>`).join('');
+  } else { // grand
+    mainVal   = u.grandTotal ?? '---';
+    mainLabel = '総合スコア';
+    breakdown = `
+      ${showResults ? `<div class="brow"><span class="bl">実際の合計点</span><span class="bv">${u.actualTotal ?? '未入力'}</span></div>` : ''}
+      <div class="brow"><span class="bl">合計点ボーナス</span><span class="bv ${u.totalBonus>=0?'pos':'neg'}">${u.totalBonus>=0?'+':''}${u.totalBonus}</span></div>
+      <div class="brow"><span class="bl">教科別ボーナス</span><span class="bv ${u.totalSubBonus>=0?'pos':'neg'}">${u.totalSubBonus>=0?'+':''}${u.totalSubBonus}</span></div>`;
+  }
+
+  return `
+    <div class="score-card ${isMe?'is-me':''} ${isTop?'is-top':''}">
+      <div class="rank-num ${rc[rank]||''}">${rl[rank]||'#'+(rank+1)}</div>
       <div class="score-player">
-        ${u.displayName||'不明'}${u.uid===currentUser?.uid?'<span class="badge-you">YOU</span>':''}
+        ${u.displayName||'不明'}${isMe?'<span class="badge-you">YOU</span>':''}
       </div>
-      <div class="big-score">${u.grandTotal??'---'}</div>
-      <div class="big-score-label">総合スコア</div>
-      <div class="breakdown">
-        <div class="brow"><span class="bl">実際の合計点</span><span class="bv">${u.actualTotal??'未入力'}</span></div>
-        <div class="brow"><span class="bl">合計点予想ボーナス</span><span class="bv ${u.totalBonus>=0?'pos':'neg'}">${u.totalBonus>=0?'+':''}${u.totalBonus}</span></div>
-        <div class="brow"><span class="bl">教科別ボーナス合計</span><span class="bv ${u.totalSubBonus>=0?'pos':'neg'}">${u.totalSubBonus>=0?'+':''}${u.totalSubBonus}</span></div>
-        ${subList.map(([id,sub])=>`
-          <div class="brow sub-row">
-            <span class="bl" style="font-size:11px">${sub.name}</span>
-            ${u.subBonusVisible?.[id]===false
-              ? `<span class="bv" style="font-size:11px;color:var(--text3)">非公開</span>`
-              : `<span class="bv ${(u.subBonuses[id]||0)>=0?'pos':'neg'}" style="font-size:11px">${(u.subBonuses[id]||0)>=0?'+':''}${u.subBonuses[id]||0}</span>`
-            }
-          </div>`).join('')}
-      </div>
-    </div>`).join('');
+      <div class="big-score ${mode==='total'?(u.totalBonus>=0?'pos-col':'neg-col'):''}">${mainVal}</div>
+      <div class="big-score-label">${mainLabel}</div>
+      <div class="breakdown">${breakdown}</div>
+    </div>`;
+}
+
+function renderRanking(gridId, scored, sortKey, mode) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  if (scored.length === 0) { grid.innerHTML = '<div class="empty-state">データがありません</div>'; return; }
+  const sorted = [...scored].sort((a, b) => {
+    const av = a[sortKey] ?? -99999;
+    const bv = b[sortKey] ?? -99999;
+    return bv - av;
+  });
+  grid.innerHTML = sorted.map((u, i) => scoreCardHTML(u, i, mode)).join('');
+}
+
+function renderScores() {
+  // 自分スコアプレビュー（常時）
+  renderMyScorePreview();
+
+  if (!appSettings.scoresReleased) return;
+  const scored = calcAllScores();
+  renderRanking('scores-total-grid',   scored, 'totalBonus',    'total');
+  renderRanking('scores-subject-grid', scored, 'totalSubBonus', 'subject');
+  renderRanking('scores-grid',         scored, 'grandTotal',    'grand');
+}
+
+function renderMyScorePreview() {
+  const preview = document.getElementById('my-score-preview');
+  if (!preview || !currentUser) return;
+
+  const myPred   = allPredictions[currentUser.uid];
+  const myResult = allResults[currentUser.uid];
+  if (!myPred) { preview.style.display = 'none'; return; }
+
+  const subList     = Object.entries(subjects);
+  const actualTotal = myResult?.total ?? null;
+  const totalBonus  = calcTotalBonus(myPred.total, actualTotal);
+  let   totalSubBonus = 0;
+  const subLines = [];
+  subList.forEach(([id, sub]) => {
+    const b = calcSubjectBonus(myPred.subjects?.[id]??null, myResult?.subjects?.[id]??null, sub.maxScore, id);
+    totalSubBonus += b;
+    subLines.push(`${sub.name}: ${b>=0?'+':''}${b}pt`);
+  });
+  const grandTotal  = actualTotal !== null ? actualTotal + totalBonus + totalSubBonus : null;
+
+  document.getElementById('my-total-bonus').textContent   = actualTotal !== null ? (totalBonus>=0?'+':'')+totalBonus+' pt' : '---';
+  document.getElementById('my-subject-bonus').textContent = actualTotal !== null ? (totalSubBonus>=0?'+':'')+totalSubBonus+' pt' : '---';
+  document.getElementById('my-grand-total').textContent   = grandTotal !== null ? String(grandTotal) : '---';
+  document.getElementById('my-total-bonus-detail').textContent   = actualTotal !== null ? `予想${myPred.total??'?'}点 / 実際${actualTotal}点` : '結果未入力';
+  document.getElementById('my-subject-bonus-detail').textContent = actualTotal !== null ? subLines.join(' ・ ') : '結果未入力';
+
+  // スコア公開フラグに応じてval色を変える
+  document.getElementById('my-total-bonus').className   = 'my-score-val ' + (totalBonus>=0?'pos-col':'neg-col');
+  document.getElementById('my-subject-bonus').className = 'my-score-val ' + (totalSubBonus>=0?'pos-col':'neg-col');
+
+  preview.style.display = 'block';
 }
 
 // ── TOAST ─────────────────────────────────
