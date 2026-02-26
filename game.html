@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>テスト予想ゲーム</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
     --bg:       #0c0c10;
@@ -26,6 +27,43 @@
     --gold:     #c9a84c;
     --gold-dim: rgba(201,168,76,0.12);
   }
+
+  /* ─── LIGHT MODE ────────────────────────── */
+  body.light {
+    --bg:       #f4f5f9;
+    --surface:  #ffffff;
+    --surface2: #eef0f6;
+    --surface3: #e4e6ef;
+    --accent:   #4070d8;
+    --accent-dim: rgba(64,112,216,0.10);
+    --accent-border: rgba(64,112,216,0.30);
+    --text:     #1a1c2a;
+    --text2:    #5a5e7a;
+    --text3:    #9498b4;
+    --border:   #dde0ec;
+    --border2:  #cdd0e0;
+    --success:  #28a055;
+    --success-dim: rgba(40,160,85,0.10);
+    --danger:   #cc3333;
+    --danger-dim: rgba(204,51,51,0.10);
+    --gold:     #b08a20;
+    --gold-dim: rgba(176,138,32,0.10);
+  }
+
+  /* テーマ切り替えボタン */
+  .btn-theme {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    padding: 5px 10px;
+    color: var(--text2);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.18s;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .btn-theme:hover { color: var(--text); border-color: var(--text2); }
 
   * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -255,7 +293,7 @@
   }
   .user-name {
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 700;
     color: var(--text);
     max-width: 120px;
     overflow: hidden;
@@ -288,7 +326,7 @@
   .nav-tab {
     padding: 14px 18px;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text2);
     cursor: pointer;
     border-bottom: 2px solid transparent;
@@ -336,8 +374,8 @@
   }
   .section-label {
     font-size: 11px;
-    font-weight: 500;
-    color: var(--text3);
+    font-weight: 700;
+    color: var(--text2);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 12px;
@@ -353,8 +391,8 @@
   }
   .card-label {
     font-size: 11px;
-    font-weight: 500;
-    color: var(--text3);
+    font-weight: 700;
+    color: var(--text2);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 16px;
@@ -418,7 +456,7 @@
   .score-hint .hl  { font-family: 'JetBrains Mono', monospace; font-weight: 600; text-align: right; }
   .score-hint .pos { color: var(--success); }
   .score-hint .neg { color: var(--danger); }
-  .score-hint .dim { color: var(--text3); }
+  .score-hint .dim { color: var(--text2); font-weight: 500; }
 
   /* ─── SUBJECTS GRID ─────────────────────── */
   .subjects-grid {
@@ -539,9 +577,9 @@
     background: var(--accent-dim);
   }
   .my-score-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--text3);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text2);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
@@ -558,13 +596,15 @@
   .my-score-val.pos-col { color: var(--success); }
   .my-score-val.neg-col { color: var(--danger); }
   .my-score-sub {
-    font-size: 11px;
-    color: var(--text3);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
     line-height: 1.5;
   }
 
   .page-sub-label {
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 600;
     color: var(--text2);
     margin-top: -8px;
     margin-bottom: 14px;
@@ -620,8 +660,9 @@
     letter-spacing: -1px;
   }
   .big-score-label {
-    font-size: 11px;
-    color: var(--text3);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
     margin-bottom: 16px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -639,11 +680,94 @@
     border-bottom: 1px solid var(--border);
   }
   .brow:last-child { border-bottom: none; }
-  .brow .bl { color: var(--text2); }
+  .brow .bl { color: var(--text); font-weight: 500; }
   .brow .bv { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
   .bv.pos { color: var(--success); }
   .bv.neg { color: var(--danger); }
   .brow.sub-row { padding-left: 10px; opacity: 0.8; }
+
+  /* ─── COMMENT INPUT ────────────────────── */
+  .comment-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    resize: none;
+    transition: border-color 0.18s;
+    line-height: 1.5;
+  }
+  .comment-input:focus { border-color: var(--accent); }
+  .comment-input::placeholder { color: var(--text3); }
+
+  /* ─── COMMENT LIST ───────────────────── */
+  .comment-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .comment-row:last-child { border-bottom: none; }
+  .comment-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .comment-body { flex: 1; min-width: 0; }
+  .comment-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .comment-text { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.5; word-break: break-all; }
+  .comment-meta { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* ─── BADGES ────────────────────────── */
+  .badge-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; margin-bottom: 4px; }
+  .badge-item {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .badge-perfect  { background: rgba(201,168,76,0.2);  color: var(--gold);    border: 1px solid rgba(201,168,76,0.4); }
+  .badge-great    { background: rgba(91,141,238,0.15); color: var(--accent);  border: 1px solid var(--accent-border); }
+  .badge-allsub   { background: rgba(82,199,122,0.15); color: var(--success); border: 1px solid rgba(82,199,122,0.3); }
+  .badge-fullmark { background: rgba(201,168,76,0.25); color: #d4a820;        border: 1px solid rgba(201,168,76,0.5); }
+
+  /* ─── SEASON CARDS ───────────────────── */
+  .season-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+  }
+  .season-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+  .season-rank-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .season-rank-row:last-child { border-bottom: none; }
+  .season-rank-num { font-family: 'JetBrains Mono', monospace; font-weight: 700; width: 32px; color: var(--text2); }
+  .season-rank-num.r1 { color: var(--gold); }
+  .season-rank-num.r2 { color: #9aa8c0; }
+  .season-rank-num.r3 { color: #a07c60; }
+  .season-rank-score { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent); margin-left: auto; }
 
   /* ─── EMPTY / LOADING ───────────────────── */
   .empty-state {
@@ -652,7 +776,7 @@
     color: var(--text2);
     font-size: 14px;
   }
-  .empty-label { font-size: 12px; color: var(--text3); margin-top: 6px; }
+  .empty-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-top: 6px; }
   .loading {
     display: flex;
     align-items: center;
@@ -856,6 +980,7 @@
         <div class="user-avatar" id="user-avatar-text">?</div>
         <span class="user-name" id="user-display-name"></span>
       </div>
+      <button class="btn-theme" id="theme-toggle-btn" onclick="toggleTheme()" title="テーマ切替">🌙</button>
       <button class="btn-icon" onclick="openUsernameModal(false)">名前変更</button>
       <button class="btn-icon" onclick="logout()">ログアウト</button>
     </div>
@@ -899,6 +1024,12 @@
         </div>
       </div>
 
+      <div class="card" style="margin-top:16px">
+        <div class="card-label">一言コメント</div>
+        <textarea id="predict-comment" class="comment-input" placeholder="「絶対英語は100点！」など一言どうぞ（任意）" maxlength="100" rows="2"></textarea>
+        <div style="text-align:right;font-size:11px;color:var(--text3);margin-top:4px"><span id="comment-count">0</span>/100文字</div>
+      </div>
+
       <button class="btn-save" id="save-predict-btn" onclick="savePrediction()" disabled style="margin-top:4px">
         予想を保存
       </button>
@@ -927,6 +1058,19 @@
       <div class="card">
         <div class="card-label">合計点予想</div>
         <div id="overview-total-table"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
+
+      <!-- ⑥ 予想分布グラフ -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-label">合計点 予想分布</div>
+        <canvas id="dist-chart" height="120"></canvas>
+        <div id="dist-no-data" style="color:var(--text2);font-size:13px;padding:20px 0;display:none">データがありません</div>
+      </div>
+
+      <!-- ③ コメント一覧 -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-label">みんなの一言</div>
+        <div id="comments-list"><div style="color:var(--text2);font-size:13px">まだコメントがありません</div></div>
       </div>
 
       <div style="margin-top:24px">
@@ -976,10 +1120,21 @@
         <div class="page-sub-label">各教科の予想精度で競います</div>
         <div id="scores-subject-grid" class="scores-grid" style="margin-bottom:32px"></div>
 
+        <!-- 合計＋教科別 複合ランキング -->
+        <div class="section-title">合計＋教科別 複合ランキング</div>
+        <div class="page-sub-label">合計点ボーナス ＋ 教科別ボーナスの合算で競います</div>
+        <div id="scores-combined-grid" class="scores-grid" style="margin-bottom:32px"></div>
+
         <!-- 総合ランキング -->
         <div class="section-title">総合ランキング</div>
-        <div class="page-sub-label">合計点 ＋ 合計点ボーナス ＋ 教科別ボーナス</div>
+        <div class="page-sub-label">実際の点数 ＋ 合計点ボーナス ＋ 教科別ボーナス</div>
         <div id="scores-grid" class="scores-grid"></div>
+      </div>
+
+      <!-- ⑤ 過去テスト記録 -->
+      <div id="seasons-section" style="margin-top:40px;display:none">
+        <div class="section-title">📚 過去のテスト記録</div>
+        <div id="seasons-list"></div>
       </div>
     </div>
 
@@ -1008,7 +1163,7 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
-import { getDatabase, ref, set, get, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAejIT2YtEDLgEpMN-w5V99m_VWIGN0BSk",
@@ -1033,6 +1188,9 @@ let allPredictions = {};
 let allResults = {};
 let scoringRules = {};
 let subjectSettings = {};  // 教科ごとのフェーズ設定
+let allComments  = {};  // ③コメント
+let seasons      = {};  // ⑤シーズン記録
+let distChartInst = null; // ⑥分布グラフインスタンス
 
 // デフォルトのスコアルール（DBに設定がない場合のフォールバック）
 const DEFAULT_TOTAL_RULES = [
@@ -1191,6 +1349,8 @@ async function initApp() {
     allPredictions = snap.val() || {};
     renderOverviewTotal();
     renderOverviewSubjects();
+    renderDistChart();
+    renderComments();
     renderScores();
   });
   onValue(ref(db, 'results'), (snap) => {
@@ -1219,8 +1379,19 @@ async function initApp() {
     subjectSettings = snap.val() || {};
     renderSubjectsGrid();
     renderResultSubjectsGrid();
-    // 予想入力ボタンの状態を更新（教科別制御）
     updateSavePredictBtn();
+  });
+
+  // ③ コメントリスナー
+  onValue(ref(db, 'comments'), (snap) => {
+    allComments = snap.val() || {};
+    renderComments();
+  });
+
+  // ⑤ シーズンリスナー
+  onValue(ref(db, 'seasons'), (snap) => {
+    seasons = snap.val() || {};
+    renderSeasons();
   });
 }
 
@@ -1231,6 +1402,7 @@ window.switchTab = (tab) => {
   document.getElementById(`tab-${tab}`).classList.add('active');
   const idx = ['predict','overview','scores'].indexOf(tab);
   document.querySelectorAll('.nav-tab')[idx]?.classList.add('active');
+  if (tab === 'overview') renderDistChart(); // テーマ切替後も正しく描画
 };
 
 // ── BANNERS ───────────────────────────────
@@ -1352,9 +1524,29 @@ async function loadMyPrediction() {
       if (el && rd.subjects?.[id] !== undefined) el.value = rd.subjects[id];
     });
   }
+
+  // ③ コメント読み込み
+  const snapC = await get(ref(db, `comments/${currentUser.uid}`));
+  if (snapC.exists()) {
+    const ta = document.getElementById('predict-comment');
+    if (ta) {
+      ta.value = snapC.val().text || '';
+      const n = document.getElementById('comment-count');
+      if (n) n.textContent = ta.value.length;
+    }
+  }
 }
 
 window.onTotalInput = () => {};
+
+// ③ コメント文字数カウンター
+window.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('predict-comment');
+  if (ta) ta.addEventListener('input', () => {
+    const n = document.getElementById('comment-count');
+    if (n) n.textContent = ta.value.length;
+  });
+});
 
 // ── SAVE ──────────────────────────────────
 window.savePrediction = async () => {
@@ -1368,6 +1560,15 @@ window.savePrediction = async () => {
   const userSnap    = await get(ref(db, `users/${currentUser.uid}`));
   const displayName = userSnap.val()?.displayName || currentUser.displayName || currentUser.email;
   await set(ref(db, `predictions/${currentUser.uid}`), { total, subjects: subData, displayName, uid: currentUser.uid, updatedAt: Date.now() });
+
+  // ③ コメントも保存（空ならDB削除）
+  const comment = document.getElementById('predict-comment')?.value?.trim() || '';
+  if (comment) {
+    await set(ref(db, `comments/${currentUser.uid}`), { text: comment, displayName, uid: currentUser.uid, updatedAt: Date.now() });
+  } else {
+    await remove(ref(db, `comments/${currentUser.uid}`)).catch(()=>{});
+  }
+
   showToast('予想を保存しました', 'success');
 };
 
@@ -1510,7 +1711,14 @@ function scoreCardHTML(u, rank, mode) {
 
   let mainVal, mainLabel, breakdown;
 
-  if (mode === 'total') {
+  if (mode === 'combined') {
+    const cb = u.totalBonus + u.totalSubBonus;
+    mainVal   = u.actualTotal !== null ? (cb >= 0 ? '+' : '') + cb + ' pt' : '---';
+    mainLabel = '複合ボーナス合計';
+    breakdown = `
+      <div class="brow"><span class="bl">合計点ボーナス</span><span class="bv ${u.totalBonus>=0?'pos':'neg'}">${u.totalBonus>=0?'+':''}${u.totalBonus}</span></div>
+      <div class="brow"><span class="bl">教科別ボーナス</span><span class="bv ${u.totalSubBonus>=0?'pos':'neg'}">${u.totalSubBonus>=0?'+':''}${u.totalSubBonus}</span></div>`;
+  } else if (mode === 'total') {
     mainVal   = u.totalBonus !== null ? (u.totalBonus >= 0 ? '+' : '') + u.totalBonus + ' pt' : '---';
     mainLabel = '合計点ボーナス';
     breakdown = `
@@ -1537,6 +1745,7 @@ function scoreCardHTML(u, rank, mode) {
       <div class="brow"><span class="bl">教科別ボーナス</span><span class="bv ${u.totalSubBonus>=0?'pos':'neg'}">${u.totalSubBonus>=0?'+':''}${u.totalSubBonus}</span></div>`;
   }
 
+  const badges = (mode === 'grand') ? badgesHTML(u) : '';
   return `
     <div class="score-card ${isMe?'is-me':''} ${isTop?'is-top':''}">
       <div class="rank-num ${rc[rank]||''}">${rl[rank]||'#'+(rank+1)}</div>
@@ -1545,6 +1754,7 @@ function scoreCardHTML(u, rank, mode) {
       </div>
       <div class="big-score ${mode==='total'?(u.totalBonus>=0?'pos-col':'neg-col'):''}">${mainVal}</div>
       <div class="big-score-label">${mainLabel}</div>
+      ${badges}
       <div class="breakdown">${breakdown}</div>
     </div>`;
 }
@@ -1567,9 +1777,15 @@ function renderScores() {
 
   if (!appSettings.scoresReleased) return;
   const scored = calcAllScores();
-  renderRanking('scores-total-grid',   scored, 'totalBonus',    'total');
-  renderRanking('scores-subject-grid', scored, 'totalSubBonus', 'subject');
-  renderRanking('scores-grid',         scored, 'grandTotal',    'grand');
+  // combinedScore = 合計点ボーナス + 教科別ボーナス
+  const scoredWithCombined = scored.map(u => ({
+    ...u,
+    combinedBonus: u.totalBonus + u.totalSubBonus
+  }));
+  renderRanking('scores-total-grid',    scoredWithCombined, 'totalBonus',    'total');
+  renderRanking('scores-subject-grid',  scoredWithCombined, 'totalSubBonus', 'subject');
+  renderRanking('scores-combined-grid', scoredWithCombined, 'combinedBonus', 'combined');
+  renderRanking('scores-grid',          scoredWithCombined, 'grandTotal',    'grand');
 }
 
 function renderMyScorePreview() {
@@ -1604,6 +1820,172 @@ function renderMyScorePreview() {
 
   preview.style.display = 'block';
 }
+
+// ── ③ COMMENTS ──────────────────────────
+function renderComments() {
+  const el = document.getElementById('comments-list');
+  if (!el) return;
+  const list = Object.values(allComments).sort((a,b) => (b.updatedAt||0)-(a.updatedAt||0));
+  if (list.length === 0) {
+    el.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:8px 0">まだコメントがありません</div>';
+    return;
+  }
+  el.innerHTML = list.map(cm => `
+    <div class="comment-row">
+      <div class="comment-avatar">${(cm.displayName||'?').charAt(0).toUpperCase()}</div>
+      <div class="comment-body">
+        <div class="comment-name">${cm.displayName||'不明'}${cm.uid===currentUser?.uid?'<span class="badge-you">YOU</span>':''}</div>
+        <div class="comment-text">${escapeHtml(cm.text||'')}</div>
+        <div class="comment-meta">${cm.updatedAt?new Date(cm.updatedAt).toLocaleString('ja'):''}</div>
+      </div>
+    </div>`).join('');
+}
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── ④ BADGES ─────────────────────────────
+function calcBadges(u, scored) {
+  const badges = [];
+  const result = allResults[u.uid];
+  if (!result) return badges;
+  const subList = Object.entries(subjects);
+
+  // ぴったり賞（合計点）
+  if (u.total !== null && u.total !== undefined && result.total !== null && result.total !== undefined) {
+    if (Math.abs(u.total - result.total) === 0) badges.push({ cls: 'badge-perfect', label: '🎯 合計点ぴったり！' });
+    else if (Math.abs(u.total - result.total) <= 5) badges.push({ cls: 'badge-great', label: '✨ 合計±5点以内' });
+  }
+
+  // 全教科5%以内
+  const allClose = subList.length > 0 && subList.every(([id, sub]) => {
+    const p = u.subjects?.[id]; const a = result.subjects?.[id];
+    if (p==null||a==null) return false;
+    return sub.maxScore > 0 && (Math.abs(p-a)/sub.maxScore)*100 <= 5;
+  });
+  if (allClose && subList.length > 0) badges.push({ cls: 'badge-allsub', label: '🏆 全教科5%以内！' });
+
+  // 満点（教科）
+  subList.forEach(([id, sub]) => {
+    const a = result.subjects?.[id];
+    if (a !== null && a !== undefined && a >= sub.maxScore) {
+      badges.push({ cls: 'badge-fullmark', label: `⭐ ${sub.name} 満点！` });
+    }
+  });
+
+  return badges;
+}
+
+// ── ⑥ DISTRIBUTION CHART ─────────────────
+function renderDistChart() {
+  const canvas = document.getElementById('dist-chart');
+  const noData = document.getElementById('dist-no-data');
+  if (!canvas) return;
+
+  const values = Object.values(allPredictions).map(u => u.total).filter(v => v !== null && v !== undefined);
+  if (values.length === 0) {
+    canvas.style.display = 'none';
+    if (noData) noData.style.display = 'block';
+    if (distChartInst) { distChartInst.destroy(); distChartInst = null; }
+    return;
+  }
+  canvas.style.display = 'block';
+  if (noData) noData.style.display = 'none';
+
+  // ビン幅10点でヒストグラム作成
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const binSize = Math.max(5, Math.ceil((max - min + 1) / 12));
+  const binStart = Math.floor(min / binSize) * binSize;
+  const bins = {};
+  for (let b = binStart; b <= max + binSize; b += binSize) bins[b] = 0;
+  values.forEach(v => {
+    const key = Math.floor(v / binSize) * binSize;
+    bins[key] = (bins[key] || 0) + 1;
+  });
+
+  const isLight = document.body.classList.contains('light');
+  const labels = Object.keys(bins).map(k => `${k}〜`);
+  const data   = Object.values(bins);
+  const accent = isLight ? 'rgba(64,112,216,0.7)' : 'rgba(91,141,238,0.7)';
+  const accentBorder = isLight ? '#4070d8' : '#5b8dee';
+  const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)';
+  const textColor = isLight ? '#4a4f6a' : '#7a7f98';
+
+  if (distChartInst) distChartInst.destroy();
+  distChartInst = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: '人数', data, backgroundColor: accent, borderColor: accentBorder, borderWidth: 1, borderRadius: 4 }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.parsed.y}人` } }
+      },
+      scales: {
+        x: { ticks: { color: textColor, font: { family: "'JetBrains Mono',monospace", size: 11 } }, grid: { color: gridColor } },
+        y: { ticks: { color: textColor, precision: 0 }, grid: { color: gridColor }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+// ── ⑤ SEASONS ────────────────────────────
+function renderSeasons() {
+  const section = document.getElementById('seasons-section');
+  const list    = document.getElementById('seasons-list');
+  if (!section || !list) return;
+  const sArr = Object.entries(seasons).sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0));
+  if (sArr.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  list.innerHTML = sArr.map(([sid, s]) => {
+    const rankings = Object.values(s.rankings || {}).sort((a,b) => (b.grandTotal||0)-(a.grandTotal||0));
+    const rc = ['r1','r2','r3'];
+    const rl = ['🥇','🥈','🥉'];
+    return `
+      <div class="season-card">
+        <div class="season-title">${escapeHtml(s.name||'テスト記録')} <span style="font-size:12px;color:var(--text3);font-weight:400">${s.date||''}</span></div>
+        ${rankings.slice(0,10).map((r,i) => `
+          <div class="season-rank-row">
+            <span class="season-rank-num ${rc[i]||''}">${rl[i]||'#'+(i+1)}</span>
+            <span>${r.displayName||'不明'}${r.uid===currentUser?.uid?'<span class="badge-you">YOU</span>':''}</span>
+            <span class="season-rank-score">${r.grandTotal??'—'}</span>
+          </div>`).join('')}
+        ${rankings.length === 0 ? '<div style="color:var(--text2);font-size:13px">記録なし</div>' : ''}
+      </div>`;
+  }).join('');
+}
+
+// バッジをscoreCardHTMLに組み込むためのヘルパー
+function badgesHTML(u) {
+  const badges = calcBadges(u);
+  if (badges.length === 0) return '';
+  return `<div class="badge-row">${badges.map(b => `<span class="badge-item ${b.cls}">${b.label}</span>`).join('')}</div>`;
+}
+
+// ── THEME ────────────────────────────────
+window.toggleTheme = () => {
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  document.getElementById('theme-toggle-btn').textContent = isLight ? '☀️' : '🌙';
+  renderDistChart(); // テーマ変更でグラフ色も更新
+};
+// 起動時にlocalStorageからテーマ復元
+(function() {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'light') {
+    document.body.classList.add('light');
+    // DOMロード後にボタンを更新
+    window.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('theme-toggle-btn');
+      if (btn) btn.textContent = '☀️';
+    });
+  }
+})();
 
 // ── TOAST ─────────────────────────────────
 function showToast(msg, type='success') {
