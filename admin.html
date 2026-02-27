@@ -147,6 +147,22 @@
   #toast.success{border-color:rgba(77,184,112,.4);color:var(--success);}
   #toast.error{border-color:rgba(217,91,91,.4);color:var(--danger);}
 
+  /* ─── NOTICE FIELD LABEL ────────── */
+  .notice-field-label {
+    font-size: 11px; font-weight: 700; color: var(--text2);
+    margin-bottom: 5px; letter-spacing: .3px;
+  }
+  .notice-card {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 16px 18px; margin-bottom: 10px;
+    border-left: 3px solid var(--accent);
+  }
+  .notice-card.warn   { border-left-color: var(--warn); }
+  .notice-card.danger { border-left-color: var(--danger); }
+  .notice-card-title  { font-size: 14px; font-weight: 700; margin-bottom: 5px; }
+  .notice-card-body   { font-size: 13px; font-weight: 500; color: var(--text2); line-height: 1.6; white-space: pre-wrap; }
+  .notice-card-meta   { font-size: 11px; color: var(--text3); margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap; }
+
   /* ─── LIGHT MODE ────────────────── */
   body.light{
     --bg:#f4f5f9;--surface:#ffffff;--surface2:#eef0f6;--surface3:#e4e6ef;
@@ -259,6 +275,10 @@
       </div>
       <div class="sidebar-item" onclick="showPage('seasons')">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>過去テスト記録
+      </div>
+      <div class="sidebar-group">お知らせ</div>
+      <div class="sidebar-item" onclick="showPage('notices')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>お知らせ管理
       </div>
     </div>
 
@@ -407,7 +427,7 @@
 
         <div class="card">
           <div class="card-label">新規アーカイブを作成</div>
-          <div class="card-desc">アーカイブ名・日付を入力し、含めるテスト（ユーザー）を選択して保存します。</div>
+          <div class="card-desc">アーカイブ名・日付を入力し、含める教科を選択して保存します。選択した教科のスコアのみが集計されます。</div>
 
           <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px">
             <div style="flex:1;min-width:220px">
@@ -420,16 +440,16 @@
             </div>
           </div>
 
-          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px">含めるテスト（ユーザー）を選択</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px">含める教科を選択</div>
           <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
-            チェックを付けたユーザーの現在の予想・結果データをこのアーカイブに含めます。
+            チェックした教科の教科別ボーナスのみをスコアに含めます。合計点ボーナスは常に含まれます。
           </div>
-          <div id="season-user-checkboxes" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:16px;max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:12px">
-            <div style="color:var(--text2);font-size:13px">予想データを読み込み中...</div>
+          <div id="season-subject-checkboxes" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:16px;max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:12px">
+            <div style="color:var(--text2);font-size:13px">教科データを読み込み中...</div>
           </div>
           <div style="display:flex;gap:8px;margin-bottom:16px">
-            <button class="btn-sm" onclick="selectAllSeasonUsers(true)">すべて選択</button>
-            <button class="btn-sm" onclick="selectAllSeasonUsers(false)">すべて解除</button>
+            <button class="btn-sm" onclick="selectAllSeasonSubjects(true)">すべて選択</button>
+            <button class="btn-sm" onclick="selectAllSeasonSubjects(false)">すべて解除</button>
           </div>
 
           <button class="btn-primary" onclick="saveSeason()">📦 アーカイブを保存</button>
@@ -437,6 +457,48 @@
 
         <div class="section-title">保存済みアーカイブ一覧</div>
         <div id="seasons-admin-list"><div style="color:var(--text2);font-size:13px">まだ保存されていません</div></div>
+      </div>
+
+      <!-- NOTICES -->
+      <div class="admin-page" id="page-notices">
+        <div class="page-title">お知らせ管理</div>
+        <div class="page-sub">ユーザー画面に表示するお知らせを作成・管理します</div>
+
+        <div class="card" style="max-width:640px">
+          <div class="card-label">新規お知らせ作成</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div>
+              <div class="notice-field-label">タイトル</div>
+              <input type="text" id="notice-title" class="field text" placeholder="例：中間テスト開始のお知らせ" style="width:100%">
+            </div>
+            <div>
+              <div class="notice-field-label">内容</div>
+              <textarea id="notice-body" class="field text" rows="4" placeholder="お知らせの詳細を入力してください" style="width:100%;resize:vertical;font-family:inherit;line-height:1.6"></textarea>
+            </div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap">
+              <div style="flex:1;min-width:160px">
+                <div class="notice-field-label">表示開始日時（空白=即時）</div>
+                <input type="datetime-local" id="notice-start" class="field" style="width:100%">
+              </div>
+              <div style="flex:1;min-width:160px">
+                <div class="notice-field-label">表示終了日時（空白=無期限）</div>
+                <input type="datetime-local" id="notice-end" class="field" style="width:100%">
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <div class="notice-field-label" style="margin-bottom:0">重要度</div>
+              <select id="notice-level" class="field" style="width:140px">
+                <option value="info">📢 通常</option>
+                <option value="warn">⚠️ 注意</option>
+                <option value="danger">🚨 重要</option>
+              </select>
+            </div>
+            <button class="btn-primary" onclick="saveNotice()" style="align-self:flex-start">📨 お知らせを投稿</button>
+          </div>
+        </div>
+
+        <div class="section-title">投稿済みお知らせ</div>
+        <div id="notices-admin-list"><div style="color:var(--text2);font-size:13px">まだ投稿がありません</div></div>
       </div>
 
     </div>
@@ -521,6 +583,7 @@ function initAdmin() {
   onValue(ref(db,'subjects'), snap => {
     subjects = snap.val() || {};
     appSettings._subjects = subjects;
+    renderSeasonSubjectCheckboxes();
     // localSubjects は「保存して反映」ボタンを押すまで上書きしない
     // → 初回だけ同期、以降はユーザー操作に委ねる
     if (localSubjects.length === 0) {
@@ -539,13 +602,13 @@ function initAdmin() {
     allPredictions = snap.val() || {};
     appSettings._predictions = allPredictions;
     renderDashboard(); renderPredictionsTable(); renderScoresPreview();
-    renderSeasonUserCheckboxes();
+    renderSeasonSubjectCheckboxes();
   });
   onValue(ref(db,'results'), snap => {
     allResults = snap.val() || {};
     appSettings._results = allResults;
     renderDashboard(); renderResultsTable(); renderScoresPreview();
-    renderSeasonUserCheckboxes();
+    renderSeasonSubjectCheckboxes();
   });
   onValue(ref(db,'users'), snap => {
     document.getElementById('dash-users').textContent = Object.keys(snap.val()||{}).length;
@@ -598,7 +661,7 @@ window.showPage = page => {
   document.querySelectorAll('.admin-page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active');
-  const pages=['dashboard','controls','subjects','subject-controls','scoring','predictions','results','scores','seasons'];
+  const pages=['dashboard','controls','subjects','subject-controls','scoring','predictions','results','scores','seasons','notices'];
   document.querySelectorAll('.sidebar-item')[pages.indexOf(page)]?.classList.add('active');
 };
 
@@ -665,7 +728,10 @@ function renderDashboardSubjectStatus() {
   // subjectSettings は別途リッスンする
   el.innerHTML=`<div class="cards-grid">${subList.map(([id,s])=>{
     const ss = (appSettings._subjectSettings||{})[id]||{};
-    const pred = ss.predictionOpen; const res = ss.resultInputOpen; const pub = ss.scoresReleased;
+    // 教科個別設定がundefinedのときはグローバル設定に従う（=ON扱い）
+    const pred = ss.predictionOpen  !== undefined ? !!ss.predictionOpen  : !!appSettings.predictionOpen;
+    const res  = ss.resultInputOpen !== undefined ? !!ss.resultInputOpen : !!appSettings.resultInputOpen;
+    const pub  = ss.scoresReleased  !== undefined ? !!ss.scoresReleased  : !!appSettings.scoresReleased;
     return `<div class="card">
       <div class="card-label">${s.name}</div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
@@ -1069,14 +1135,17 @@ function renderResultsTable() {
   const users=Object.values(allResults),subList=Object.entries(subjects);
   if(users.length===0){wrap.innerHTML='<div style="color:var(--text2);font-size:13px">まだデータがありません</div>';return;}
   wrap.innerHTML=`<div class="table-wrap"><table class="dtable">
-    <thead><tr><th>UID</th><th>合計点</th>${subList.map(([,s])=>`<th>${s.name}</th>`).join('')}<th>更新日時</th><th>操作</th></tr></thead>
-    <tbody>${users.map(u=>`<tr>
-      <td style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3)">${u.uid}</td>
-      <td class="mono">${u.total??'—'}</td>
-      ${subList.map(([id])=>`<td class="mono">${u.subjects?.[id]??'—'}</td>`).join('')}
-      <td style="font-size:11px;color:var(--text3)">${u.updatedAt?new Date(u.updatedAt).toLocaleString('ja'):'—'}</td>
-      <td><button class="btn-sm danger" onclick="deleteResult('${u.uid}')">削除</button></td>
-    </tr>`).join('')}</tbody></table></div>`;
+    <thead><tr><th>名前</th><th>合計点</th>${subList.map(([,s])=>`<th>${s.name}</th>`).join('')}<th>更新日時</th><th>操作</th></tr></thead>
+    <tbody>${users.map(u=>{
+      const displayName = allPredictions[u.uid]?.displayName || u.displayName || u.uid;
+      return `<tr>
+        <td style="font-weight:600">${displayName}</td>
+        <td class="mono">${u.total??'—'}</td>
+        ${subList.map(([id])=>`<td class="mono">${u.subjects?.[id]??'—'}</td>`).join('')}
+        <td style="font-size:11px;color:var(--text3)">${u.updatedAt?new Date(u.updatedAt).toLocaleString('ja'):'—'}</td>
+        <td><button class="btn-sm danger" onclick="deleteResult('${u.uid}')">削除</button></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
 }
 window.deleteResult = async uid => { await remove(ref(db,`results/${uid}`)); showToast('削除しました','success'); };
 
@@ -1157,34 +1226,36 @@ function calcScoreForSeason() {
   });
 }
 
-// ユーザー選択チェックボックスを描画
-function renderSeasonUserCheckboxes() {
-  const wrap = document.getElementById('season-user-checkboxes');
+// 教科選択チェックボックスを描画
+function renderSeasonSubjectCheckboxes() {
+  const wrap = document.getElementById('season-subject-checkboxes');
   if (!wrap) return;
-  const users = Object.values(allPredictions);
-  if (users.length === 0) {
-    wrap.innerHTML = '<div style="color:var(--text2);font-size:13px">予想データがありません</div>';
+  const subList = Object.entries(subjects);
+  if (subList.length === 0) {
+    wrap.innerHTML = '<div style="color:var(--text2);font-size:13px">教科データがありません</div>';
     return;
   }
-  wrap.innerHTML = users.map(u => {
-    const result = allResults[u.uid];
-    const hasResult = result?.total != null;
+  wrap.innerHTML = subList.map(([id, sub]) => {
+    // この教科に結果を入力しているユーザー数を集計
+    const enteredCount = Object.values(allResults).filter(r => r.subjects?.[id] != null).length;
+    const totalUsers   = Object.values(allPredictions).filter(u => u.subjects?.[id] != null).length;
     return `
-      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:7px 8px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);user-select:none">
-        <input type="checkbox" class="season-user-chk" data-uid="${u.uid}" checked
+      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);user-select:none">
+        <input type="checkbox" class="season-subject-chk" data-sid="${id}" checked
           style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
         <span style="flex:1;min-width:0">
-          <span style="font-size:13px;font-weight:600;color:var(--text);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u.displayName||'不明'}</span>
-          <span style="font-size:11px;color:${hasResult?'var(--success)':'var(--text3)'}">
-            ${hasResult ? `結果あり（合計 ${result.total}点）` : '結果未入力'}
+          <span style="font-size:13px;font-weight:700;color:var(--text);display:block">${sub.name}</span>
+          <span style="font-size:11px;color:var(--text2)">${sub.maxScore}点満点</span>
+          <span style="font-size:11px;color:${enteredCount>0?'var(--success)':'var(--text3)'};display:block;margin-top:2px">
+            結果入力: ${enteredCount}/${totalUsers}人
           </span>
         </span>
       </label>`;
   }).join('');
 }
 
-window.selectAllSeasonUsers = (checked) => {
-  document.querySelectorAll('.season-user-chk').forEach(chk => chk.checked = checked);
+window.selectAllSeasonSubjects = (checked) => {
+  document.querySelectorAll('.season-subject-chk').forEach(chk => chk.checked = checked);
 };
 
 window.saveSeason = async () => {
@@ -1192,22 +1263,75 @@ window.saveSeason = async () => {
   const date = document.getElementById('season-date-input')?.value || '';
   if (!name) { showToast('アーカイブ名を入力してください', 'error'); return; }
 
-  // 選択されたUIDのみ取得
-  const selectedUids = new Set(
-    [...document.querySelectorAll('.season-user-chk:checked')].map(el => el.dataset.uid)
+  // 選択された教科IDを取得
+  const selectedSids = new Set(
+    [...document.querySelectorAll('.season-subject-chk:checked')].map(el => el.dataset.sid)
   );
-  if (selectedUids.size === 0) { showToast('ユーザーを1人以上選択してください', 'error'); return; }
+  if (selectedSids.size === 0) { showToast('教科を1つ以上選択してください', 'error'); return; }
 
-  // 選択ユーザーのみでスコア計算
-  const allScores = calcScoreForSeason();
-  const rankings = {};
-  allScores.filter(r => selectedUids.has(r.uid)).forEach(r => { rankings[r.uid] = r; });
+  // 選択教科のみでスコアを計算して保存
+  const rankings = calcScoreForSeasonWithSubjects(selectedSids);
 
   const sid = `season_${Date.now()}`;
-  await set(ref(db, `seasons/${sid}`), { name, date, createdAt: Date.now(), rankings });
-  showToast(`「${name}」を保存しました（${selectedUids.size}人）`, 'success');
+  await set(ref(db, `seasons/${sid}`), {
+    name, date, createdAt: Date.now(),
+    selectedSubjects: [...selectedSids],
+    rankings
+  });
+  showToast(`「${name}」を保存しました（${selectedSids.size}教科）`, 'success');
   document.getElementById('season-name-input').value = '';
 };
+
+// 選択教科のみでスコア計算（既存のcalcScoreForSeasonを教科フィルタ対応版に）
+function calcScoreForSeasonWithSubjects(selectedSids) {
+  const subList = Object.entries(appSettings._subjects || {})
+    .filter(([id]) => selectedSids.has(id));
+  const toArray = v => {
+    if (!v) return null;
+    if (Array.isArray(v)) return v;
+    return Object.keys(v).sort((a,b)=>Number(a)-Number(b)).map(k=>v[k]);
+  };
+
+  const result = {};
+  Object.values(appSettings._predictions || {}).forEach(u => {
+    const res = (appSettings._results || {})[u.uid];
+    const actualTotal = res?.total ?? null;
+
+    // 合計点ボーナス（常に含む）
+    const totalRules = toArray(appSettings._scoringRules?.total) || DEFAULT_TOTAL_RULES;
+    const sortedRules = [...totalRules].sort((a,b)=>a.maxDiff-b.maxDiff);
+    let totalBonus = 0;
+    if (u.total !== null && u.total !== undefined && actualTotal !== null) {
+      const diff = Math.abs(u.total - actualTotal);
+      totalBonus = sortedRules.find(r => diff <= r.maxDiff)?.pts ?? -diff;
+    }
+
+    // 選択教科のみ教科別ボーナスを計算
+    const subjDefault = toArray(appSettings._scoringRules?.subject) || DEFAULT_SUBJECT_RULES;
+    let subBonus = 0;
+    const subBreakdown = {};
+    subList.forEach(([id, sub]) => {
+      const pred = u.subjects?.[id] ?? null;
+      const act  = res?.subjects?.[id] ?? null;
+      if (pred === null || act === null) return;
+      const diff = Math.abs(pred - act);
+      const pct  = sub.maxScore > 0 ? (diff / sub.maxScore) * 100 : 0;
+      const rules = (toArray(appSettings._scoringRules?.subjects?.[id]) || subjDefault)
+        .slice().sort((a,b)=>a.maxPct-b.maxPct);
+      const bonus = rules.find(r => pct <= r.maxPct)?.pts ?? -diff;
+      subBonus += bonus;
+      subBreakdown[id] = bonus;
+    });
+
+    const grandTotal = actualTotal !== null ? actualTotal + totalBonus + subBonus : null;
+    result[u.uid] = {
+      uid: u.uid, displayName: u.displayName,
+      grandTotal, totalBonus, subBonus, actualTotal,
+      subBreakdown
+    };
+  });
+  return result;
+}
 
 window.deleteSeason = async (sid, name) => {
   if (!confirm(`「${name}」を削除しますか？`)) return;
@@ -1232,19 +1356,22 @@ function renderSeasonsAdmin() {
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div>
             <div style="font-size:15px;font-weight:700">${s.name||'無題'}</div>
-            <div style="font-size:12px;font-weight:500;color:var(--text2);margin-top:2px">${s.date||''} · ${Object.keys(s.rankings||{}).length}人参加</div>
+            <div style="font-size:12px;font-weight:500;color:var(--text2);margin-top:2px">
+              ${s.date||''} · ${Object.keys(s.rankings||{}).length}人参加
+              ${s.selectedSubjects?.length ? `· 対象教科: ${s.selectedSubjects.map(id => subjects[id]?.name||id).join('・')}` : ''}
+            </div>
           </div>
           <button class="btn-sm danger" onclick="deleteSeason('${sid}', '${(s.name||'').replace(/'/g,"\'")}')">削除</button>
         </div>
         <div class="table-wrap"><table class="dtable">
           <thead><tr><th>順位</th><th>名前</th><th>実際の点数</th><th>合計ボーナス</th><th>教科別ボーナス</th><th>最終スコア</th></tr></thead>
           <tbody>${rankings.map((r,i) => `<tr>
-            <td class="mono ${rc[i]||''}">  ${rl[i]||'#'+(i+1)}</td>
+            <td class="mono ${rc[i]||''}">${rl[i]||'#'+(i+1)}</td>
             <td>${r.displayName||'不明'}</td>
             <td class="mono">${r.actualTotal??'未入力'}</td>
             <td class="mono ${(r.totalBonus||0)>=0?'c-success':'c-danger'}">${r.totalBonus!=null?(r.totalBonus>=0?'+':'')+r.totalBonus:'—'}</td>
             <td class="mono ${(r.subBonus||0)>=0?'c-success':'c-danger'}">${r.subBonus!=null?(r.subBonus>=0?'+':'')+r.subBonus:'—'}</td>
-            <td class="mono c-accent" style="font-size:14px">${r.grandTotal??'未確定'}</td>
+            <td class="mono c-accent" style="font-size:14px;font-weight:700">${r.grandTotal??'未確定'}</td>
           </tr>`).join('')}</tbody>
         </table></div>
       </div>`;
@@ -1253,6 +1380,82 @@ function renderSeasonsAdmin() {
 
 // initApp のDBリスナー内でスコア計算に必要なデータをキャッシュ
 // (predictions/results/subjects/scoringRulesはすでにリスナーがあるので appSettings._xxx に保存)
+
+// ── NOTICES ───────────────────────────────────────
+let allNotices = {};
+
+onValue(ref(db,'notices'), snap => {
+  allNotices = snap.val() || {};
+  renderNoticesAdmin();
+});
+
+window.saveNotice = async () => {
+  const title = document.getElementById('notice-title')?.value?.trim();
+  const body  = document.getElementById('notice-body')?.value?.trim();
+  const start = document.getElementById('notice-start')?.value;
+  const end   = document.getElementById('notice-end')?.value;
+  const level = document.getElementById('notice-level')?.value || 'info';
+  if (!title) { showToast('タイトルを入力してください','error'); return; }
+  if (!body)  { showToast('内容を入力してください','error'); return; }
+  const nid = `notice_${Date.now()}`;
+  await set(ref(db, `notices/${nid}`), {
+    title, body, level,
+    startAt: start ? new Date(start).getTime() : null,
+    endAt:   end   ? new Date(end).getTime()   : null,
+    createdAt: Date.now()
+  });
+  showToast('お知らせを投稿しました','success');
+  document.getElementById('notice-title').value = '';
+  document.getElementById('notice-body').value  = '';
+  document.getElementById('notice-start').value = '';
+  document.getElementById('notice-end').value   = '';
+};
+
+window.deleteNotice = async nid => {
+  if (!confirm('このお知らせを削除しますか？')) return;
+  await remove(ref(db, `notices/${nid}`));
+  showToast('削除しました','success');
+};
+
+window.toggleNoticeActive = async (nid, current) => {
+  await set(ref(db, `notices/${nid}/disabled`), !current);
+  showToast(!current ? '非表示にしました' : '表示に戻しました','success');
+};
+
+function renderNoticesAdmin() {
+  const el = document.getElementById('notices-admin-list');
+  if (!el) return;
+  const list = Object.entries(allNotices).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  if (list.length === 0) {
+    el.innerHTML = '<div style="color:var(--text2);font-size:13px">まだ投稿がありません</div>';
+    return;
+  }
+  const now = Date.now();
+  el.innerHTML = list.map(([nid, n]) => {
+    const active = !n.disabled
+      && (n.startAt === null || n.startAt <= now)
+      && (n.endAt   === null || n.endAt   >= now);
+    const levelLabel = {info:'📢 通常', warn:'⚠️ 注意', danger:'🚨 重要'}[n.level]||'📢 通常';
+    const startStr = n.startAt ? new Date(n.startAt).toLocaleString('ja') : '即時';
+    const endStr   = n.endAt   ? new Date(n.endAt).toLocaleString('ja')   : '無期限';
+    return `
+      <div class="notice-card ${n.level||'info'}" style="opacity:${n.disabled?'.5':'1'}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">
+          <div class="notice-card-title">${n.title||'無題'}</div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button class="btn-sm" onclick="toggleNoticeActive('${nid}',${!!n.disabled})">${n.disabled?'表示に戻す':'非表示にする'}</button>
+            <button class="btn-sm danger" onclick="deleteNotice('${nid}')">削除</button>
+          </div>
+        </div>
+        <div class="notice-card-body">${n.body||''}</div>
+        <div class="notice-card-meta">
+          <span>${levelLabel}</span>
+          <span>表示期間: ${startStr} 〜 ${endStr}</span>
+          <span style="color:${active?'var(--success)':'var(--text3)'}">● ${active?'表示中':'非表示'}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
 
 // ── THEME ─────────────────────────────────────────
 window.toggleAdminTheme = () => {

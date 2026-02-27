@@ -562,11 +562,11 @@
   /* ─── MY SCORE PREVIEW ────────────────── */
   .my-score-wrap {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin-bottom: 8px;
   }
-  @media (max-width: 520px) {
+  @media (max-width: 680px) {
     .my-score-wrap { grid-template-columns: 1fr; }
   }
   .my-score-block {
@@ -771,6 +771,30 @@
   .season-rank-num.r2 { color: #9aa8c0; }
   .season-rank-num.r3 { color: #a07c60; }
   .season-rank-score { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent); margin-left: auto; }
+
+  /* ─── NOTICE BADGE ─────────────────────── */
+  .notice-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--danger); color: #fff;
+    font-size: 10px; font-weight: 700;
+    min-width: 16px; height: 16px; border-radius: 8px;
+    padding: 0 4px; margin-left: 5px; vertical-align: middle;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ─── NOTICE CARD (user side) ───────── */
+  .notice-item {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 16px 18px; margin-bottom: 10px;
+    border-left: 3px solid var(--accent);
+  }
+  .notice-item.warn   { border-left-color: var(--warn,#c49a3a); }
+  .notice-item.danger { border-left-color: var(--danger); }
+  .notice-item-icon   { font-size: 15px; margin-right: 6px; }
+  .notice-item-title  { font-size: 14px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; }
+  .notice-item-body   { font-size: 13px; font-weight: 500; color: var(--text2); line-height: 1.7; white-space: pre-wrap; }
+  .notice-item-meta   { font-size: 11px; color: var(--text3); margin-top: 8px; }
+  .notice-new-dot     { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); display: inline-block; margin-right: 6px; vertical-align: middle; }
 
   /* ─── EMPTY / LOADING ───────────────────── */
   .empty-state {
@@ -993,6 +1017,9 @@
     <div class="nav-tab active" onclick="switchTab('predict')">予想入力</div>
     <div class="nav-tab" onclick="switchTab('overview')">みんなの予想</div>
     <div class="nav-tab" onclick="switchTab('scores')">スコア結果</div>
+    <div class="nav-tab" id="notice-tab" onclick="switchTab('notices')">
+      お知らせ<span class="notice-badge" id="notice-badge" style="display:none"></span>
+    </div>
   </nav>
 
   <div class="content">
@@ -1090,36 +1117,28 @@
         <div class="section-title">あなたの現在スコア</div>
         <div class="my-score-wrap">
 
-          <!-- 合計点ボーナスのみ -->
+          <!-- 合計点ボーナスのみスコア -->
           <div class="my-score-block my-block-total-only">
             <div class="my-score-label-tag">合計点ボーナスのみ</div>
             <div class="my-score-val" id="my-total-only-score">---</div>
             <div class="my-score-sub" id="my-total-only-detail"></div>
-            <div class="my-score-sub-note">合計点予想の精度</div>
+            <div class="my-score-sub-note">実際の点数 ＋ 合計点ボーナス</div>
           </div>
 
-          <!-- 教科別ボーナスのみ -->
+          <!-- 教科別ボーナスのみスコア -->
           <div class="my-score-block my-block-subject-only">
             <div class="my-score-label-tag">教科別ボーナスのみ</div>
             <div class="my-score-val" id="my-subject-only-score">---</div>
             <div class="my-score-sub" id="my-subject-only-detail"></div>
-            <div class="my-score-sub-note">各教科の予想精度合計</div>
+            <div class="my-score-sub-note">実際の点数 ＋ 教科別ボーナス</div>
           </div>
 
-          <!-- 複合（合計＋教科別） -->
-          <div class="my-score-block my-block-combined">
-            <div class="my-score-label-tag">複合ボーナス</div>
-            <div class="my-score-val" id="my-combined-score">---</div>
-            <div class="my-score-sub">合計点 ＋ 教科別の合算</div>
-            <div class="my-score-sub-note">実際の点数は不要</div>
-          </div>
-
-          <!-- 総合スコア（実際の点数含む） -->
+          <!-- 総合スコア -->
           <div class="my-score-block my-block-grand is-total">
             <div class="my-score-label-tag">総合スコア</div>
             <div class="my-score-val" id="my-grand-total">---</div>
-            <div class="my-score-sub">実際の点数 ＋ 全ボーナス</div>
-            <div class="my-score-sub-note">最終的なスコア</div>
+            <div class="my-score-sub" id="my-grand-detail"></div>
+            <div class="my-score-sub-note">実際の点数 ＋ 全ボーナス</div>
           </div>
 
         </div>
@@ -1160,6 +1179,32 @@
       </div>
     </div>
 
+    <!-- NOTICES TAB -->
+    <div class="tab-panel" id="tab-notices">
+      <div class="section-title">お知らせ</div>
+      <div id="notices-list"><div class="loading"><div class="spinner"></div>読み込み中</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- お知らせポップアップ -->
+<div id="notice-popup" style="display:none;position:fixed;top:68px;right:16px;z-index:500;width:min(360px,calc(100vw - 32px))">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden">
+    <div id="notice-popup-header" style="padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+      <span id="notice-popup-icon" style="font-size:16px">📢</span>
+      <span id="notice-popup-title" style="font-size:14px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button onclick="closeNoticePopup()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;line-height:1;padding:0 2px">×</button>
+    </div>
+    <div id="notice-popup-body" style="padding:12px 16px;font-size:13px;font-weight:500;color:var(--text2);line-height:1.7;max-height:160px;overflow-y:auto;white-space:pre-wrap"></div>
+    <div style="padding:10px 16px 12px;display:flex;justify-content:space-between;align-items:center">
+      <span id="notice-popup-counter" style="font-size:11px;color:var(--text3)"></span>
+      <div style="display:flex;gap:8px">
+        <button id="notice-popup-prev" onclick="stepNoticePopup(-1)" style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--text2)">◀ 前へ</button>
+        <button id="notice-popup-next" onclick="stepNoticePopup(1)"  style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--text2)">次へ ▶</button>
+        <button onclick="closeNoticePopup()" style="background:var(--accent);border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-weight:700;color:#fff;cursor:pointer">閉じる</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1212,6 +1257,9 @@ let scoringRules = {};
 let subjectSettings = {};  // 教科ごとのフェーズ設定
 let allComments  = {};  // ③コメント
 let seasons      = {};  // ⑤シーズン記録
+let allNotices   = {};  // お知らせ
+let noticePopupQueue = [];  // ポップアップ表示待ちキュー
+let noticePopupIdx   = 0;   // 現在表示中の番号
 let distChartInst = null; // ⑥分布グラフインスタンス
 
 // デフォルトのスコアルール（DBに設定がない場合のフォールバック）
@@ -1415,6 +1463,13 @@ async function initApp() {
     seasons = snap.val() || {};
     renderSeasons();
   });
+
+  // お知らせリスナー
+  onValue(ref(db, 'notices'), (snap) => {
+    allNotices = snap.val() || {};
+    renderNoticesTab();
+    checkNewNotices();
+  });
 }
 
 // ── TABS ──────────────────────────────────
@@ -1422,9 +1477,10 @@ window.switchTab = (tab) => {
   document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(el   => el.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
-  const idx = ['predict','overview','scores'].indexOf(tab);
+  const idx = ['predict','overview','scores','notices'].indexOf(tab);
   document.querySelectorAll('.nav-tab')[idx]?.classList.add('active');
-  if (tab === 'overview') renderDistChart(); // テーマ切替後も正しく描画
+  if (tab === 'overview') renderDistChart();
+  if (tab === 'notices')  markNoticesRead();
 };
 
 // ── BANNERS ───────────────────────────────
@@ -1845,28 +1901,37 @@ function renderMyScorePreview() {
   // 総合スコア = 実際の点数 + 全ボーナス
   const grandTotal = hasResult ? actualTotal + (totalBonus??0) + totalSubBonus : null;
 
-  const fmt = v => v !== null ? (v>=0?'+':'')+v+' pt' : '---';
-  const cls = v => 'my-score-val ' + (v===null ? '' : v>=0 ? 'pos-col' : 'neg-col');
+  // スコア = 実際の点数 + 各ボーナス
+  const totalOnlyScore   = hasResult ? actualTotal + (totalBonus ?? 0) : null;
+  const subjectOnlyScore = hasResult ? actualTotal + totalSubBonus : null;
+  // grandTotal はすでに計算済み
 
-  // 合計点ボーナスのみ
+  const fmtScore = v => v !== null ? String(v) : '---';
+  const clsScore = () => 'my-score-val'; // スコアは常にアクセント色
+
+  // 合計点ボーナスのみスコア
   const tb = document.getElementById('my-total-only-score');
   const td = document.getElementById('my-total-only-detail');
-  if (tb) { tb.textContent = fmt(totalBonus); tb.className = cls(totalBonus); }
-  if (td) td.textContent = hasResult ? `予想 ${myPred.total??'?'}点 → 実際 ${actualTotal}点` : '結果が未入力です';
+  if (tb) { tb.textContent = fmtScore(totalOnlyScore); tb.className = clsScore(); }
+  if (td) td.textContent = hasResult
+    ? `実際 ${actualTotal}点 + ボーナス ${totalBonus>=0?'+':''}${totalBonus??0}`
+    : '合計点の結果が未入力です';
 
-  // 教科別ボーナスのみ
+  // 教科別ボーナスのみスコア
   const sb = document.getElementById('my-subject-only-score');
   const sd = document.getElementById('my-subject-only-detail');
-  if (sb) { sb.textContent = hasAnySubResult ? fmt(totalSubBonus) : '---'; sb.className = cls(hasAnySubResult?totalSubBonus:null); }
-  if (sd) sd.textContent = hasAnySubResult ? subLines.join('  ') : '教科の結果が未入力です';
-
-  // 複合
-  const cb = document.getElementById('my-combined-score');
-  if (cb) { cb.textContent = fmt(combinedBonus); cb.className = cls(combinedBonus); }
+  if (sb) { sb.textContent = hasResult ? fmtScore(subjectOnlyScore) : '---'; sb.className = clsScore(); }
+  if (sd) sd.textContent = hasResult
+    ? `実際 ${actualTotal}点 + 教科ボーナス ${totalSubBonus>=0?'+':''}${totalSubBonus}`
+    : '合計点の結果が未入力です';
 
   // 総合スコア
   const gt = document.getElementById('my-grand-total');
-  if (gt) { gt.textContent = grandTotal !== null ? String(grandTotal) : '---'; gt.className = 'my-score-val'; }
+  const gd = document.getElementById('my-grand-detail');
+  if (gt) { gt.textContent = fmtScore(grandTotal); gt.className = clsScore(); }
+  if (gd) gd.textContent = hasResult
+    ? `実際 ${actualTotal}点 + 合計ボーナス ${totalBonus>=0?'+':''}${totalBonus??0} + 教科ボーナス ${totalSubBonus>=0?'+':''}${totalSubBonus}`
+    : '合計点の結果が未入力です';
 
   preview.style.display = 'block';
 }
@@ -2015,6 +2080,113 @@ function badgesHTML(u) {
   const badges = calcBadges(u);
   if (badges.length === 0) return '';
   return `<div class="badge-row">${badges.map(b => `<span class="badge-item ${b.cls}">${b.label}</span>`).join('')}</div>`;
+}
+
+// ── NOTICES ──────────────────────────────
+const NOTICE_KEY = 'seenNotices_v1';
+
+function getSeenNotices() {
+  try { return JSON.parse(localStorage.getItem(NOTICE_KEY) || '{}'); } catch { return {}; }
+}
+function setSeenNotice(nid) {
+  const seen = getSeenNotices();
+  seen[nid] = Date.now();
+  localStorage.setItem(NOTICE_KEY, JSON.stringify(seen));
+}
+
+function getActiveNotices() {
+  const now = Date.now();
+  return Object.entries(allNotices)
+    .filter(([, n]) => !n.disabled
+      && (n.startAt === null || n.startAt <= now)
+      && (n.endAt   === null || n.endAt   >= now))
+    .sort((a, b) => (b[1].createdAt||0) - (a[1].createdAt||0));
+}
+
+function checkNewNotices() {
+  const seen   = getSeenNotices();
+  const active = getActiveNotices();
+  const unseen = active.filter(([nid]) => !seen[nid]);
+
+  // バッジ更新
+  const badge = document.getElementById('notice-badge');
+  if (badge) {
+    if (unseen.length > 0) {
+      badge.textContent = unseen.length > 9 ? '9+' : String(unseen.length);
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // 未読があればポップアップキュー
+  if (unseen.length > 0) {
+    noticePopupQueue = unseen;
+    noticePopupIdx   = 0;
+    showNoticePopupAt(0);
+  }
+}
+
+function showNoticePopupAt(idx) {
+  if (noticePopupQueue.length === 0) return;
+  const [nid, n] = noticePopupQueue[idx];
+  const icons = { info:'📢', warn:'⚠️', danger:'🚨' };
+  document.getElementById('notice-popup-icon').textContent  = icons[n.level||'info'];
+  document.getElementById('notice-popup-title').textContent = n.title || '';
+  document.getElementById('notice-popup-body').textContent  = n.body  || '';
+  const total = noticePopupQueue.length;
+  document.getElementById('notice-popup-counter').textContent = total > 1 ? `${idx+1} / ${total}` : '';
+  document.getElementById('notice-popup-prev').style.display = (total > 1 && idx > 0)       ? '' : 'none';
+  document.getElementById('notice-popup-next').style.display = (total > 1 && idx < total-1) ? '' : 'none';
+  document.getElementById('notice-popup').style.display = '';
+  setSeenNotice(nid);
+  // バッジ更新
+  checkNewNotices();
+}
+
+window.stepNoticePopup = (dir) => {
+  noticePopupIdx = Math.max(0, Math.min(noticePopupQueue.length - 1, noticePopupIdx + dir));
+  showNoticePopupAt(noticePopupIdx);
+};
+
+window.closeNoticePopup = () => {
+  document.getElementById('notice-popup').style.display = 'none';
+  // 残りもすべて既読にする
+  noticePopupQueue.forEach(([nid]) => setSeenNotice(nid));
+  checkNewNotices();
+};
+
+function markNoticesRead() {
+  getActiveNotices().forEach(([nid]) => setSeenNotice(nid));
+  checkNewNotices();
+}
+
+function renderNoticesTab() {
+  const el = document.getElementById('notices-list');
+  if (!el) return;
+  const active = getActiveNotices();
+  if (active.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div style="font-size:24px;margin-bottom:8px">🔔</div><div class="empty-label">現在お知らせはありません</div></div>';
+    return;
+  }
+  const seen  = getSeenNotices();
+  const icons = { info:'📢', warn:'⚠️', danger:'🚨' };
+  el.innerHTML = active.map(([nid, n]) => {
+    const isNew = !seen[nid];
+    return `
+      <div class="notice-item ${n.level||'info'}">
+        <div class="notice-item-title">
+          ${isNew ? '<span class="notice-new-dot"></span>' : ''}
+          <span class="notice-item-icon">${icons[n.level||'info']}</span>
+          ${n.title||'お知らせ'}
+        </div>
+        <div class="notice-item-body">${n.body||''}</div>
+        <div class="notice-item-meta">
+          ${n.startAt ? new Date(n.startAt).toLocaleString('ja') : new Date(n.createdAt||0).toLocaleString('ja')}
+          ${n.endAt ? ` 〜 ${new Date(n.endAt).toLocaleString('ja')}` : ''}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ── THEME ────────────────────────────────
