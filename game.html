@@ -1,4 +1,61 @@
-<!DOCTYPE html>
+function renderArchive() {
+  const el = document.getElementById('archive-list');
+  if (!el) return;
+  const list = Object.entries(seasons).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  if (list.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div style="font-size:24px;margin-bottom:8px">📭</div><div class="empty-label">過去のテスト記録がありません</div></div>';
+    return;
+  }
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = list.map(([sid, s]) => {
+    const rankings = Object.values(s.rankings||{}).sort((a,b)=>(b.grandTotal??-9999)-(a.grandTotal??-9999));
+    const myUid = currentUser?.uid;
+    const myRank = rankings.findIndex(r=>r.uid===myUid);
+    const subNames = (s.selectedSubjects||[]).map(id=>subjects[id]?.name||id).join('・');
+    return `
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:16px;font-weight:700">${s.name||'無題'}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:3px">
+              ${s.date||''}${subNames?' · 対象教科: '+subNames:''} · ${rankings.length}人参加
+            </div>
+          </div>
+          ${myRank>=0?`<div style="background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:8px;padding:6px 14px;text-align:center;flex-shrink:0">
+            <div style="font-size:11px;font-weight:600;color:var(--text2)">あなたの順位</div>
+            <div style="font-size:20px;font-weight:700;color:var(--accent)">${medals[myRank]||'#'+(myRank+1)}</div>
+          </div>`:''}
+        </div>
+        <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:340px">
+          <thead><tr style="border-bottom:1px solid var(--border)">
+            <th style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--text2);text-align:left">順位</th>
+            <th style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--text2);text-align:left">名前</th>
+            <th style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--text2);text-align:right">実際</th>
+            <th style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--text2);text-align:right">合計B</th>
+            <th style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--text2);text-align:right">教科B</th>
+            <th style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--accent);text-align:right">スコア</th>
+          </tr></thead>
+          <tbody>
+            ${rankings.slice(0,10).map((r,i)=>{
+              const isMe = r.uid===myUid;
+              const medal = medals[i]||'';
+              return `<tr style="${isMe?'background:var(--accent-dim);':''}border-bottom:1px solid var(--border)">
+                <td style="padding:8px 10px;font-size:13px;font-weight:700">${medal||'#'+(i+1)}</td>
+                <td style="padding:8px 10px;font-size:13px;font-weight:600">${r.displayName||'不明'}${isMe?' <span style="font-size:10px;background:var(--accent);color:#fff;border-radius:4px;padding:1px 5px">YOU</span>':''}</td>
+                <td style="padding:8px 10px;font-size:12px;font-family:monospace;text-align:right;color:var(--text2)">${r.actualTotal??'—'}</td>
+                <td style="padding:8px 10px;font-size:12px;font-family:monospace;text-align:right;color:${(r.totalBonus??0)>=0?'var(--success)':'var(--danger)'}">${r.totalBonus!=null?(r.totalBonus>=0?'+':'')+r.totalBonus:'—'}</td>
+                <td style="padding:8px 10px;font-size:12px;font-family:monospace;text-align:right;color:${(r.subBonus??0)>=0?'var(--success)':'var(--danger)'}">${r.subBonus!=null?(r.subBonus>=0?'+':'')+r.subBonus:'—'}</td>
+                <td style="padding:8px 10px;font-size:14px;font-family:monospace;text-align:right;font-weight:700;color:var(--accent)">${r.grandTotal??'—'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        ${rankings.length>10?`<div style="text-align:center;padding:8px;font-size:12px;color:var(--text2)">（上位10人を表示）</div>`:''}
+        </div>
+      </div>`;
+  }).join('');
+}<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -314,17 +371,26 @@
     white-space: nowrap;
   }
   .btn-icon:hover { color: var(--text); border-color: var(--text2); }
+  @media (max-width: 480px) {
+    .btn-label { display: none; }
+    .btn-icon { padding: 5px 8px; }
+    .user-chip { padding: 4px 8px 4px 4px; }
+  }
 
   /* ─── NAV TABS ──────────────────────────── */
   nav.tabs {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 0 20px;
+    padding: 0 4px;
     display: flex;
     gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  nav.tabs::-webkit-scrollbar { display: none; }
   .nav-tab {
-    padding: 14px 18px;
+    padding: 13px 16px;
     font-size: 13px;
     font-weight: 600;
     color: var(--text2);
@@ -333,6 +399,7 @@
     transition: all 0.18s;
     user-select: none;
     white-space: nowrap;
+    flex-shrink: 0;
   }
   .nav-tab:hover { color: var(--text); }
   .nav-tab.active {
@@ -342,9 +409,26 @@
 
   /* ─── CONTENT ───────────────────────────── */
   .content {
-    padding: 28px 20px;
+    padding: 20px 16px;
     max-width: 1080px;
     margin: 0 auto;
+  }
+
+  /* ─── TOPBAR MOBILE ──────────────────────── */
+  @media (max-width: 600px) {
+    .topbar { padding: 0 12px; height: 52px; }
+    .topbar-logo { font-size: 13px; }
+    .user-name { max-width: 80px; font-size: 12px; }
+    .btn-icon { padding: 4px 7px; font-size: 11px; }
+    .content { padding: 14px 12px; }
+    .section-title { font-size: 12px; }
+    .card { padding: 16px 14px; }
+    .my-score-wrap { grid-template-columns: 1fr !important; }
+    .my-score-val { font-size: 24px !important; }
+    .subjects-grid { grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); }
+    .scores-grid   { grid-template-columns: 1fr; }
+    .total-input-row { flex-direction: column; gap: 14px; }
+    .score-hint { font-size: 11px; }
   }
 
   /* ─── BANNERS ───────────────────────────── */
@@ -1079,16 +1163,17 @@
         <span class="user-name" id="user-display-name"></span>
       </div>
       <button class="btn-theme" id="theme-toggle-btn" onclick="toggleTheme()" title="テーマ切替">☀️</button>
-      <button class="btn-icon" onclick="openUsernameModal(false)">名前変更</button>
-      <button class="btn-icon" onclick="logout()">ログアウト</button>
+      <button class="btn-icon btn-icon-name" onclick="openUsernameModal(false)" title="名前変更">✏️ <span class="btn-label">名前変更</span></button>
+      <button class="btn-icon" onclick="logout()" title="ログアウト">⏻ <span class="btn-label">ログアウト</span></button>
     </div>
   </div>
 
-  <nav class="tabs">
-    <div class="nav-tab active" onclick="switchTab('predict')">予想入力</div>
-    <div class="nav-tab" onclick="switchTab('overview')">みんなの予想</div>
-    <div class="nav-tab" onclick="switchTab('scores')">スコア結果</div>
-    <div class="nav-tab" id="notice-tab" onclick="switchTab('notices')">
+  <nav class="tabs" id="main-tabs">
+    <div class="nav-tab active" data-tab="predict" onclick="switchTab('predict')">予想入力</div>
+    <div class="nav-tab" data-tab="overview" onclick="switchTab('overview')">みんなの予想</div>
+    <div class="nav-tab" data-tab="scores" onclick="switchTab('scores')">スコア結果</div>
+    <div class="nav-tab" data-tab="archive" onclick="switchTab('archive')">過去のテスト</div>
+    <div class="nav-tab" data-tab="notices" id="notice-tab" onclick="switchTab('notices')">
       お知らせ<span class="notice-badge" id="notice-badge" style="display:none"></span>
     </div>
   </nav>
@@ -1098,6 +1183,19 @@
     <!-- PREDICT TAB -->
     <div class="tab-panel active" id="tab-predict">
       <div id="predict-status-banner"></div>
+      <div id="no-test-banner" style="display:none">
+        <div class="status-banner" style="background:var(--surface2);border:1px solid var(--border2);flex-direction:column;align-items:flex-start;gap:6px">
+          <div style="font-size:15px;font-weight:700">📭 現在テストはありません</div>
+          <div style="font-size:13px;color:var(--text2)">次のテストが始まるまでお待ちください。過去のテスト結果は「過去のテスト」タブから確認できます。</div>
+        </div>
+      </div>
+      <div id="not-participant-banner" style="display:none">
+        <div class="status-banner" style="background:var(--surface2);border:1px solid var(--border2);flex-direction:column;align-items:flex-start;gap:6px">
+          <div style="font-size:15px;font-weight:700">📋 このテストには参加していません</div>
+          <div style="font-size:13px;color:var(--text2)">管理者に問い合わせるか、過去のテスト結果は「過去のテスト」タブから確認できます。</div>
+        </div>
+      </div>
+      <div id="test-active-area">
 
       <div class="section-title">合計点の予想</div>
       <div class="card">
@@ -1134,6 +1232,8 @@
       <button class="btn-save" id="save-predict-btn" onclick="savePrediction()" disabled style="margin-top:4px">
         予想を保存
       </button>
+
+      </div><!-- /test-active-area -->
 
       <!-- テスト結果入力 -->
       <div id="result-input-section" style="margin-top:36px;display:none">
@@ -1243,11 +1343,12 @@
         <div id="scores-grid" class="scores-grid"></div>
       </div>
 
-      <!-- ⑤ 過去テスト記録 -->
-      <div id="seasons-section" style="margin-top:40px;display:none">
-        <div class="section-title">📚 過去のテスト記録</div>
-        <div id="seasons-list"></div>
-      </div>
+    </div>
+
+    <!-- ARCHIVE TAB -->
+    <div class="tab-panel" id="tab-archive">
+      <div class="section-title">📚 過去のテスト記録</div>
+      <div id="archive-list"><div class="loading"><div class="spinner"></div>読み込み中</div></div>
     </div>
 
     <!-- NOTICES TAB -->
@@ -1545,7 +1646,7 @@ async function initApp() {
   // ⑤ シーズンリスナー
   onValue(ref(db, 'seasons'), (snap) => {
     seasons = snap.val() || {};
-    renderSeasons();
+    renderArchive();
   });
 
   // お知らせリスナー
@@ -1560,17 +1661,46 @@ async function initApp() {
 window.switchTab = (tab) => {
   document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(el   => el.classList.remove('active'));
-  document.getElementById(`tab-${tab}`).classList.add('active');
-  const idx = ['predict','overview','scores','notices'].indexOf(tab);
-  document.querySelectorAll('.nav-tab')[idx]?.classList.add('active');
+  const panel = document.getElementById(`tab-${tab}`);
+  if(panel) panel.classList.add('active');
+  document.querySelector(`.nav-tab[data-tab="${tab}"]`)?.classList.add('active');
   if (tab === 'overview') renderDistChart();
   if (tab === 'notices')  markNoticesRead();
+  if (tab === 'archive')  renderArchive();
 };
 
 // ── BANNERS ───────────────────────────────
 function updatePredictBanner() {
   const el      = document.getElementById('predict-status-banner');
   const saveBtn = document.getElementById('save-predict-btn');
+
+  // テストなし状態（testActiveがfalseのとき）。未設定はtrue扱い（後方互換）
+  const testActive = appSettings.testActive !== false;
+  const noTestBanner   = document.getElementById('no-test-banner');
+  const notPartBanner  = document.getElementById('not-participant-banner');
+  const testActiveArea = document.getElementById('test-active-area');
+
+  if (noTestBanner)   noTestBanner.style.display   = testActive ? 'none' : '';
+  if (testActiveArea) testActiveArea.style.display  = testActive ? '' : 'none';
+
+  if (!testActive) {
+    if (el) { el.innerHTML = ''; el.className = ''; }
+    if (saveBtn) saveBtn.disabled = true;
+    if (notPartBanner) notPartBanner.style.display = 'none';
+    return;
+  }
+
+  // 参加者チェック
+  const participants = appSettings.testParticipants;
+  const isParticipant = !participants || participants[currentUser?.uid] !== false;
+  if (notPartBanner) notPartBanner.style.display = isParticipant ? 'none' : '';
+
+  if (!isParticipant) {
+    if (el) { el.innerHTML = ''; el.className = ''; }
+    if (saveBtn) saveBtn.disabled = true;
+    return;
+  }
+
   if (appSettings.predictionOpen) {
     el.innerHTML = '予想入力を受け付け中です';
     el.className = 'status-banner open';

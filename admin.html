@@ -147,6 +147,52 @@
   #toast.success{border-color:rgba(77,184,112,.4);color:var(--success);}
   #toast.error{border-color:rgba(217,91,91,.4);color:var(--danger);}
 
+  /* ─── MOBILE RESPONSIVE ──────────── */
+  @media (max-width: 700px) {
+    .sidebar {
+      display: none !important;
+    }
+    .main-content {
+      margin-left: 0 !important;
+      padding-bottom: 72px !important;
+    }
+    .bottom-nav {
+      display: flex !important;
+    }
+    .admin-page { padding: 16px !important; }
+    .page-title { font-size: 16px !important; }
+    .cards-grid { grid-template-columns: 1fr !important; }
+    .dtable { font-size: 11px !important; }
+    .dtable th, .dtable td { padding: 6px 8px !important; }
+    .table-wrap { font-size: 11px; }
+  }
+  .bottom-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 4px;
+  }
+  .bottom-nav-inner {
+    display: flex;
+    min-width: max-content;
+  }
+  .bottom-nav-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 8px 14px 10px;
+    font-size: 10px; font-weight: 600; color: var(--text2);
+    cursor: pointer; white-space: nowrap; gap: 3px;
+    border-top: 2px solid transparent;
+    transition: all .15s;
+    min-width: 56px;
+  }
+  .bottom-nav-item.active { color: var(--accent); border-top-color: var(--accent); }
+  .bottom-nav-item svg { opacity: .6; }
+  .bottom-nav-item.active svg { opacity: 1; }
+
   /* ─── NOTICE FIELD LABEL ────────── */
   .notice-field-label {
     font-size: 11px; font-weight: 700; color: var(--text2);
@@ -299,12 +345,28 @@
         </div>
         <div class="section-title">教科ごとのフェーズ状況</div>
         <div id="dash-subject-status"><div style="color:var(--text2);font-size:13px">教科データを読み込み中...</div></div>
+        <div class="section-title" style="margin-top:28px">未提出状況</div>
+        <div id="missing-lists"><div style="color:var(--text2);font-size:13px">読み込み中...</div></div>
       </div>
 
       <!-- GLOBAL CONTROLS -->
       <div class="admin-page" id="page-controls">
         <div class="page-title">全体フェーズ制御</div>
         <div class="page-sub">全教科に一括適用されるフェーズを制御します。個別設定は「教科ごとのフェーズ」から行えます。</div>
+
+        <div class="section-title">テスト状態</div>
+        <div class="cards-grid" style="max-width:640px;margin-bottom:28px">
+          <div class="card">
+            <div class="card-label">テスト開催中</div>
+            <div class="card-desc">OFFにすると「現在テストはありません」状態になり、合計点予想・教科入力エリアがすべて非表示になります。</div>
+            <div class="toggle-row">
+              <div class="status-row"><span class="sdot" id="test-active-dot"></span><span id="test-active-label">—</span></div>
+              <label class="toggle-switch"><input type="checkbox" id="toggle-test-active" onchange="toggleSetting('testActive',this.checked,this)"><span class="tslider"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">入力フェーズ</div>
         <div class="cards-grid" style="max-width:640px">
           <div class="card">
             <div class="card-label">予想入力フェーズ（全体）</div>
@@ -321,6 +383,17 @@
               <div class="status-row"><span class="sdot" id="result-dot"></span><span id="result-label">—</span></div>
               <label class="toggle-switch"><input type="checkbox" id="toggle-result" onchange="toggleSetting('resultInputOpen',this.checked,this)"><span class="tslider"></span></label>
             </div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:28px">参加ユーザー管理</div>
+        <div class="card" style="max-width:640px">
+          <div class="card-label">このテストに参加するユーザー</div>
+          <div class="card-desc">チェックを外したユーザーには「このテストに参加していません」と表示されます。デフォルトは全員参加。</div>
+          <div id="test-users-list" style="margin-top:12px"><div style="color:var(--text2);font-size:13px">ユーザーデータ読み込み中...</div></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn-sm" onclick="selectAllTestUsers(true)">全員参加</button>
+            <button class="btn-sm" onclick="selectAllTestUsers(false)">全員除外</button>
           </div>
         </div>
       </div>
@@ -513,6 +586,44 @@
   </div>
 </div>
 
+<!-- Bottom Nav (mobile) -->
+<nav class="bottom-nav" id="bottom-nav">
+  <div class="bottom-nav-inner">
+    <div class="bottom-nav-item active" onclick="showPage('dashboard');setBottomActive(this)">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      ダッシュボード
+    </div>
+    <div class="bottom-nav-item" onclick="showPage('controls');setBottomActive(this)">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      フェーズ
+    </div>
+    <div class="bottom-nav-item" onclick="showPage('subject-controls');setBottomActive(this)">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      教科設定
+    </div>
+    <div class="bottom-nav-item" onclick="showPage('predictions');setBottomActive(this)">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      予想
+    </div>
+    <div class="bottom-nav-item" onclick="showPage('results');setBottomActive(this)">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      結果
+    </div>
+    <div class="bottom-nav-item" onclick="showPage('scores');setBottomActive(this)">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      スコア
+    </div>
+    <div class="bottom-nav-item" onclick="showPage('seasons');setBottomActive(this)">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      アーカイブ
+    </div>
+    <div class="bottom-nav-item" onclick="showPage('notices');setBottomActive(this)">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      お知らせ
+    </div>
+  </div>
+</nav>
+
 <div id="toast"></div>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
@@ -611,16 +722,77 @@ function initAdmin() {
     appSettings._predictions = allPredictions;
     renderDashboard(); renderPredictionsTable(); renderScoresPreview();
     renderSeasonSubjectCheckboxes();
+    renderMissingLists(allUsers);
   });
   onValue(ref(db,'results'), snap => {
     allResults = snap.val() || {};
     appSettings._results = allResults;
     renderDashboard(); renderResultsTable(); renderScoresPreview();
     renderSeasonSubjectCheckboxes();
+    renderMissingLists(allUsers);
   });
+  let allUsers = {};
   onValue(ref(db,'users'), snap => {
-    document.getElementById('dash-users').textContent = Object.keys(snap.val()||{}).length;
+    allUsers = snap.val() || {};
+    document.getElementById('dash-users').textContent = Object.keys(allUsers).length;
+    renderTestUsersList(allUsers);
+    renderMissingLists(allUsers);
   });
+
+  // 参加ユーザー管理
+  function renderTestUsersList(users) {
+    const el = document.getElementById('test-users-list');
+    if(!el) return;
+    const list = Object.entries(users);
+    if(list.length===0){el.innerHTML='<div style="color:var(--text2);font-size:13px">ユーザーがいません</div>';return;}
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+      ${list.map(([uid,u])=>{
+        const joined = appSettings.testParticipants === undefined || appSettings.testParticipants?.[uid] !== false;
+        return `<label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);user-select:none">
+          <input type="checkbox" class="test-user-chk" data-uid="${uid}" ${joined?'checked':''}
+            style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0"
+            onchange="setTestParticipant('${uid}',this.checked)">
+          <span>
+            <span style="font-size:13px;font-weight:700;color:var(--text);display:block">${u.displayName||u.email||uid}</span>
+            <span style="font-size:11px;color:var(--text3)">${u.email||''}</span>
+          </span>
+        </label>`;
+      }).join('')}
+    </div>`;
+  }
+
+  window.setTestParticipant = async (uid, val) => {
+    await set(ref(db,`settings/testParticipants/${uid}`), val ? null : false);
+  };
+  window.selectAllTestUsers = async (val) => {
+    document.querySelectorAll('.test-user-chk').forEach(chk => chk.checked = val);
+    const upd = {};
+    Object.keys(allUsers).forEach(uid => { upd[`settings/testParticipants/${uid}`] = val ? null : false; });
+    await update(ref(db), upd);
+    showToast(val ? '全員参加にしました' : '全員除外しました','success');
+  };
+
+  // 未提出一覧
+  function renderMissingLists(users) {
+    const el = document.getElementById('missing-lists');
+    if(!el) return;
+    const allU = Object.entries(users);
+    const noPred   = allU.filter(([uid])=>!allPredictions[uid]);
+    const noResult = allU.filter(([uid])=>!allResults[uid]);
+    const missingHtml = (list, label) => {
+      if(list.length===0) return `<div style="color:var(--success);font-size:13px;font-weight:600">✓ 全員${label}済み</div>`;
+      return `<div style="display:flex;flex-wrap:wrap;gap:6px">${list.map(([,u])=>`<span style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600">${u.displayName||u.email||'不明'}</span>`).join('')}</div>`;
+    };
+    el.innerHTML = `
+      <div class="card" style="max-width:640px;margin-bottom:12px">
+        <div class="card-label" style="color:var(--danger)">未提出: 予想 (${noPred.length}人)</div>
+        ${missingHtml(noPred,'予想入力')}
+      </div>
+      <div class="card" style="max-width:640px">
+        <div class="card-label" style="color:var(--danger)">未提出: 結果 (${noResult.length}人)</div>
+        ${missingHtml(noResult,'結果入力')}
+      </div>`;
+  }
 
   onValue(ref(db,'scoringRules'), snap => {
     const raw = snap.val() || {};
@@ -678,6 +850,8 @@ function updateControls() {
   [['toggle-predict',appSettings.predictionOpen],['toggle-result',appSettings.resultInputOpen],['toggle-scores',appSettings.scoresReleased],['toggle-results-public',appSettings.resultsPublic]].forEach(([id,val])=>{
     const el=document.getElementById(id); if(el&&!el.disabled) el.checked=!!val;
   });
+  setDot('test-active-dot','test-active-label',appSettings.testActive,'開催中','テストなし');
+  const ta=document.getElementById('toggle-test-active');if(ta&&!ta.disabled)ta.checked=!!appSettings.testActive;
   setDot('predict-dot','predict-label',appSettings.predictionOpen,'受付中','締め切り');
   setDot('result-dot','result-label',appSettings.resultInputOpen,'受付中','締め切り');
   setDot('score-dot','score-release-label',appSettings.scoresReleased,'公開中','非公開');
@@ -813,105 +987,80 @@ function renderSubjectControlsList() {
   const subList = Object.entries(subjects);
   if(subList.length===0){ el.innerHTML='<div style="color:var(--text2);font-size:13px">教科が未設定です</div>'; return; }
 
-  // 初回：HTMLを生成
-  // 2回目以降：既存のチェックボックス・バッジだけを更新（アコーディオン状態を保持）
-  const isFirstRender = !el.querySelector('.subctrl-card');
-
-  if (isFirstRender) {
-    el.innerHTML = subList.map(([id,s]) => {
-      const pred = getSubjectFlag(id,'predictionOpen');
-      const res  = getSubjectFlag(id,'resultInputOpen');
-      const pub  = getSubjectFlag(id,'scoresReleased');
-      return `
-      <div class="subctrl-card">
-        <div class="subctrl-header" onclick="toggleSubjectAccordion('acc-${id}', this)">
-          <span class="subctrl-name">${s.name}</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="subctrl-badges" id="badges-${id}">
-              <span class="phase-badge ${pred?'on':'off'}">予想${pred?'受付中':'停止'}</span>
-              <span class="phase-badge ${res?'on':'off'}">結果${res?'受付中':'停止'}</span>
-              <span class="phase-badge ${pub?'on':'off'}">スコア${pub?'公開':'非公開'}</span>
-            </div>
-            <span class="subctrl-chevron">▼</span>
-          </div>
-        </div>
-        <div class="subctrl-body" id="acc-${id}">
-          <div class="subctrl-section">
-            <div class="subctrl-section-label">フェーズ制御（全体設定と AND 動作）</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
-
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
-                <div>
-                  <div style="font-size:12px;font-weight:600">予想入力</div>
-                  <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科の予想入力を受け付ける</div>
-                </div>
-                <label class="toggle-switch" style="flex-shrink:0">
-                  <input type="checkbox" id="chk-${id}-predictionOpen" ${pred?'checked':''}
-                    onchange="toggleSubjectSetting('${id}','predictionOpen',this.checked,this)">
-                  <span class="tslider"></span>
-                </label>
-              </div>
-
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
-                <div>
-                  <div style="font-size:12px;font-weight:600">結果入力</div>
-                  <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科の結果入力を受け付ける</div>
-                </div>
-                <label class="toggle-switch" style="flex-shrink:0">
-                  <input type="checkbox" id="chk-${id}-resultInputOpen" ${res?'checked':''}
-                    onchange="toggleSubjectSetting('${id}','resultInputOpen',this.checked,this)">
-                  <span class="tslider"></span>
-                </label>
-              </div>
-
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;gap:12px">
-                <div>
-                  <div style="font-size:12px;font-weight:600">スコア公開</div>
-                  <div style="font-size:11px;color:var(--text2);margin-top:2px">この教科のスコアを公開する</div>
-                </div>
-                <label class="toggle-switch" style="flex-shrink:0">
-                  <input type="checkbox" id="chk-${id}-scoresReleased" ${pub?'checked':''}
-                    onchange="toggleSubjectSetting('${id}','scoresReleased',this.checked,this)">
-                  <span class="tslider"></span>
-                </label>
-              </div>
-
-            </div>
-          </div>
-        </div>
+  const isFirst = !el.querySelector('.subctrl-inline-card');
+  if (isFirst) {
+    el.innerHTML = `
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:520px">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:8px 14px;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px">教科</th>
+            <th style="padding:8px 14px;font-size:11px;font-weight:700;color:var(--text2);text-align:center;letter-spacing:.5px">予想入力</th>
+            <th style="padding:8px 14px;font-size:11px;font-weight:700;color:var(--text2);text-align:center;letter-spacing:.5px">結果入力</th>
+            <th style="padding:8px 14px;font-size:11px;font-weight:700;color:var(--text2);text-align:center;letter-spacing:.5px">スコア公開</th>
+          </tr>
+        </thead>
+        <tbody id="subctrl-tbody">
+          ${subList.map(([id,s]) => {
+            const pred = getSubjectFlag(id,'predictionOpen');
+            const res  = getSubjectFlag(id,'resultInputOpen');
+            const pub  = getSubjectFlag(id,'scoresReleased');
+            return `<tr class="subctrl-inline-card" style="border-bottom:1px solid var(--border);transition:background .15s" 
+                onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
+              <td style="padding:12px 14px;font-size:14px;font-weight:700">${s.name}
+                <div style="font-size:11px;font-weight:500;color:var(--text3);margin-top:2px">${s.maxScore}点満点</div>
+              </td>
+              <td style="padding:12px 14px;text-align:center">
+                <label class="toggle-switch"><input type="checkbox" id="chk-${id}-predictionOpen" ${pred?'checked':''}
+                  onchange="toggleSubjectSetting('${id}','predictionOpen',this.checked,this)"><span class="tslider"></span></label>
+                <div class="subctrl-status-txt" id="stxt-${id}-pred" style="font-size:10px;font-weight:600;margin-top:4px;color:${pred?'var(--success)':'var(--text3)'}">${pred?'受付中':'停止'}</div>
+              </td>
+              <td style="padding:12px 14px;text-align:center">
+                <label class="toggle-switch"><input type="checkbox" id="chk-${id}-resultInputOpen" ${res?'checked':''}
+                  onchange="toggleSubjectSetting('${id}','resultInputOpen',this.checked,this)"><span class="tslider"></span></label>
+                <div class="subctrl-status-txt" id="stxt-${id}-res" style="font-size:10px;font-weight:600;margin-top:4px;color:${res?'var(--success)':'var(--text3)'}">${res?'受付中':'停止'}</div>
+              </td>
+              <td style="padding:12px 14px;text-align:center">
+                <label class="toggle-switch"><input type="checkbox" id="chk-${id}-scoresReleased" ${pub?'checked':''}
+                  onchange="toggleSubjectSetting('${id}','scoresReleased',this.checked,this)"><span class="tslider"></span></label>
+                <div class="subctrl-status-txt" id="stxt-${id}-pub" style="font-size:10px;font-weight:600;margin-top:4px;color:${pub?'var(--success)':'var(--text3)'}">${pub?'公開中':'非公開'}</div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="bulkSubjectSetting('predictionOpen',true)">全予想 ON</button>
+        <button class="btn-sm" onclick="bulkSubjectSetting('predictionOpen',false)">全予想 OFF</button>
+        <button class="btn-sm" onclick="bulkSubjectSetting('resultInputOpen',true)">全結果 ON</button>
+        <button class="btn-sm" onclick="bulkSubjectSetting('resultInputOpen',false)">全結果 OFF</button>
+        <button class="btn-sm" onclick="bulkSubjectSetting('scoresReleased',true)">全スコア 公開</button>
+        <button class="btn-sm" onclick="bulkSubjectSetting('scoresReleased',false)">全スコア 非公開</button>
       </div>`;
-    }).join('');
-
   } else {
-    // 差分更新：チェックボックスとバッジのみ書き換え（DOMを再生成しない）
-    subList.forEach(([id, s]) => {
+    // 差分更新
+    subList.forEach(([id]) => {
       const pred = getSubjectFlag(id,'predictionOpen');
       const res  = getSubjectFlag(id,'resultInputOpen');
       const pub  = getSubjectFlag(id,'scoresReleased');
-
-      // チェックボックス（操作中（disabled）でなければ更新）
-      [['predictionOpen', pred], ['resultInputOpen', res], ['scoresReleased', pub]].forEach(([key, val]) => {
+      [['predictionOpen',pred],['resultInputOpen',res],['scoresReleased',pub]].forEach(([key,val])=>{
         const chk = document.getElementById(`chk-${id}-${key}`);
-        if (chk && !chk.disabled) chk.checked = val;
+        if(chk&&!chk.disabled) chk.checked = val;
       });
-
-      // バッジ
-      const badges = document.getElementById(`badges-${id}`);
-      if (badges) {
-        badges.innerHTML = `
-          <span class="phase-badge ${pred?'on':'off'}">予想${pred?'受付中':'停止'}</span>
-          <span class="phase-badge ${res?'on':'off'}">結果${res?'受付中':'停止'}</span>
-          <span class="phase-badge ${pub?'on':'off'}">スコア${pub?'公開':'非公開'}</span>`;
-      }
+      const stxtPred = document.getElementById(`stxt-${id}-pred`);
+      const stxtRes  = document.getElementById(`stxt-${id}-res`);
+      const stxtPub  = document.getElementById(`stxt-${id}-pub`);
+      if(stxtPred){stxtPred.textContent=pred?'受付中':'停止';stxtPred.style.color=pred?'var(--success)':'var(--text3)';}
+      if(stxtRes){stxtRes.textContent=res?'受付中':'停止';stxtRes.style.color=res?'var(--success)':'var(--text3)';}
+      if(stxtPub){stxtPub.textContent=pub?'公開中':'非公開';stxtPub.style.color=pub?'var(--success)':'var(--text3)';}
     });
   }
 }
 
-window.toggleSubjectAccordion = (bodyId, header) => {
-  const body = document.getElementById(bodyId);
-  if(!body) return;
-  const open = body.classList.toggle('open');
-  header.querySelector('.subctrl-chevron').style.transform = open ? 'rotate(180deg)' : '';
+window.bulkSubjectSetting = async (key, val) => {
+  const subList = Object.entries(subjects);
+  await Promise.all(subList.map(([id]) => set(ref(db,`subjectSettings/${id}/${key}`), val)));
+  showToast(`全教科の${key}を${val?'ON':'OFF'}にしました`, 'success');
 };
 
 // ── SCORING RULES (global) ────────────────────────
@@ -1468,6 +1617,11 @@ function renderNoticesAdmin() {
       </div>`;
   }).join('');
 }
+
+window.setBottomActive = (el) => {
+  document.querySelectorAll('.bottom-nav-item').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+};
 
 // ── THEME ─────────────────────────────────────────
 window.toggleAdminTheme = () => {
