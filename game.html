@@ -772,6 +772,77 @@
   .season-rank-num.r3 { color: #a07c60; }
   .season-rank-score { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent); margin-left: auto; }
 
+  /* ─── SUBJECT BORDER MODAL ─────────────── */
+  .sub-info-btn {
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all .15s;
+    letter-spacing: .3px;
+    margin-top: 6px;
+    width: 100%;
+  }
+  .sub-info-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .border-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 600;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .border-modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 24px;
+    width: min(400px, 100%);
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 12px 48px rgba(0,0,0,.22);
+  }
+  .border-modal-title {
+    font-size: 16px; font-weight: 700; margin-bottom: 4px;
+  }
+  .border-modal-sub {
+    font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 18px;
+  }
+  .border-row {
+    display: flex; align-items: center;
+    padding: 9px 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    gap: 10px;
+  }
+  .border-pts {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px; font-weight: 700;
+    min-width: 56px;
+  }
+  .border-pts.pos { color: var(--success); }
+  .border-pts.neg { color: var(--danger); }
+  .border-cond {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    flex: 1;
+  }
+  .border-note {
+    font-size: 11px; font-weight: 500; color: var(--text3);
+  }
+  .border-modal-close {
+    width: 100%; margin-top: 14px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 9px; font-size: 13px; font-weight: 600;
+    color: var(--text2); cursor: pointer; transition: all .15s;
+  }
+  .border-modal-close:hover { border-color: var(--accent); color: var(--accent); }
+
   /* ─── NOTICE BADGE ─────────────────────── */
   .notice-badge {
     display: inline-flex; align-items: center; justify-content: center;
@@ -1208,6 +1279,16 @@
   </div>
 </div>
 
+<!-- 教科ボーダーモーダル -->
+<div class="border-modal-overlay" id="border-modal-overlay" style="display:none" onclick="closeBorderModal(event)">
+  <div class="border-modal" id="border-modal-box">
+    <div class="border-modal-title" id="border-modal-title"></div>
+    <div class="border-modal-sub" id="border-modal-sub"></div>
+    <div id="border-modal-rows"></div>
+    <button class="border-modal-close" onclick="document.getElementById('border-modal-overlay').style.display='none'">閉じる</button>
+  </div>
+</div>
+
 <!-- USERNAME MODAL -->
 <div class="modal-overlay" id="username-modal" style="display:none">
   <div class="modal-box">
@@ -1427,6 +1508,9 @@ async function initApp() {
     allResults = snap.val() || {};
     renderScores();
     renderMyScorePreview();
+    // 結果入力完了トリガーのお知らせを再評価
+    renderNoticesTab();
+    checkNewNotices();
   });
   onValue(ref(db, 'scoringRules'), (snap) => {
     const raw = snap.val() || {};
@@ -1551,6 +1635,7 @@ function renderSubjectsGrid() {
         : `<div class="subject-closed-msg">締め切り</div>
            <input class="subject-input" type="number" id="sub-pred-${id}" min="0" max="${sub.maxScore}" placeholder="---" disabled style="opacity:.3">`
       }
+      <button class="sub-info-btn" onclick="openBorderModal('${id}')">ボーダー確認 ▸</button>
     </div>`;
   }).join('');
 
@@ -2096,10 +2181,20 @@ function setSeenNotice(nid) {
 
 function getActiveNotices() {
   const now = Date.now();
+  const myResult = currentUser ? allResults[currentUser.uid] : null;
+  const myResultDone = myResult?.total != null;
+
   return Object.entries(allNotices)
-    .filter(([, n]) => !n.disabled
-      && (n.startAt === null || n.startAt <= now)
-      && (n.endAt   === null || n.endAt   >= now))
+    .filter(([, n]) => {
+      if (n.disabled) return false;
+      // 表示開始：startAtがnull/undefinedなら即時
+      if (n.startAt != null && n.startAt > now) return false;
+      // 表示終了：endAtがnull/undefinedなら無期限
+      if (n.endAt != null && n.endAt < now) return false;
+      // 結果入力完了トリガー：自分が結果を入力済みなら非表示
+      if (n.endOnResult && myResultDone) return false;
+      return true;
+    })
     .sort((a, b) => (b[1].createdAt||0) - (a[1].createdAt||0));
 }
 
@@ -2188,6 +2283,71 @@ function renderNoticesTab() {
       </div>`;
   }).join('');
 }
+
+// ── BORDER MODAL ─────────────────────────
+window.openBorderModal = (subjectId) => {
+  const sub = subjects[subjectId];
+  if (!sub) return;
+
+  // この教科のルールを取得（個別→共通→デフォルト）
+  const subRules = scoringRules.subjects?.[subjectId];
+  const rules = (subRules || scoringRules.subject || DEFAULT_SUBJECT_RULES)
+    .slice().sort((a, b) => a.maxPct - b.maxPct);
+
+  document.getElementById('border-modal-title').textContent = `${sub.name} のボーダー`;
+  document.getElementById('border-modal-sub').textContent   =
+    `満点 ${sub.maxScore}点 — 誤差が小さいほど高いボーナス`;
+
+  // 各ボーダーに対して「何点以内」に換算して表示
+  const rows = rules.map((r, i) => {
+    const prevPct = i === 0 ? -1 : rules[i-1].maxPct;
+    const maxPts  = Math.floor(sub.maxScore * r.maxPct / 100);
+    const prevPts = i === 0 ? -1 : Math.floor(sub.maxScore * rules[i-1].maxPct / 100);
+    const isExact = r.maxPct === 0;
+
+    let condLabel;
+    if (isExact) {
+      condLabel = 'ぴったり（誤差 0点）';
+    } else if (prevPct === 0) {
+      condLabel = `誤差 1〜${maxPts}点（${r.maxPct}%以内）`;
+    } else {
+      condLabel = `誤差 ${prevPts+1}〜${maxPts}点（${r.maxPct}%以内）`;
+    }
+    const ptsSign = r.pts >= 0 ? '+' : '';
+    const ptsCls  = r.pts >= 0 ? 'pos' : 'neg';
+    const note    = r.note || '';
+    return `
+      <div class="border-row">
+        <div class="border-pts ${ptsCls}">${ptsSign}${r.pts}</div>
+        <div style="flex:1;min-width:0">
+          <div class="border-cond">${condLabel}</div>
+          ${note ? `<div class="border-note">${note}</div>` : ''}
+        </div>
+      </div>`;
+  });
+
+  // ボーダー外（それ以上）
+  const lastPct = rules[rules.length-1]?.maxPct ?? 0;
+  const lastPts = Math.floor(sub.maxScore * lastPct / 100);
+  rows.push(`
+    <div class="border-row" style="opacity:.65">
+      <div class="border-pts neg">-誤差</div>
+      <div style="flex:1">
+        <div class="border-cond">誤差 ${lastPts+1}点以上</div>
+        <div class="border-note">誤差点数分がマイナスになります</div>
+      </div>
+    </div>`);
+
+  document.getElementById('border-modal-rows').innerHTML = rows.join('');
+  document.getElementById('border-modal-overlay').style.display = 'flex';
+};
+
+window.closeBorderModal = (e) => {
+  // オーバーレイ自体をクリックしたとき（モーダル内はNG）
+  if (e.target === document.getElementById('border-modal-overlay')) {
+    document.getElementById('border-modal-overlay').style.display = 'none';
+  }
+};
 
 // ── THEME ────────────────────────────────
 window.toggleTheme = () => {

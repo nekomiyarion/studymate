@@ -485,13 +485,21 @@
                 <input type="datetime-local" id="notice-end" class="field" style="width:100%">
               </div>
             </div>
-            <div style="display:flex;gap:10px;align-items:center">
-              <div class="notice-field-label" style="margin-bottom:0">重要度</div>
-              <select id="notice-level" class="field" style="width:140px">
-                <option value="info">📢 通常</option>
-                <option value="warn">⚠️ 注意</option>
-                <option value="danger">🚨 重要</option>
-              </select>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <div>
+                <div class="notice-field-label">重要度</div>
+                <select id="notice-level" class="field" style="width:140px">
+                  <option value="info">📢 通常</option>
+                  <option value="warn">⚠️ 注意</option>
+                  <option value="danger">🚨 重要</option>
+                </select>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding-top:20px">
+                <input type="checkbox" id="notice-end-on-result" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
+                <label for="notice-end-on-result" style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer">
+                  自分の結果入力後に非表示にする
+                </label>
+              </div>
             </div>
             <button class="btn-primary" onclick="saveNotice()" style="align-self:flex-start">📨 お知らせを投稿</button>
           </div>
@@ -1397,11 +1405,13 @@ window.saveNotice = async () => {
   const level = document.getElementById('notice-level')?.value || 'info';
   if (!title) { showToast('タイトルを入力してください','error'); return; }
   if (!body)  { showToast('内容を入力してください','error'); return; }
+  const endOnResult = document.getElementById('notice-end-on-result')?.checked || false;
   const nid = `notice_${Date.now()}`;
   await set(ref(db, `notices/${nid}`), {
     title, body, level,
-    startAt: start ? new Date(start).getTime() : null,
-    endAt:   end   ? new Date(end).getTime()   : null,
+    startAt:     start ? new Date(start).getTime() : null,
+    endAt:       end   ? new Date(end).getTime()   : null,
+    endOnResult: endOnResult || null,
     createdAt: Date.now()
   });
   showToast('お知らせを投稿しました','success');
@@ -1409,6 +1419,7 @@ window.saveNotice = async () => {
   document.getElementById('notice-body').value  = '';
   document.getElementById('notice-start').value = '';
   document.getElementById('notice-end').value   = '';
+  const chk = document.getElementById('notice-end-on-result'); if(chk) chk.checked = false;
 };
 
 window.deleteNotice = async nid => {
@@ -1451,6 +1462,7 @@ function renderNoticesAdmin() {
         <div class="notice-card-meta">
           <span>${levelLabel}</span>
           <span>表示期間: ${startStr} 〜 ${endStr}</span>
+          ${n.endOnResult ? '<span>⚑ 結果入力後に非表示</span>' : ''}
           <span style="color:${active?'var(--success)':'var(--text3)'}">● ${active?'表示中':'非表示'}</span>
         </div>
       </div>`;
