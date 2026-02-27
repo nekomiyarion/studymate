@@ -149,21 +149,9 @@
 
   /* ─── MOBILE RESPONSIVE ──────────── */
   @media (max-width: 700px) {
-    .sidebar {
-      display: none !important;
-    }
-    .main-content {
-      margin-left: 0 !important;
-      padding-bottom: 72px !important;
-    }
-    .bottom-nav {
-      display: flex !important;
-    }
-    .admin-page { padding: 16px !important; }
-    .page-title { font-size: 16px !important; }
-    .cards-grid { grid-template-columns: 1fr !important; }
-    .dtable { font-size: 11px !important; }
-    .dtable th, .dtable td { padding: 6px 8px !important; }
+    .sidebar { display: none !important; }
+    .main-content { margin-left: 0 !important; padding-bottom: 80px !important; }
+    .bottom-nav { display: flex !important; }
     .table-wrap { font-size: 11px; }
   }
   .bottom-nav {
@@ -240,14 +228,34 @@
   .status-row{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;}
   .phase-badge.off{background:var(--surface3);color:var(--text2);border:1px solid var(--border2);}
 
+  /* ─── MOBILE ─── */
   @media(max-width:768px){
     .layout{grid-template-columns:1fr;}
-    .sidebar{display:flex;overflow-x:auto;padding:0;border-right:none;border-bottom:1px solid var(--border);}
-    .sidebar-group{display:none;}
-    .sidebar-item{border-left:none;border-bottom:2px solid transparent;white-space:nowrap;flex-direction:column;gap:3px;font-size:11px;padding:10px 14px;}
-    .sidebar-item.active{border-bottom-color:var(--accent);}
-    .sidebar-item svg{display:none;}
-    .main-content{padding:16px;}
+    .sidebar{display:none;}
+    .main-content{padding:14px;padding-bottom:80px;}
+    .cards-grid{grid-template-columns:1fr 1fr;}
+    .toggle-row{gap:10px;}
+    .table-wrap{overflow-x:auto;}
+    .admin-page{padding:14px;}
+    /* 教科フェーズテーブル → カード形式 */
+    .subctrl-table-wrap table { min-width: unset !important; width: 100% !important; }
+    .subctrl-table-wrap th, .subctrl-table-wrap td { padding: 8px 8px !important; }
+    /* お知らせフォーム */
+    .notice-field-label{font-size:10px;}
+  }
+  @media(max-width:540px){
+    .cards-grid{grid-template-columns:1fr;}
+    .page-title{font-size:15px;}
+    .main-content{padding:10px;padding-bottom:80px;}
+    .dtable{font-size:11px;}
+    .dtable th,.dtable td{padding:6px 8px;}
+    .topbar-logo{font-size:13px;}
+    #admin-name{display:none;}
+    .admin-badge{display:none;}
+    .season-form-row{flex-direction:column !important;}
+    .notice-period-row{flex-direction:column !important; gap:8px !important;}
+    /* 教科フェーズ：トグルと名前を縦積みに */
+    .subctrl-table-wrap th:last-child, .subctrl-table-wrap td:last-child { display:none; }
   }
 </style>
 </head>
@@ -990,7 +998,7 @@ function renderSubjectControlsList() {
   const isFirst = !el.querySelector('.subctrl-inline-card');
   if (isFirst) {
     el.innerHTML = `
-      <div style="overflow-x:auto">
+      <div class="subctrl-table-wrap" style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;min-width:520px">
         <thead>
           <tr style="border-bottom:1px solid var(--border)">
