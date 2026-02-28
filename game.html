@@ -1445,24 +1445,19 @@
         <div class="empty-label">管理者がスコアを公開すると表示されます</div>
       </div>
       <div id="scores-content" style="display:none">
-        <!-- 合計点ボーナスランキング -->
-        <div class="section-title">合計点ボーナス ランキング</div>
-        <div class="page-sub-label">合計点の予想精度で競います</div>
+        <!-- 合計点ボーナスのみ ランキング -->
+        <div class="section-title">合計点ボーナスのみ ランキング</div>
+        <div class="page-sub-label">実際の合計点 ＋ 合計点ボーナス</div>
         <div id="scores-total-grid" class="scores-grid" style="margin-bottom:32px"></div>
 
-        <!-- 教科別ボーナスランキング -->
-        <div class="section-title">教科別ボーナス ランキング</div>
-        <div class="page-sub-label">各教科の予想精度で競います</div>
+        <!-- 教科別ボーナスのみ ランキング -->
+        <div class="section-title">教科別ボーナスのみ ランキング</div>
+        <div class="page-sub-label">実際の合計点 ＋ 教科別ボーナス合計</div>
         <div id="scores-subject-grid" class="scores-grid" style="margin-bottom:32px"></div>
-
-        <!-- 合計＋教科別 複合ランキング -->
-        <div class="section-title">合計＋教科別 複合ランキング</div>
-        <div class="page-sub-label">合計点ボーナス ＋ 教科別ボーナスの合算で競います</div>
-        <div id="scores-combined-grid" class="scores-grid" style="margin-bottom:32px"></div>
 
         <!-- 総合ランキング -->
         <div class="section-title">総合ランキング</div>
-        <div class="page-sub-label">実際の点数 ＋ 合計点ボーナス ＋ 教科別ボーナス</div>
+        <div class="page-sub-label">実際の合計点 ＋ 合計点ボーナス ＋ 教科別ボーナス</div>
         <div id="scores-grid" class="scores-grid"></div>
       </div>
 
@@ -2117,8 +2112,12 @@ function calcAllScores() {
       subBonusVisible[id]   = subPub;
       totalSubBonus        += b;
     });
-    const grandTotal = actualTotal !== null ? actualTotal + totalBonus + totalSubBonus : null;
-    return { ...u, actualTotal, totalBonus, subBonuses, subBonusVisible, totalSubBonus, grandTotal };
+    const grandTotal        = actualTotal !== null ? actualTotal + totalBonus + totalSubBonus : null;
+    // 実際の点数＋各ボーナス（ランキング用スコア）
+    const totalOnlyScore    = actualTotal !== null ? actualTotal + totalBonus    : null;
+    const subjectOnlyScore  = actualTotal !== null ? actualTotal + totalSubBonus : null;
+    return { ...u, actualTotal, totalBonus, subBonuses, subBonusVisible, totalSubBonus,
+             grandTotal, totalOnlyScore, subjectOnlyScore };
   });
 }
 
@@ -2133,33 +2132,33 @@ function scoreCardHTML(u, rank, mode) {
 
   let mainVal, mainLabel, breakdown;
 
-  if (mode === 'combined') {
-    const cb = u.totalBonus + u.totalSubBonus;
-    mainVal   = u.actualTotal !== null ? (cb >= 0 ? '+' : '') + cb + ' pt' : '---';
-    mainLabel = '複合ボーナス合計';
-    breakdown = `
-      <div class="brow"><span class="bl">合計点ボーナス</span><span class="bv ${u.totalBonus>=0?'pos':'neg'}">${u.totalBonus>=0?'+':''}${u.totalBonus}</span></div>
-      <div class="brow"><span class="bl">教科別ボーナス</span><span class="bv ${u.totalSubBonus>=0?'pos':'neg'}">${u.totalSubBonus>=0?'+':''}${u.totalSubBonus}</span></div>`;
-  } else if (mode === 'total') {
-    mainVal   = u.totalBonus !== null ? (u.totalBonus >= 0 ? '+' : '') + u.totalBonus + ' pt' : '---';
-    mainLabel = '合計点ボーナス';
+  if (mode === 'total') {
+    // 実際の点数 ＋ 合計点ボーナス
+    mainVal   = u.totalOnlyScore != null ? String(u.totalOnlyScore) + ' pt' : '---';
+    mainLabel = '合計点ボーナスのみスコア';
     breakdown = `
       ${showResults ? `<div class="brow"><span class="bl">実際の合計点</span><span class="bv">${u.actualTotal ?? '未入力'}</span></div>` : ''}
+      <div class="brow"><span class="bl">合計点ボーナス</span><span class="bv ${u.totalBonus>=0?'pos':'neg'}">${u.totalBonus>=0?'+':''}${u.totalBonus}</span></div>
       <div class="brow"><span class="bl">予想</span><span class="bv">${u.total ?? '---'}</span></div>
       <div class="brow"><span class="bl">誤差</span><span class="bv">${u.actualTotal !== null && u.total !== null ? Math.abs(u.actualTotal - u.total) + '点' : '—'}</span></div>`;
   } else if (mode === 'subject') {
-    mainVal   = (u.totalSubBonus >= 0 ? '+' : '') + u.totalSubBonus + ' pt';
-    mainLabel = '教科別ボーナス';
-    breakdown = subList.map(([id, sub]) => `
-      <div class="brow sub-row">
-        <span class="bl" style="font-size:11px">${sub.name}</span>
-        ${u.subBonusVisible?.[id] === false
-          ? `<span class="bv" style="font-size:11px;color:var(--text3)">非公開</span>`
-          : `<span class="bv ${(u.subBonuses[id]||0)>=0?'pos':'neg'}" style="font-size:11px">${(u.subBonuses[id]||0)>=0?'+':''}${u.subBonuses[id]||0}</span>`
-        }
-      </div>`).join('');
+    // 実際の点数 ＋ 教科別ボーナス合計
+    mainVal   = u.subjectOnlyScore != null ? String(u.subjectOnlyScore) + ' pt' : '---';
+    mainLabel = '教科別ボーナスのみスコア';
+    breakdown = `
+      ${showResults ? `<div class="brow"><span class="bl">実際の合計点</span><span class="bv">${u.actualTotal ?? '未入力'}</span></div>` : ''}
+      <div class="brow"><span class="bl">教科別ボーナス合計</span><span class="bv ${u.totalSubBonus>=0?'pos':'neg'}">${u.totalSubBonus>=0?'+':''}${u.totalSubBonus}</span></div>
+      ${subList.map(([id, sub]) => `
+        <div class="brow sub-row">
+          <span class="bl" style="font-size:11px">${sub.name}</span>
+          ${u.subBonusVisible?.[id] === false
+            ? `<span class="bv" style="font-size:11px;color:var(--text3)">非公開</span>`
+            : `<span class="bv ${(u.subBonuses[id]||0)>=0?'pos':'neg'}" style="font-size:11px">${(u.subBonuses[id]||0)>=0?'+':''}${u.subBonuses[id]||0}</span>`
+          }
+        </div>`).join('')}`;
   } else { // grand
-    mainVal   = u.grandTotal ?? '---';
+    // 実際の点数 ＋ 合計点ボーナス ＋ 教科別ボーナス
+    mainVal   = u.grandTotal != null ? String(u.grandTotal) + ' pt' : '---';
     mainLabel = '総合スコア';
     breakdown = `
       ${showResults ? `<div class="brow"><span class="bl">実際の合計点</span><span class="bv">${u.actualTotal ?? '未入力'}</span></div>` : ''}
@@ -2174,7 +2173,7 @@ function scoreCardHTML(u, rank, mode) {
       <div class="score-player">
         ${u.displayName||'不明'}${isMe?'<span class="badge-you">YOU</span>':''}
       </div>
-      <div class="big-score ${mode==='total'?(u.totalBonus>=0?'pos-col':'neg-col'):''}">${mainVal}</div>
+      <div class="big-score">${mainVal}</div>
       <div class="big-score-label">${mainLabel}</div>
       ${badges}
       <div class="breakdown">${breakdown}</div>
@@ -2199,15 +2198,10 @@ function renderScores() {
 
   if (!appSettings.scoresReleased) return;
   const scored = calcAllScores();
-  // combinedScore = 合計点ボーナス + 教科別ボーナス
-  const scoredWithCombined = scored.map(u => ({
-    ...u,
-    combinedBonus: u.totalBonus + u.totalSubBonus
-  }));
-  renderRanking('scores-total-grid',    scoredWithCombined, 'totalBonus',    'total');
-  renderRanking('scores-subject-grid',  scoredWithCombined, 'totalSubBonus', 'subject');
-  renderRanking('scores-combined-grid', scoredWithCombined, 'combinedBonus', 'combined');
-  renderRanking('scores-grid',          scoredWithCombined, 'grandTotal',    'grand');
+  // 3つのランキング：それぞれ「実際の点数＋各ボーナス」でソート
+  renderRanking('scores-total-grid',    scored, 'totalOnlyScore',   'total');
+  renderRanking('scores-subject-grid',  scored, 'subjectOnlyScore', 'subject');
+  renderRanking('scores-grid',          scored, 'grandTotal',       'grand');
 }
 
 function renderMyScorePreview() {
