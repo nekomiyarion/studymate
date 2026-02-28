@@ -683,78 +683,96 @@
   .big-score.neg-col { color: var(--danger); }
 
   /* ─── SCORES ────────────────────────────── */
-  .scores-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
-    gap: 14px;
-  }
-  .score-card {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 12px;
-    padding: 20px;
+  /* ─── RANKING LIST ──────────────────────── */
+  .scores-grid { display: flex; flex-direction: column; gap: 0; }
+
+  .score-row {
+    display: flex; align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .12s;
+    gap: 0;
     position: relative;
   }
-  .score-card.is-me  { border-color: var(--accent-border); }
-  .score-card.is-top { border-color: rgba(201,168,76,0.4); }
+  .score-row:first-child { border-top: 1px solid var(--border); border-radius: 10px 10px 0 0; }
+  .score-row:last-of-type { border-radius: 0 0 10px 10px; }
+  .score-row:hover { background: var(--surface2); }
+  .score-row.is-me  { background: var(--accent-dim); }
+  .score-row.is-me:hover { background: rgba(91,141,238,0.18); }
 
-  .rank-num {
-    position: absolute;
-    top: 16px; right: 18px;
+  /* 順位 */
+  .sr-rank {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 12px; font-weight: 700;
     color: var(--text3);
+    width: 32px; flex-shrink: 0; text-align: center;
   }
-  .rank-num.top1 { color: var(--gold); }
-  .rank-num.top2 { color: #9aa8c0; }
-  .rank-num.top3 { color: #a07c60; }
+  .sr-rank.top1 { color: var(--gold); font-size: 16px; }
+  .sr-rank.top2 { color: #9aa8c0;    font-size: 16px; }
+  .sr-rank.top3 { color: #a07c60;    font-size: 16px; }
 
-  .score-player {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 0;
-    padding-right: 36px;
+  /* 名前 */
+  .sr-name {
+    flex: 1; min-width: 0;
+    font-size: 14px; font-weight: 700; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    padding: 0 10px;
   }
-  .big-score {
+
+  /* スコア */
+  .sr-score {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 38px;
-    font-weight: 600;
+    font-size: 18px; font-weight: 700;
     color: var(--accent);
-    line-height: 1;
-    margin-bottom: 2px;
-    letter-spacing: -1px;
+    flex-shrink: 0; text-align: right;
+    min-width: 64px;
   }
-  .big-score-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text2);
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+
+  /* 展開矢印 */
+  .sr-arrow {
+    font-size: 10px; color: var(--text3);
+    width: 18px; text-align: center; flex-shrink: 0;
+    transition: transform .2s;
+    margin-left: 6px;
   }
-  .breakdown {
+  .sr-arrow.open { transform: rotate(180deg); }
+
+  /* 内訳パネル */
+  .sr-detail {
+    display: none;
     background: var(--surface2);
-    border-radius: 7px;
-    padding: 11px 13px;
-    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px 12px 46px;
   }
+  .sr-detail.open { display: block; }
   .brow {
     display: flex;
     justify-content: space-between;
     padding: 4px 0;
     border-bottom: 1px solid var(--border);
+    font-size: 12px;
   }
   .brow:last-child { border-bottom: none; }
-  .brow .bl { color: var(--text); font-weight: 500; }
-  .brow .bv { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .brow .bl { color: var(--text2); font-weight: 500; }
+  .brow .bv { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text); }
   .bv.pos { color: var(--success); }
   .bv.neg { color: var(--danger); }
-  .brow.sub-row { padding-left: 10px; opacity: 0.8; }
+  .brow.sub-row { padding-left: 10px; opacity: 0.82; }
+
+  /* youバッジ */
+  .badge-you {
+    font-size: 9px; font-weight: 700; letter-spacing: .5px;
+    background: var(--accent); color: #fff;
+    border-radius: 4px; padding: 1px 5px;
+    margin-left: 6px; vertical-align: middle; flex-shrink: 0;
+  }
+
+  /* big-score-label は残しておく（スコアプレビュー用） */
+  .big-score-label {
+    font-size: 12px; font-weight: 600; color: var(--text2);
+    margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
 
   /* ─── COMMENT INPUT ────────────────────── */
   .comment-input {
@@ -2122,30 +2140,25 @@ function calcAllScores() {
 }
 
 // スコアカードHTML生成
-function scoreCardHTML(u, rank, mode) {
-  const rc = ['top1','top2','top3'];
-  const rl = ['1st','2nd','3rd'];
+function scoreRowHTML(u, rank, mode, rowId) {
+  const rc  = ['top1','top2','top3'];
+  const rl  = ['🥇','🥈','🥉'];
   const isMe = u.uid === currentUser?.uid;
-  const isTop = rank === 0;
   const subList = Object.entries(subjects);
-  const showResults = !!appSettings.resultsPublic;   // 実際の点数公開フラグ
+  const showResults = !!appSettings.resultsPublic;
 
-  let mainVal, mainLabel, breakdown;
+  let scoreVal, detailRows;
 
   if (mode === 'total') {
-    // 実際の点数 ＋ 合計点ボーナス
-    mainVal   = u.totalOnlyScore != null ? String(u.totalOnlyScore) + ' pt' : '---';
-    mainLabel = '合計点ボーナスのみスコア';
-    breakdown = `
+    scoreVal   = u.totalOnlyScore != null ? u.totalOnlyScore : '—';
+    detailRows = `
       ${showResults ? `<div class="brow"><span class="bl">実際の合計点</span><span class="bv">${u.actualTotal ?? '未入力'}</span></div>` : ''}
       <div class="brow"><span class="bl">合計点ボーナス</span><span class="bv ${u.totalBonus>=0?'pos':'neg'}">${u.totalBonus>=0?'+':''}${u.totalBonus}</span></div>
       <div class="brow"><span class="bl">予想</span><span class="bv">${u.total ?? '---'}</span></div>
       <div class="brow"><span class="bl">誤差</span><span class="bv">${u.actualTotal !== null && u.total !== null ? Math.abs(u.actualTotal - u.total) + '点' : '—'}</span></div>`;
   } else if (mode === 'subject') {
-    // 実際の点数 ＋ 教科別ボーナス合計
-    mainVal   = u.subjectOnlyScore != null ? String(u.subjectOnlyScore) + ' pt' : '---';
-    mainLabel = '教科別ボーナスのみスコア';
-    breakdown = `
+    scoreVal   = u.subjectOnlyScore != null ? u.subjectOnlyScore : '—';
+    detailRows = `
       ${showResults ? `<div class="brow"><span class="bl">実際の合計点</span><span class="bv">${u.actualTotal ?? '未入力'}</span></div>` : ''}
       <div class="brow"><span class="bl">教科別ボーナス合計</span><span class="bv ${u.totalSubBonus>=0?'pos':'neg'}">${u.totalSubBonus>=0?'+':''}${u.totalSubBonus}</span></div>
       ${subList.map(([id, sub]) => `
@@ -2157,28 +2170,33 @@ function scoreCardHTML(u, rank, mode) {
           }
         </div>`).join('')}`;
   } else { // grand
-    // 実際の点数 ＋ 合計点ボーナス ＋ 教科別ボーナス
-    mainVal   = u.grandTotal != null ? String(u.grandTotal) + ' pt' : '---';
-    mainLabel = '総合スコア';
-    breakdown = `
+    scoreVal   = u.grandTotal != null ? u.grandTotal : '—';
+    detailRows = `
       ${showResults ? `<div class="brow"><span class="bl">実際の合計点</span><span class="bv">${u.actualTotal ?? '未入力'}</span></div>` : ''}
       <div class="brow"><span class="bl">合計点ボーナス</span><span class="bv ${u.totalBonus>=0?'pos':'neg'}">${u.totalBonus>=0?'+':''}${u.totalBonus}</span></div>
       <div class="brow"><span class="bl">教科別ボーナス</span><span class="bv ${u.totalSubBonus>=0?'pos':'neg'}">${u.totalSubBonus>=0?'+':''}${u.totalSubBonus}</span></div>`;
   }
 
-  const badges = (mode === 'grand') ? badgesHTML(u) : '';
+  const rankMark = rank < 3 ? rl[rank] : `#${rank+1}`;
+  const rankCls  = rank < 3 ? rc[rank] : '';
+
   return `
-    <div class="score-card ${isMe?'is-me':''} ${isTop?'is-top':''}">
-      <div class="rank-num ${rc[rank]||''}">${rl[rank]||'#'+(rank+1)}</div>
-      <div class="score-player">
-        ${u.displayName||'不明'}${isMe?'<span class="badge-you">YOU</span>':''}
-      </div>
-      <div class="big-score">${mainVal}</div>
-      <div class="big-score-label">${mainLabel}</div>
-      ${badges}
-      <div class="breakdown">${breakdown}</div>
-    </div>`;
+    <div class="score-row ${isMe?'is-me':''}" onclick="toggleScoreRow('${rowId}')">
+      <div class="sr-rank ${rankCls}">${rankMark}</div>
+      <div class="sr-name">${u.displayName||'不明'}${isMe?'<span class="badge-you">YOU</span>':''}</div>
+      <div class="sr-score">${scoreVal}</div>
+      <div class="sr-arrow" id="arr-${rowId}">▾</div>
+    </div>
+    <div class="sr-detail" id="det-${rowId}">${detailRows}</div>`;
 }
+
+window.toggleScoreRow = (rowId) => {
+  const det = document.getElementById(`det-${rowId}`);
+  const arr = document.getElementById(`arr-${rowId}`);
+  if (!det) return;
+  const open = det.classList.toggle('open');
+  if (arr) arr.classList.toggle('open', open);
+};
 
 function renderRanking(gridId, scored, sortKey, mode) {
   const grid = document.getElementById(gridId);
@@ -2189,7 +2207,7 @@ function renderRanking(gridId, scored, sortKey, mode) {
     const bv = b[sortKey] ?? -99999;
     return bv - av;
   });
-  grid.innerHTML = sorted.map((u, i) => scoreCardHTML(u, i, mode)).join('');
+  grid.innerHTML = sorted.map((u, i) => scoreRowHTML(u, i, mode, `${gridId}-${i}`)).join('');
 }
 
 function renderScores() {
