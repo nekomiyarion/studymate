@@ -356,32 +356,107 @@
                             <button @click="shiftWeek(7)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-right"></i></button>
                         </div>
                     </header>
-                    <div class="flex flex-col md:flex-row gap-6 h-full">
-                        <div class="w-full md:w-2/3 flex flex-col gap-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-primary-light dark:border-gray-700">
-                                    <div class="text-xs text-primary font-bold mb-1">Total Study</div>
-                                    <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
-                                </div>
-                                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-green-100 dark:border-gray-700">
-                                    <div class="text-xs text-green-500 font-bold mb-1">Daily Avg</div>
-                                    <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal / 7) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
-                                </div>
-                            </div>
-                            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex-1 min-h-[300px] relative">
-                                <canvas id="weeklyChart"></canvas>
-                            </div>
+
+                    <!-- サマリーカード -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-primary-light dark:border-gray-700">
+                            <div class="text-xs text-primary font-bold mb-1">Total Study</div>
+                            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
                         </div>
-                        <div class="w-full md:w-1/3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-0 flex flex-col overflow-hidden">
-                            <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-4 border-b border-gray-100 dark:border-gray-700"><h3 class="font-bold text-gray-700 dark:text-gray-200">{{ selectedReportDate ? selectedReportDate + ' の詳細' : '日付を選択' }}</h3></div>
-                            <div class="flex-1 overflow-y-auto p-4">
-                                <div v-if="!selectedReportDetail || Object.keys(selectedReportDetail).length === 0" class="text-center py-10 text-gray-400 text-sm">記録なし / 日付未選択</div>
-                                <div v-else class="space-y-3">
-                                    <div v-for="(time, sub) in selectedReportDetail" :key="sub" class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-2">
-                                        <span class="font-medium text-sm">{{ sub }}</span>
-                                        <span class="font-mono px-2 py-0.5 rounded text-sm" :class="sub==='休憩'?'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30':'text-primary bg-primary-light dark:bg-primary/20'">{{ formatSeconds(time) }}</span>
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-green-100 dark:border-gray-700">
+                            <div class="text-xs text-green-500 font-bold mb-1">Daily Avg</div>
+                            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal / 7) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 曜日セレクター -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 overflow-x-auto">
+                        <div class="flex min-w-max">
+                            <button v-for="(dateStr, idx) in weeklyDates" :key="dateStr"
+                                @click="selectReportDay(dateStr, idx)"
+                                class="flex-1 min-w-[80px] py-3 px-2 text-center transition border-b-2 text-sm"
+                                :class="selectedReportDate === dateStr
+                                    ? 'border-primary text-primary bg-primary-light dark:bg-gray-700 font-bold'
+                                    : 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
+                                <div class="font-bold text-xs mb-1">{{ ['日','月','火','水','木','金','土'][new Date(dateStr+'T12:00:00').getDay()] }}</div>
+                                <div>{{ dateStr.slice(5).replace('-','/') }}</div>
+                                <div class="text-[10px] mt-1 font-mono" :class="selectedReportDate === dateStr ? 'text-primary' : 'text-gray-300 dark:text-gray-600'">
+                                    {{ formatHours(calculateDailyStudyTotal(weeklyData[idx]?.subjects || {})) }}h
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- タイムスケジュール -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex-1">
+                        <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-200">
+                                <i class="fa-regular fa-clock mr-2 text-primary"></i>
+                                {{ selectedReportDate ? selectedReportDate + ' のタイムライン' : '日付を選択してください' }}
+                            </h3>
+                            <span v-if="selectedReportDetail" class="text-xs font-mono bg-primary-light dark:bg-primary/20 text-primary px-2 py-1 rounded-full">
+                                学習 {{ formatSeconds(calculateDailyStudyTotal(selectedReportDetail)) }}
+                            </span>
+                        </div>
+                        <div class="p-4 md:p-6 overflow-y-auto" style="max-height: 480px;">
+                            <!-- 未選択 or セッションなし -->
+                            <div v-if="!selectedReportDate" class="text-center py-12 text-gray-400 text-sm">
+                                <i class="fa-regular fa-calendar-days text-3xl mb-3 block"></i>
+                                上の曜日から日付を選択してください
+                            </div>
+                            <div v-else-if="!selectedReportSessions || selectedReportSessions.length === 0" class="text-center py-12 text-gray-400 text-sm">
+                                <i class="fa-solid fa-mug-hot text-3xl mb-3 block opacity-30"></i>
+                                <p>この日の記録はありません</p>
+                                <p v-if="selectedReportDetail && Object.keys(selectedReportDetail).length > 0" class="mt-3 text-xs text-gray-300">（旧形式データ：時刻情報なし）</p>
+                                <!-- 旧形式データのフォールバック表示 -->
+                                <div v-if="selectedReportDetail && Object.keys(selectedReportDetail).length > 0" class="mt-4 text-left max-w-xs mx-auto">
+                                    <div v-for="(time, sub) in selectedReportDetail" :key="sub" class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 py-2 text-sm">
+                                        <span class="font-medium text-gray-600 dark:text-gray-300">{{ sub }}</span>
+                                        <span class="font-mono" :class="sub==='休憩'?'text-green-500':'text-primary'">{{ formatSeconds(time) }}</span>
                                     </div>
-                                    <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between font-bold"><span>学習合計(休憩除く)</span><span>{{ formatSeconds(calculateDailyStudyTotal(selectedReportDetail)) }}</span></div>
+                                </div>
+                            </div>
+                            <!-- タイムライン表示 -->
+                            <div v-else>
+                                <div class="relative">
+                                    <!-- タイムライン本体 -->
+                                    <div v-for="(session, i) in [...selectedReportSessions].sort((a,b)=>a.start.localeCompare(b.start))" :key="i"
+                                         class="flex gap-4 mb-4 items-start">
+                                        <!-- 左：時刻ライン -->
+                                        <div class="flex flex-col items-center w-14 flex-shrink-0">
+                                            <div class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400 leading-tight">
+                                                {{ new Date(session.start).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}
+                                            </div>
+                                            <div class="w-px flex-1 mt-1" :class="session.subject==='休憩' ? 'bg-green-200 dark:bg-green-800' : 'bg-primary-light dark:bg-primary/30'" style="min-height:24px;"></div>
+                                            <div class="text-xs font-mono text-gray-400 dark:text-gray-500 leading-tight">
+                                                {{ new Date(session.end).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}
+                                            </div>
+                                        </div>
+                                        <!-- 右：カード -->
+                                        <div class="flex-1 rounded-xl p-3 border transition"
+                                             :class="session.subject==='休憩'
+                                                ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800'
+                                                : 'bg-primary-light dark:bg-primary/10 border-blue-100 dark:border-primary/30'">
+                                            <div class="flex justify-between items-center">
+                                                <span class="font-bold text-sm" :class="session.subject==='休憩' ? 'text-green-700 dark:text-green-400' : 'text-primary'">
+                                                    <i v-if="session.subject==='休憩'" class="fa-solid fa-mug-hot mr-1"></i>
+                                                    <i v-else class="fa-solid fa-book mr-1"></i>
+                                                    {{ session.subject }}
+                                                </span>
+                                                <span class="font-mono text-xs font-bold" :class="session.subject==='休憩' ? 'text-green-600 dark:text-green-400' : 'text-primary'">
+                                                    {{ formatSeconds(session.duration) }}
+                                                </span>
+                                            </div>
+                                            <div class="text-[10px] text-gray-400 dark:text-gray-500 mt-1 font-mono">
+                                                {{ new Date(session.start).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }} 〜 {{ new Date(session.end).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 合計 -->
+                                <div class="pt-4 mt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between font-bold text-sm">
+                                    <span class="text-gray-600 dark:text-gray-300">学習合計（休憩除く）</span>
+                                    <span class="text-primary font-mono">{{ formatSeconds(calculateDailyStudyTotal(selectedReportDetail)) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -731,6 +806,9 @@
                 let chartInstance = null;
                 const selectedReportDate = ref(null);
                 const selectedReportDetail = ref(null);
+                const selectedReportSessions = ref([]);
+                const weeklyDates = ref([]);
+                const weeklyData = ref([]);
 
                 // Tutorial
                 const showTutorial = ref(false);
@@ -870,12 +948,12 @@
                     try {
                         if(isGuestMode.value) {
                             const raw = localStorage.getItem(`studyMate_log_${d}`);
-                            todayLog.value = raw ? JSON.parse(raw) : {total:0, subjects:{}};
+                            todayLog.value = raw ? JSON.parse(raw) : {total:0, subjects:{}, sessions:[]};
                         } else if(user.value) {
                             const s = await getDoc(doc(db, "users", user.value.uid, "logs", d));
-                            todayLog.value = s.exists() ? s.data() : {total:0, subjects:{}};
+                            todayLog.value = s.exists() ? s.data() : {total:0, subjects:{}, sessions:[]};
                         }
-                    } catch(e) { todayLog.value = {total:0, subjects:{}}; }
+                    } catch(e) { todayLog.value = {total:0, subjects:{}, sessions:[]}; }
                 };
                 const saveData = async () => {
                     const d = getTodayStr();
@@ -1001,12 +1079,16 @@
                 };
 
                 // --- TIMER CONTROL ---
+                // セッション開始壁時計（実際の時刻記録用）
+                const sessionWallStart = ref(null);
+
                 const startSession = (sub, mode, durationSec = 0) => {
                     currentSubject.value = sub;
                     breakMode.value = (sub === '休憩');
                     countdownDuration.value = durationSec;
                     
                     if (!startTime.value) startTime.value = Date.now();
+                    sessionWallStart.value = new Date().toISOString(); // 壁時計の開始時刻
                     elapsedTime.value = 0;
                     isTimerRunning.value = true;
                     isPaused.value = false;
@@ -1016,7 +1098,8 @@
                     // ★ローカルストレージに状態保存
                     localStorage.setItem(TIMER_STATE_KEY, JSON.stringify({
                         subject: sub, mode: mode, duration: durationSec,
-                        startTime: startTime.value, breakMode: breakMode.value, isPaused: false
+                        startTime: startTime.value, breakMode: breakMode.value, isPaused: false,
+                        wallStart: sessionWallStart.value
                     }));
                     
                     if (timerInterval) clearInterval(timerInterval);
@@ -1087,8 +1170,17 @@
                     if(sub && todayLog.value.subjects) {
                         const oldVal = todayLog.value.subjects[sub] || 0;
                         todayLog.value.subjects[sub] = oldVal + addedTime;
+                        
+                        // セッション時刻を記録
+                        const wallEnd = new Date().toISOString();
+                        const wallStart = sessionWallStart.value || new Date(Date.now() - addedTime * 1000).toISOString();
+                        if (!todayLog.value.sessions) todayLog.value.sessions = [];
+                        todayLog.value.sessions.push({ subject: sub, start: wallStart, end: wallEnd, duration: addedTime });
+                        
                         await saveData();
                     }
+                    
+                    sessionWallStart.value = null;
 
                     if (isNaturalFinish) playAlarm();
                     
@@ -1122,9 +1214,11 @@
                                 elapsedTime.value = diff;
                                 breakMode.value = state.breakMode;
                                 countdownDuration.value = state.duration;
+                                sessionWallStart.value = state.wallStart || new Date(state.startTime).toISOString();
                                 stopTimer(true);
                             } else {
                                 startTime.value = state.startTime;
+                                sessionWallStart.value = state.wallStart || new Date(state.startTime).toISOString();
                                 startSession(state.subject, state.mode, state.duration);
                             }
                         }
@@ -1307,25 +1401,33 @@
                     const dates=[]; const promises=[];
                     for(let i=0;i<7;i++){
                         const d=new Date(start); d.setDate(start.getDate()+i); const s=d.toLocaleDateString('en-CA'); dates.push(s);
-                        if(isGuestMode.value){ const l=localStorage.getItem(`studyMate_log_${s}`); promises.push(Promise.resolve(l?JSON.parse(l):{total:0,subjects:{}})); }
-                        else if(user.value) promises.push(getDoc(doc(db,"users",user.value.uid,"logs",s)).then(x=>x.exists()?x.data():{total:0,subjects:{}}));
-                        else promises.push(Promise.resolve({total:0,subjects:{}}));
+                        if(isGuestMode.value){ const l=localStorage.getItem(`studyMate_log_${s}`); promises.push(Promise.resolve(l?JSON.parse(l):{total:0,subjects:{},sessions:[]})); }
+                        else if(user.value) promises.push(getDoc(doc(db,"users",user.value.uid,"logs",s)).then(x=>x.exists()?x.data():{total:0,subjects:{},sessions:[]}));
+                        else promises.push(Promise.resolve({total:0,subjects:{},sessions:[]}));
                     }
                     const data=await Promise.all(promises);
                     const studyTotals = data.map(d => calculateDailyStudyTotal(d.subjects));
                     weeklyTotal.value = studyTotals.reduce((a,b)=>a+b,0);
-                    
-                    nextTick(()=>{
-                        const ctx=document.getElementById('weeklyChart');
-                        if(ctx){
-                            if(chartInstance)chartInstance.destroy();
-                            chartInstance=new Chart(ctx,{
-                                type:'bar',
-                                data:{ labels:dates.map(d=>d.slice(5).replace('-','/')), datasets:[{label:'分',data:studyTotals.map(s=>(s/60).toFixed(1)),backgroundColor:themeColor.value,borderRadius:4}] },
-                                options:{ maintainAspectRatio:false, responsive:true, onClick:(e,el)=>{if(el.length){const i=el[0].index;selectedReportDate.value=dates[i];selectedReportDetail.value=data[i].subjects;}}, scales:{y:{beginAtZero:true, grid:{color:isDarkMode.value?'#374151':'#e5e7eb'}},x:{grid:{display:false}, ticks:{color:isDarkMode.value?'#9ca3af':'#374151'}}}, plugins:{legend:{display:false}} }
-                            });
-                        }
-                    });
+                    weeklyDates.value = dates;
+                    weeklyData.value = data;
+                    // 今日の日付をデフォルト選択
+                    const todayStr = new Date().toLocaleDateString('en-CA');
+                    const todayIdx = dates.indexOf(todayStr);
+                    if (todayIdx >= 0) {
+                        selectedReportDate.value = dates[todayIdx];
+                        selectedReportDetail.value = data[todayIdx].subjects;
+                        selectedReportSessions.value = data[todayIdx].sessions || [];
+                    } else {
+                        selectedReportDate.value = null;
+                        selectedReportDetail.value = null;
+                        selectedReportSessions.value = [];
+                    }
+                };
+
+                const selectReportDay = (dateStr, idx) => {
+                    selectedReportDate.value = dateStr;
+                    selectedReportDetail.value = weeklyData.value[idx]?.subjects || {};
+                    selectedReportSessions.value = weeklyData.value[idx]?.sessions || [];
                 };
 
                 const formattedTime = computed(() => {
@@ -1360,6 +1462,7 @@
                     tasks, newTaskTitle, showCompletedTasks, filteredTasks, createTask, deleteTask, toggleTaskStatus, updateTaskTitle,
                     tokenExpired, refreshToken,
                     weekRangeLabel, shiftWeek, loadWeeklyReport, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
+                    selectedReportSessions, weeklyDates, weeklyData, selectReportDay,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
                     isDarkMode, toggleDarkMode, themeColor, tempThemeColor, changeThemeColor, resetTheme,
