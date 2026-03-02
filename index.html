@@ -311,14 +311,21 @@
                                 <span class="hidden sm:inline">DOWN</span>
                             </button>
                         </div>
-                        <!-- 時刻・日付（flex-1で残りを使う、右寄せ） -->
-                        <div class="flex-1 flex justify-end min-w-0">
-                            <div class="flex items-center gap-1 text-xs font-mono text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1.5 rounded-full shadow-sm border dark:border-gray-700 min-w-0">
+                        <!-- 時刻・日付 + 全画面ボタン（右寄せ） -->
+                        <div class="flex-1 flex justify-end items-center gap-1.5 min-w-0">
+                            <div class="flex items-center gap-1 text-xs font-mono text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1.5 rounded-full shadow-sm border dark:border-gray-700 min-w-0 flex-shrink-0">
                                 <i class="fa-regular fa-clock text-[9px] flex-shrink-0"></i>
                                 <span class="font-bold tabular-nums flex-shrink-0">{{ currentTimeFormatted }}</span>
                                 <span class="text-gray-300 dark:text-gray-600 flex-shrink-0">|</span>
                                 <span class="flex-shrink-0">{{ new Date().toLocaleDateString('ja-JP', {month:'numeric', day:'numeric'}) }}</span>
                             </div>
+                            <!-- 全画面ボタン（スマホのみ・縦向き・スタンバイ以外） -->
+                            <button v-if="isMobile && !isFullscreen && !isStandbyMode && !isLandscape"
+                                @click="toggleFullscreen"
+                                class="flex-shrink-0 bg-gray-700/80 dark:bg-gray-600/80 backdrop-blur-sm text-white p-1.5 rounded-full shadow transition active:scale-95 md:hidden"
+                                title="全画面">
+                                <i class="fa-solid fa-expand text-[11px]"></i>
+                            </button>
                         </div>
                     </header>
 
@@ -424,13 +431,7 @@
                         </div>
                     </div>
 
-                    <!-- Fullscreen Button (Mobile Only, not in Standby, not in landscape) -->
-                    <div v-if="isMobile && !isFullscreen && !isStandbyMode && !isLandscape" class="fixed bottom-28 left-4 md:hidden slide-up z-30">
-                        <button @click="toggleFullscreen" class="bg-gray-800/80 dark:bg-gray-700/80 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition transform active:scale-95 text-xs font-medium flex items-center gap-1.5">
-                            <i class="fa-solid fa-expand text-sm"></i>
-                            <span>全画面</span>
-                        </button>
-                    </div>
+
                 </div>
 
                 <!-- 2. TODO TAB -->
@@ -488,34 +489,38 @@
 
                 <!-- 3. REPORT TAB -->
                 <div v-if="currentTab === 'report'" class="max-w-full mx-auto flex flex-col" :style="{ height: (isMobile && !isLandscape) ? 'calc(100dvh - 5rem - 2rem)' : 'calc(100vh - 4rem)', minHeight: 0 }">
-                    <!-- ヘッダー -->
-                    <div class="flex-shrink-0 mb-2 flex flex-wrap gap-2 justify-between items-center">
-                        <h2 class="font-bold" style="font-size: clamp(16px, 2vw, 26px);">週間レポート</h2>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <input type="month" :value="reportMonthValue" @change="jumpToMonth($event.target.value)"
-                                   :max="todayMonthValue"
-                                   class="text-xs border dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-primary cursor-pointer">
-                            <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-0.5">
-                                <button @click="shiftWeek(-7)" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-                                <span class="px-2 text-xs font-bold">{{ weekRangeLabel }}</span>
-                                <button @click="shiftWeek(7)" :disabled="isCurrentWeek" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
-                                    :class="isCurrentWeek ? 'text-gray-200 dark:text-gray-700 cursor-not-allowed' : 'text-gray-500'">
-                                    <i class="fa-solid fa-chevron-right text-xs"></i>
-                                </button>
-                            </div>
-                            <!-- 操作モードボタン -->
-                            <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-0.5 gap-0.5">
-                                <button @click="reportMode = reportMode === 'edit' ? 'view' : 'edit'"
-                                    class="px-2.5 py-1.5 rounded text-xs font-bold transition flex items-center gap-1"
-                                    :class="reportMode==='edit' ? 'bg-yellow-400 text-white' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-gray-700'">
-                                    <i class="fa-solid fa-pen text-[10px]"></i> 変更
-                                </button>
-                                <button @click="reportMode = reportMode === 'delete' ? 'view' : 'delete'"
-                                    class="px-2.5 py-1.5 rounded text-xs font-bold transition flex items-center gap-1"
-                                    :class="reportMode==='delete' ? 'bg-red-400 text-white' : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-gray-700'">
-                                    <i class="fa-solid fa-trash text-[10px]"></i> 削除
-                                </button>
-                            </div>
+                    <!-- ヘッダー：全要素を1行に収める -->
+                    <div class="flex-shrink-0 mb-2 flex items-center gap-1.5 min-w-0 overflow-hidden">
+                        <!-- タイトル（スマホで省略） -->
+                        <h2 class="font-bold whitespace-nowrap flex-shrink-0 hidden xs:block" style="font-size: clamp(14px, 2vw, 22px);">週間レポート</h2>
+                        <!-- 月ピッカー -->
+                        <input type="month" :value="reportMonthValue" @change="jumpToMonth($event.target.value)"
+                               :max="todayMonthValue"
+                               class="flex-shrink-0 border dark:border-gray-600 rounded-lg px-1.5 py-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                               style="font-size: clamp(10px, 1.2vw, 13px); max-width: clamp(100px, 18vw, 140px);">
+                        <!-- 週ナビ -->
+                        <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-0.5 flex-shrink-0">
+                            <button @click="shiftWeek(-7)" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></button>
+                            <span class="px-1 font-bold whitespace-nowrap" style="font-size: clamp(9px, 1.1vw, 12px);">{{ weekRangeLabel }}</span>
+                            <button @click="shiftWeek(7)" :disabled="isCurrentWeek" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+                                :class="isCurrentWeek ? 'text-gray-200 dark:text-gray-700 cursor-not-allowed' : 'text-gray-500'">
+                                <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
+                            </button>
+                        </div>
+                        <!-- 操作モードボタン -->
+                        <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-0.5 gap-0.5 flex-shrink-0">
+                            <button @click="reportMode = reportMode === 'edit' ? 'view' : 'edit'"
+                                class="px-2 py-1 rounded font-bold transition flex items-center gap-0.5"
+                                style="font-size: clamp(10px, 1.2vw, 12px);"
+                                :class="reportMode==='edit' ? 'bg-yellow-400 text-white' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-gray-700'">
+                                <i class="fa-solid fa-pen" style="font-size:9px;"></i> 変更
+                            </button>
+                            <button @click="reportMode = reportMode === 'delete' ? 'view' : 'delete'"
+                                class="px-2 py-1 rounded font-bold transition flex items-center gap-0.5"
+                                style="font-size: clamp(10px, 1.2vw, 12px);"
+                                :class="reportMode==='delete' ? 'bg-red-400 text-white' : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-gray-700'">
+                                <i class="fa-solid fa-trash" style="font-size:9px;"></i> 削除
+                            </button>
                         </div>
                     </div>
 
@@ -577,10 +582,10 @@
                         </div>
                     </div>
 
-                    <!-- ═══ タイムライングリッド（スクロールなし） ═══ -->
+                    <!-- ═══ タイムライングリッド（時間幅が長い場合はy方向スクロール） ═══ -->
                     <div class="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col min-h-0">
-                        <div class="flex-1 overflow-x-auto overflow-y-hidden min-h-0">
-                            <div class="flex h-full" style="min-width: 480px;">
+                        <div class="flex-1 overflow-x-auto min-h-0" :class="reportVisibleHours > 10 ? 'overflow-y-auto' : 'overflow-y-hidden'">
+                            <div class="flex" :style="{ minWidth: '480px', height: reportVisibleHours > 10 ? (reportVisibleHours * 52) + 'px' : '100%', minHeight: '100%' }">
 
                                 <!-- 時刻ラベル列：幅・文字サイズをレスポンシブ対応 -->
                                 <div class="flex-shrink-0 relative border-r border-gray-100 dark:border-gray-700"
@@ -724,81 +729,95 @@
                 </transition>
 
                 <!-- 4. SETTINGS TAB -->
-                <div v-if="currentTab === 'settings'" class="max-w-xl mx-auto min-h-full pb-8">
+                <div v-if="currentTab === 'settings'" class="max-w-xl mx-auto pb-8 w-full">
                     <header class="mb-6"><h2 class="text-2xl font-bold">設定</h2></header>
 
                     <!-- 1. 外観設定 -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
-                            <i class="fa-solid fa-palette mr-2 text-primary"></i>外観設定
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-4">
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
+                            <i class="fa-solid fa-palette mr-1.5 text-primary"></i>外観設定
                         </div>
-                        <div class="p-6 space-y-6">
-                            <!-- テーマモード -->
-                            <div>
-                                <h4 class="font-bold text-sm mb-3">テーマ</h4>
-                                <div class="grid grid-cols-3 gap-2">
+                        <div class="px-4 py-3 space-y-3">
+                            <!-- テーマモード：横1行セグメント -->
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">テーマ</span>
+                                <div class="flex bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg gap-0.5 flex-shrink-0">
                                     <button @click="setThemeMode('light')"
-                                        class="flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition text-xs font-bold"
-                                        :class="themeMode==='light' ? 'border-primary bg-primary-light dark:bg-primary/20 text-primary' : 'border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-300'">
-                                        <i class="fa-solid fa-sun text-xl text-yellow-400"></i>
-                                        ライト
+                                        class="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-bold transition"
+                                        :class="themeMode==='light' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">
+                                        <i class="fa-solid fa-sun text-yellow-400"></i>ライト
                                     </button>
                                     <button @click="setThemeMode('dark')"
-                                        class="flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition text-xs font-bold"
-                                        :class="themeMode==='dark' ? 'border-primary bg-primary-light dark:bg-primary/20 text-primary' : 'border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-300'">
-                                        <i class="fa-solid fa-moon text-xl text-indigo-400"></i>
-                                        ダーク
+                                        class="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-bold transition"
+                                        :class="themeMode==='dark' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">
+                                        <i class="fa-solid fa-moon text-indigo-400"></i>ダーク
                                     </button>
                                     <button @click="setThemeMode('system')"
-                                        class="flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition text-xs font-bold"
-                                        :class="themeMode==='system' ? 'border-primary bg-primary-light dark:bg-primary/20 text-primary' : 'border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-300'">
-                                        <i class="fa-solid fa-display text-xl text-gray-400"></i>
-                                        システム
+                                        class="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-bold transition"
+                                        :class="themeMode==='system' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">
+                                        <i class="fa-solid fa-display text-gray-400"></i>自動
                                     </button>
                                 </div>
                             </div>
-                            <!-- テーマカラー -->
-                            <div>
-                                <h4 class="font-bold text-sm mb-2">テーマカラー</h4>
-                                <div class="flex items-center gap-4">
-                                    <input type="color" v-model="tempThemeColor" @change="changeThemeColor" class="w-10 h-10 rounded cursor-pointer border-none">
-                                    <span class="text-xs text-gray-500">現在の色: {{ themeColor }}</span>
-                                    <button @click="resetTheme" class="ml-auto text-xs border px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">デフォルトに戻す</button>
-                                </div>
+                            <!-- テーマカラー：コンパクト1行 -->
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">カラー</span>
+                                <input type="color" v-model="tempThemeColor" @change="changeThemeColor" class="w-8 h-8 rounded cursor-pointer border border-gray-200 dark:border-gray-600 flex-shrink-0">
+                                <span class="text-xs text-gray-400 font-mono flex-shrink-0">{{ themeColor }}</span>
+                                <button @click="resetTheme" class="ml-auto text-xs text-gray-400 hover:text-primary border border-gray-200 dark:border-gray-600 px-2.5 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex-shrink-0">リセット</button>
                             </div>
                         </div>
                     </section>
 
-                    <!-- 2. 教科の編集・カラー設定 -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center gap-2">
-                            <i class="fa-solid fa-pen-to-square text-primary"></i> 教科の編集・カラー設定
+                    <!-- 2. 教科の編集・カラー設定（折り畳み） -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-4">
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between cursor-pointer"
+                             @click="showSubjectEditor = !showSubjectEditor">
+                            <span><i class="fa-solid fa-pen-to-square mr-1.5 text-primary"></i>教科の編集・カラー設定</span>
+                            <i class="fa-solid text-gray-400 transition-transform duration-200 text-xs"
+                               :class="showSubjectEditor ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                         </div>
-                        <div class="p-6">
-                            <p class="text-xs text-gray-400 mb-4">教科名の変更・色の設定ができます。色はレポートのタイムラインに使用されます。</p>
-                            <ul class="space-y-3 mb-4">
-                                <li v-for="(sub, index) in subjects" :key="index" class="flex items-center gap-2">
+                        <div v-if="showSubjectEditor" class="p-4">
+                            <p class="text-xs text-gray-400 mb-3">ドラッグで並び替え・色変更・名前変更ができます。</p>
+                            <ul class="space-y-2 mb-3" ref="subjectList">
+                                <li v-for="(sub, index) in subjects" :key="sub"
+                                    class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-2 py-1.5 cursor-grab active:cursor-grabbing"
+                                    :data-index="index"
+                                    draggable="true"
+                                    @dragstart="subjectDragStart($event, index)"
+                                    @dragover.prevent="subjectDragOver($event, index)"
+                                    @drop="subjectDrop($event, index)"
+                                    @dragend="subjectDragEnd">
+                                    <!-- ドラッグハンドル -->
+                                    <i class="fa-solid fa-grip-vertical text-gray-300 text-xs flex-shrink-0 cursor-grab"></i>
+                                    <!-- 色 -->
                                     <div class="relative flex-shrink-0">
-                                        <div class="w-8 h-8 rounded-full border-2 border-white shadow cursor-pointer hover:scale-110 transition"
+                                        <div class="w-7 h-7 rounded-full border-2 border-white shadow cursor-pointer hover:scale-110 transition"
                                              :style="{ backgroundColor: subjectColor(sub) }"
-                                             @click="$refs['colorPicker_'+index][0].click()"></div>
+                                             @click.stop="$refs['colorPicker_'+index][0].click()"></div>
                                         <input type="color" :ref="'colorPicker_'+index"
                                                :value="subjectColor(sub)"
                                                @change="setSubjectColor(sub, $event.target.value)"
                                                class="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none">
                                     </div>
+                                    <!-- 名前 -->
                                     <input type="text" v-model="subjects[index]" @change="saveSettings"
-                                           class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-primary outline-none bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 transition">
-                                    <button @click="resetSubjectColor(sub)" class="text-gray-300 hover:text-gray-500 p-1.5 transition" title="色をデフォルトに戻す">
+                                           class="flex-1 border dark:border-gray-600 rounded-lg px-2 py-1 text-sm focus:border-primary outline-none bg-white dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 transition min-w-0"
+                                           @click.stop>
+                                    <!-- リセット -->
+                                    <button @click.stop="resetSubjectColor(sub)" class="text-gray-300 hover:text-gray-500 p-1 transition flex-shrink-0" title="色リセット">
                                         <i class="fa-solid fa-rotate-left text-xs"></i>
                                     </button>
-                                    <button @click="removeSubject(index)" class="text-gray-300 hover:text-red-500 p-1.5 transition">
+                                    <!-- 削除 -->
+                                    <button @click.stop="removeSubject(index)" class="text-gray-300 hover:text-red-500 p-1 transition flex-shrink-0">
                                         <i class="fa-solid fa-circle-minus"></i>
                                     </button>
                                 </li>
+                                <!-- 休憩（削除・移動不可） -->
                                 <li class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                    <i class="fa-solid fa-lock text-gray-200 text-xs flex-shrink-0"></i>
                                     <div class="relative flex-shrink-0">
-                                        <div class="w-8 h-8 rounded-full border-2 border-white shadow cursor-pointer hover:scale-110 transition"
+                                        <div class="w-7 h-7 rounded-full border-2 border-white shadow cursor-pointer hover:scale-110 transition"
                                              :style="{ backgroundColor: subjectColor('休憩') }"
                                              @click="$refs.breakColorPicker.click()"></div>
                                         <input type="color" ref="breakColorPicker"
@@ -806,11 +825,11 @@
                                                @change="setSubjectColor('休憩', $event.target.value)"
                                                class="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none">
                                     </div>
-                                    <span class="flex-1 text-sm font-medium text-gray-500 dark:text-gray-400 px-3 py-2">休憩（固定）</span>
-                                    <button @click="resetSubjectColor('休憩')" class="text-gray-300 hover:text-gray-500 p-1.5 transition">
+                                    <span class="flex-1 text-xs font-medium text-gray-400 dark:text-gray-500 px-1">休憩（固定）</span>
+                                    <button @click="resetSubjectColor('休憩')" class="text-gray-300 hover:text-gray-500 p-1 transition">
                                         <i class="fa-solid fa-rotate-left text-xs"></i>
                                     </button>
-                                    <div class="w-8"></div>
+                                    <div class="w-6"></div>
                                 </li>
                             </ul>
                             <div class="flex gap-2">
@@ -820,65 +839,77 @@
                         </div>
                     </section>
 
-                    <!-- 3. 通知設定 -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
-                            <i class="fa-solid fa-bell mr-2 text-primary"></i>通知設定
+                    <!-- 3. 通知設定（スイッチ方式 + 通知音統合） -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-4">
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
+                            <i class="fa-solid fa-bell mr-1.5 text-primary"></i>通知設定
                         </div>
-                        <div class="p-6">
-                            <h4 class="font-bold text-sm mb-3">タイマー終了時の通知モード</h4>
-                            <div class="grid grid-cols-2 gap-3">
-                                <button @click="setNotificationMode('sound_vibrate')"
-                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
-                                    :class="notificationMode === 'sound_vibrate' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
-                                    <i class="fa-solid fa-bell text-lg"></i>音 + 振動
+                        <div class="px-4 py-3 space-y-0 divide-y divide-gray-100 dark:divide-gray-700">
+                            <!-- 音 -->
+                            <div class="flex items-center justify-between py-2.5">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-volume-high w-4 text-center text-gray-500"></i>
+                                    <span class="text-sm font-medium">通知音</span>
+                                </div>
+                                <button @click="notifSound = !notifSound; saveSettings()"
+                                    class="w-11 h-6 rounded-full p-0.5 transition-colors duration-200"
+                                    :class="notifSound ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'">
+                                    <div class="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200"
+                                         :class="notifSound ? 'translate-x-5' : 'translate-x-0'"></div>
                                 </button>
-                                <button @click="setNotificationMode('vibrate_only')"
-                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
-                                    :class="notificationMode === 'vibrate_only' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
-                                    <i class="fa-solid fa-mobile-screen-button text-lg"></i>振動のみ
+                            </div>
+                            <!-- 振動 -->
+                            <div class="flex items-center justify-between py-2.5">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-mobile-screen-button w-4 text-center text-gray-500"></i>
+                                    <span class="text-sm font-medium">振動</span>
+                                </div>
+                                <button @click="notifVibrate = !notifVibrate; saveSettings()"
+                                    class="w-11 h-6 rounded-full p-0.5 transition-colors duration-200"
+                                    :class="notifVibrate ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'">
+                                    <div class="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200"
+                                         :class="notifVibrate ? 'translate-x-5' : 'translate-x-0'"></div>
                                 </button>
-                                <button @click="setNotificationMode('silent')"
-                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
-                                    :class="notificationMode === 'silent' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
-                                    <i class="fa-solid fa-bell-slash text-lg"></i>音無し
+                            </div>
+                            <!-- フラッシュ -->
+                            <div class="flex items-center justify-between py-2.5">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-bolt w-4 text-center text-gray-500"></i>
+                                    <span class="text-sm font-medium">フラッシュ</span>
+                                </div>
+                                <button @click="notifFlash = !notifFlash; saveSettings()"
+                                    class="w-11 h-6 rounded-full p-0.5 transition-colors duration-200"
+                                    :class="notifFlash ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'">
+                                    <div class="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200"
+                                         :class="notifFlash ? 'translate-x-5' : 'translate-x-0'"></div>
                                 </button>
-                                <button @click="setNotificationMode('flash')"
-                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
-                                    :class="notificationMode === 'flash' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
-                                    <i class="fa-solid fa-bolt text-lg"></i>音無し+フラッシュ
-                                </button>
+                            </div>
+                            <!-- 通知音ファイル（音がONの時のみ表示） -->
+                            <div v-if="notifSound" class="py-2.5">
+                                <p class="text-xs text-gray-400 mb-1.5">通知音ファイル（mp3推奨）</p>
+                                <div class="flex items-center gap-2">
+                                    <input type="file" accept="audio/*" @change="handleAudioUpload" class="flex-1 text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200">
+                                    <button @click="testAudio" class="text-xs text-primary hover:underline flex-shrink-0"><i class="fa-solid fa-play mr-1"></i>テスト</button>
+                                </div>
                             </div>
                         </div>
                     </section>
 
-                    <!-- 4. 通知音 -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
-                            <i class="fa-solid fa-music mr-2 text-primary"></i>通知音の設定
+                    <!-- 4. アニメーション設定 -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-4">
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-primary"></i>アニメーション設定
                         </div>
-                        <div class="p-6">
-                            <p class="text-xs text-gray-500 mb-2">タイマー終了時の音を変更（mp3推奨）</p>
-                            <input type="file" accept="audio/*" @change="handleAudioUpload" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200">
-                            <button @click="testAudio" class="mt-2 text-xs text-primary hover:underline"><i class="fa-solid fa-play mr-1"></i>テスト再生</button>
-                        </div>
-                    </section>
-
-                    <!-- 5. アニメーション -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
-                            <i class="fa-solid fa-wand-magic-sparkles mr-2 text-primary"></i>アニメーション設定
-                        </div>
-                        <div class="p-6 flex items-center justify-between">
-                            <div>
-                                <h4 class="font-bold text-sm">タブ切り替えアニメーション</h4>
-                                <p class="text-xs text-gray-500">画面切り替え時のエフェクト</p>
+                        <div class="px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+                            <div class="flex-shrink-0">
+                                <h4 class="font-bold text-sm">タブ切り替え</h4>
+                                <p class="text-xs text-gray-400">画面切り替え時のエフェクト</p>
                             </div>
-                            <div class="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg gap-1">
-                                <button @click="setTabAnimation('fade')" class="px-3 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='fade' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">フェード</button>
-                                <button @click="setTabAnimation('slide')" class="px-3 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='slide' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">スライド</button>
-                                <button @click="setTabAnimation('zoom')" class="px-3 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='zoom' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">ズーム</button>
-                                <button @click="setTabAnimation('none')" class="px-3 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='none' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">なし</button>
+                            <div class="flex bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg gap-0.5 flex-shrink-0">
+                                <button @click="setTabAnimation('fade')" class="px-2.5 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='fade' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">フェード</button>
+                                <button @click="setTabAnimation('slide')" class="px-2.5 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='slide' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">スライド</button>
+                                <button @click="setTabAnimation('zoom')" class="px-2.5 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='zoom' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">ズーム</button>
+                                <button @click="setTabAnimation('none')" class="px-2.5 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='none' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">なし</button>
                             </div>
                         </div>
                     </section>
@@ -1004,7 +1035,7 @@
             <!-- ALARM OVERLAY (Updated with Flash capability) -->
             <div v-if="isAlarmRinging" 
                  class="fixed inset-0 z-[300] bg-black/80 flex flex-col items-center justify-center p-4 transition-colors duration-100"
-                 :class="{ 'animate-flash-screen': notificationMode === 'flash' }">
+                 :class="{ 'animate-flash-screen': isAlarmRinging && notifFlash }">
                 <div class="text-white text-6xl mb-8 animate-ring"><i class="fa-solid fa-bell"></i></div>
                 <h2 class="text-white text-3xl font-bold mb-8">Time's Up!</h2>
                 <button @click="stopAlarm" class="px-10 py-5 bg-white text-red-600 rounded-full font-bold text-xl shadow-2xl hover:scale-105 transition">
@@ -1164,6 +1195,10 @@
                 // Notification Settings
                 // 'sound_vibrate', 'vibrate_only', 'silent', 'flash'
                 const notificationMode = ref('sound_vibrate'); 
+                // 通知スイッチ（個別ON/OFF）
+                const notifSound = ref(true);
+                const notifVibrate = ref(true);
+                const notifFlash = ref(false);
 
                 // Tab animation
                 const tabAnimation = ref('fade'); // 'fade', 'slide', 'zoom', 'none'
@@ -1306,6 +1341,31 @@
                 const emailAuthError = ref('');
                 const showEmailAuth = ref(false);
                 const showAccountSettings = ref(false);
+                const showSubjectEditor = ref(false);
+
+                // ── 教科ドラッグ並び替え ──
+                let subjectDragIdx = ref(null);
+                let subjectDragOverIdx = ref(null);
+                const subjectDragStart = (e, idx) => {
+                    subjectDragIdx.value = idx;
+                    e.dataTransfer.effectAllowed = 'move';
+                };
+                const subjectDragOver = (e, idx) => {
+                    subjectDragOverIdx.value = idx;
+                };
+                const subjectDrop = (e, idx) => {
+                    const from = subjectDragIdx.value;
+                    if (from === null || from === idx) return;
+                    const arr = [...subjects.value];
+                    const [moved] = arr.splice(from, 1);
+                    arr.splice(idx, 0, moved);
+                    subjects.value = arr;
+                    saveSettings();
+                };
+                const subjectDragEnd = () => {
+                    subjectDragIdx.value = null;
+                    subjectDragOverIdx.value = null;
+                };
                 const linkEmailForm = ref({ email: '', password: '', confirm: '' });
                 const linkEmailError = ref('');
                 const accountMessage = ref('');
@@ -1456,7 +1516,7 @@
                 };
                 
                 const loadSettings = async () => {
-                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', themeMode: 'system', notificationMode: 'sound_vibrate', tabAnimation: 'fade', subjectColors: {} };
+                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', themeMode: 'system', notificationMode: 'sound_vibrate', notifSound: true, notifVibrate: true, notifFlash: false, tabAnimation: 'fade', subjectColors: {} };
                     try {
                         if(isGuestMode.value) {
                             const s = localStorage.getItem('studyMate_settings');
@@ -1472,6 +1532,9 @@
                     tempThemeColor.value = themeColor.value;
                     themeMode.value = d.themeMode || 'system';
                     notificationMode.value = d.notificationMode || 'sound_vibrate';
+                    notifSound.value = d.notifSound !== undefined ? d.notifSound : true;
+                    notifVibrate.value = d.notifVibrate !== undefined ? d.notifVibrate : true;
+                    notifFlash.value = d.notifFlash !== undefined ? d.notifFlash : false;
                     tabAnimation.value = d.tabAnimation || 'fade';
                     subjectColors.value = d.subjectColors || {};
                     applyTheme();
@@ -1483,6 +1546,9 @@
                         themeColor: themeColor.value, 
                         themeMode: themeMode.value,
                         notificationMode: notificationMode.value,
+                        notifSound: notifSound.value,
+                        notifVibrate: notifVibrate.value,
+                        notifFlash: notifFlash.value,
                         tabAnimation: tabAnimation.value,
                         subjectColors: subjectColors.value
                     };
@@ -1774,17 +1840,10 @@
 
                 const playAlarm = () => {
                     isAlarmRinging.value = true;
-                    const mode = notificationMode.value;
-
-                    // Sound Logic
-                    if (mode === 'sound_vibrate') {
-                        triggerAudio();
-                        triggerVibration();
-                    } else if (mode === 'vibrate_only') {
-                        triggerVibration();
-                    } else if (mode === 'flash') {
-                        // Flash is handled by CSS binding
-                    }
+                    // 通知スイッチに基づいて実行
+                    if (notifSound.value) triggerAudio();
+                    if (notifVibrate.value) triggerVibration();
+                    // flash は CSS binding で処理
                 };
 
                 const triggerAudio = () => {
@@ -2264,6 +2323,8 @@
                     deleteSessionFromReport, editSessionFromReport, confirmEditSession, editingSession, editingDurationMin,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
+                    showSubjectEditor, subjectDragStart, subjectDragOver, subjectDrop, subjectDragEnd,
+                    notifSound, notifVibrate, notifFlash,
                     silentRefreshToken,
                     isDarkMode, themeMode, setThemeMode, themeColor, tempThemeColor, changeThemeColor, resetTheme,
                     tabAnimation, setTabAnimation,
