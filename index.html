@@ -434,13 +434,41 @@
                         </div>
                     </div>
 
-                    <!-- 教科凡例 -->
-                    <div class="flex-shrink-0 flex flex-wrap gap-1.5 mb-2">
-                        <div v-for="sub in allWeekSubjects" :key="sub"
-                             class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
-                             :style="{ backgroundColor: subjectColor(sub) + '22', borderColor: subjectColor(sub) + '55', color: subjectColor(sub) }">
-                            <span class="w-2 h-2 rounded-full inline-block" :style="{ backgroundColor: subjectColor(sub) }"></span>
-                            {{ sub }}
+                    <!-- 凡例 + 日別詳細パネル（横並び） -->
+                    <div class="flex-shrink-0 flex gap-2 mb-2 min-h-0" style="max-height: 120px;">
+                        <!-- 左：教科凡例 -->
+                        <div class="flex flex-col gap-1 overflow-y-auto flex-shrink-0 pr-2 border-r border-gray-100 dark:border-gray-700" style="min-width: 80px; max-width: 130px;">
+                            <div v-for="sub in allWeekSubjects" :key="sub"
+                                 class="flex items-center gap-1 text-[10px] font-bold whitespace-nowrap"
+                                 :style="{ color: subjectColor(sub) }">
+                                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: subjectColor(sub) }"></span>
+                                <span class="truncate">{{ sub }}</span>
+                            </div>
+                            <div v-if="allWeekSubjects.length === 0" class="text-[10px] text-gray-300">記録なし</div>
+                        </div>
+                        <!-- 右：選択日の学習時間詳細（日付ヘッダータップで表示） -->
+                        <div class="flex-1 overflow-y-auto">
+                            <div v-if="!selectedDayDetail" class="h-full flex items-center justify-center">
+                                <p class="text-[10px] text-gray-300 dark:text-gray-600">↑ 日付をタップすると学習時間を表示</p>
+                            </div>
+                            <div v-else>
+                                <div class="flex items-center gap-1.5 mb-1.5">
+                                    <span class="text-[11px] font-bold text-gray-600 dark:text-gray-300">{{ selectedDayDetail.dateStr }}</span>
+                                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-primary-light dark:bg-primary/20 text-primary">
+                                        学習 {{ formatSeconds(calculateDailyStudyTotal(selectedDayDetail.subjects)) }}
+                                    </span>
+                                    <button @click="selectedDayDetail = null" class="ml-auto text-gray-300 hover:text-gray-500 text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div v-if="Object.keys(selectedDayDetail.subjects).length === 0" class="text-[10px] text-gray-300">記録なし</div>
+                                <div v-else class="flex flex-wrap gap-1">
+                                    <div v-for="(sec, sub) in selectedDayDetail.subjects" :key="sub"
+                                         class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold"
+                                         :style="{ backgroundColor: subjectColor(sub)+'22', color: subjectColor(sub) }">
+                                        <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" :style="{ backgroundColor: subjectColor(sub) }"></span>
+                                        {{ sub }}&nbsp;<span class="font-mono font-normal opacity-80">{{ formatSeconds(sec) }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -468,9 +496,10 @@
                                      style="min-width: 58px;">
 
                                     <!-- 日付ヘッダー（48px固定） -->
-                                    <div class="flex-shrink-0 text-center py-1 border-b border-gray-100 dark:border-gray-700"
+                                    <div class="flex-shrink-0 text-center py-1 border-b border-gray-100 dark:border-gray-700 cursor-pointer select-none transition hover:brightness-95 active:brightness-90"
                                          style="height: 48px;"
-                                         :class="dateStr === getTodayStr() ? 'bg-primary-light dark:bg-primary/20' : 'bg-white dark:bg-gray-800'">
+                                         :class="dateStr === getTodayStr() ? 'bg-primary-light dark:bg-primary/20' : 'bg-white dark:bg-gray-800'"
+                                         @click="selectedDayDetail = { dateStr, subjects: weeklyData[idx]?.subjects || {} }">
                                         <div class="text-[11px] font-bold leading-tight"
                                              :class="dateStr === getTodayStr() ? 'text-primary' :
                                                      new Date(dateStr+'T12:00:00').getDay()===0 ? 'text-red-400' :
@@ -686,51 +715,6 @@
                         </div>
                     </section>
 
-                    <!-- Edit Log -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 text-red-500">
-                            <i class="fa-solid fa-eraser mr-2"></i>記録の修正
-                        </div>
-                        <div class="p-6">
-                            <p class="text-xs text-gray-500 mb-4">セッションを個別に削除するか、分単位で増減できます</p>
-                            
-                            <!-- セッション削除 -->
-                            <div v-if="todayLog.sessions && todayLog.sessions.length > 0" class="mb-6">
-                                <h5 class="text-xs font-bold text-gray-400 uppercase mb-3">セッション削除（ロールバック）</h5>
-                                <div class="space-y-2 max-h-48 overflow-y-auto">
-                                    <div v-for="(session, i) in [...(todayLog.sessions || [])].sort((a,b)=>b.start.localeCompare(a.start))" :key="i"
-                                         class="flex items-center justify-between p-3 rounded-lg border text-xs"
-                                         :class="session.subject==='休憩' ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700'">
-                                        <div>
-                                            <span class="font-bold" :class="session.subject==='休憩' ? 'text-green-700 dark:text-green-400' : 'text-primary'">{{ session.subject }}</span>
-                                            <span class="text-gray-400 ml-2">{{ new Date(session.start).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}〜{{ new Date(session.end).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}</span>
-                                            <span class="font-mono text-gray-500 ml-2">({{ formatSeconds(session.duration) }})</span>
-                                        </div>
-                                        <button @click="deleteSession(i)" class="ml-2 text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 科目別時間増減 -->
-                            <h5 class="text-xs font-bold text-gray-400 uppercase mb-3">科目別 時間増減（分単位）</h5>
-                            <div v-if="Object.keys(todayLog.subjects).length === 0" class="text-center text-gray-300 text-sm">本日の記録はありません</div>
-                            <div v-else class="space-y-4">
-                                <div v-for="(time, sub) in todayLog.subjects" :key="sub" class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-2 border-b dark:border-gray-700 last:border-0">
-                                    <span class="text-sm font-bold w-32 truncate">{{ sub }}</span>
-                                    <div class="flex items-center gap-2 justify-end">
-                                        <button @click="updateSubjectTime(sub, -5)" class="px-2 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs rounded border border-red-100 dark:border-red-900 font-bold">-5</button>
-                                        <button @click="updateSubjectTime(sub, -1)" class="px-2 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs rounded border border-red-100 dark:border-red-900 font-bold">-1</button>
-                                        <span class="font-mono text-sm w-16 text-center bg-gray-50 dark:bg-gray-700 rounded py-1">{{ Math.floor(time/60) }}分</span>
-                                        <button @click="updateSubjectTime(sub, 1)" class="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-xs rounded border border-blue-100 dark:border-blue-900 font-bold">+1</button>
-                                        <button @click="updateSubjectTime(sub, 5)" class="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-xs rounded border border-blue-100 dark:border-blue-900 font-bold">+5</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
                     <!-- Sound -->
                     <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
                         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
@@ -743,55 +727,58 @@
                         </div>
                     </section>
 
-                    <!-- Subjects -->
+                    <!-- Subjects + Colors (統合) -->
                     <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
                         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center gap-2">
-                            <i class="fa-solid fa-pen-to-square text-primary"></i> 教科の編集
+                            <i class="fa-solid fa-pen-to-square text-primary"></i> 教科の編集・カラー設定
                         </div>
                         <div class="p-6">
+                            <p class="text-xs text-gray-400 mb-4">教科名の変更・色の設定ができます。色はレポートのタイムラインに使用されます。</p>
                             <ul class="space-y-3 mb-4">
                                 <li v-for="(sub, index) in subjects" :key="index" class="flex items-center gap-2">
+                                    <!-- 色丸（クリックでカラーピッカー） -->
+                                    <div class="relative flex-shrink-0">
+                                        <div class="w-8 h-8 rounded-full border-2 border-white shadow cursor-pointer hover:scale-110 transition"
+                                             :style="{ backgroundColor: subjectColor(sub) }"
+                                             @click="$refs['colorPicker_'+index][0].click()"></div>
+                                        <input type="color" :ref="'colorPicker_'+index"
+                                               :value="subjectColor(sub)"
+                                               @change="setSubjectColor(sub, $event.target.value)"
+                                               class="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none">
+                                    </div>
+                                    <!-- 教科名 -->
                                     <input type="text" v-model="subjects[index]" @change="saveSettings"
                                            class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-primary outline-none bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 transition">
-                                    <button @click="removeSubject(index)" class="text-gray-300 hover:text-red-500 p-2"><i class="fa-solid fa-circle-minus"></i></button>
+                                    <!-- リセット -->
+                                    <button @click="resetSubjectColor(sub)" class="text-gray-300 hover:text-gray-500 p-1.5 transition" title="色をデフォルトに戻す">
+                                        <i class="fa-solid fa-rotate-left text-xs"></i>
+                                    </button>
+                                    <!-- 削除 -->
+                                    <button @click="removeSubject(index)" class="text-gray-300 hover:text-red-500 p-1.5 transition">
+                                        <i class="fa-solid fa-circle-minus"></i>
+                                    </button>
+                                </li>
+                                <!-- 休憩（削除不可） -->
+                                <li class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                    <div class="relative flex-shrink-0">
+                                        <div class="w-8 h-8 rounded-full border-2 border-white shadow cursor-pointer hover:scale-110 transition"
+                                             :style="{ backgroundColor: subjectColor('休憩') }"
+                                             @click="$refs.breakColorPicker.click()"></div>
+                                        <input type="color" ref="breakColorPicker"
+                                               :value="subjectColor('休憩')"
+                                               @change="setSubjectColor('休憩', $event.target.value)"
+                                               class="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none">
+                                    </div>
+                                    <span class="flex-1 text-sm font-medium text-gray-500 dark:text-gray-400 px-3 py-2">休憩（固定）</span>
+                                    <button @click="resetSubjectColor('休憩')" class="text-gray-300 hover:text-gray-500 p-1.5 transition" title="色をデフォルトに戻す">
+                                        <i class="fa-solid fa-rotate-left text-xs"></i>
+                                    </button>
+                                    <div class="w-8"></div><!-- 削除ボタン分のスペース -->
                                 </li>
                             </ul>
                             <div class="flex gap-2">
-                                <input type="text" v-model="newSubjectName" placeholder="新しい教科名" class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800">
+                                <input type="text" v-model="newSubjectName" placeholder="新しい教科名を追加" class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800">
                                 <button @click="addSubject" class="bg-primary text-white px-4 rounded-lg text-sm font-bold shadow hover:bg-primary-hover">追加</button>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Subject Colors -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center gap-2">
-                            <i class="fa-solid fa-palette text-primary"></i> 教科カラー設定
-                        </div>
-                        <div class="p-6">
-                            <p class="text-xs text-gray-400 mb-4">レポートのタイムラインで使用する教科ごとの色を設定できます</p>
-                            <div class="space-y-3">
-                                <div v-for="sub in subjects" :key="'col-'+sub" class="flex items-center gap-3">
-                                    <div class="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0" :style="{ backgroundColor: subjectColor(sub) }"></div>
-                                    <span class="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">{{ sub }}</span>
-                                    <input type="color" :value="subjectColor(sub)"
-                                           @change="setSubjectColor(sub, $event.target.value)"
-                                           class="w-8 h-8 rounded cursor-pointer border border-gray-200 dark:border-gray-600 p-0.5">
-                                    <button @click="resetSubjectColor(sub)" class="text-xs text-gray-300 hover:text-gray-500 dark:hover:text-gray-400" title="デフォルトに戻す">
-                                        <i class="fa-solid fa-rotate-left"></i>
-                                    </button>
-                                </div>
-                                <!-- 休憩色 -->
-                                <div class="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
-                                    <div class="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0" :style="{ backgroundColor: subjectColor('休憩') }"></div>
-                                    <span class="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">休憩</span>
-                                    <input type="color" :value="subjectColor('休憩')"
-                                           @change="setSubjectColor('休憩', $event.target.value)"
-                                           class="w-8 h-8 rounded cursor-pointer border border-gray-200 dark:border-gray-600 p-0.5">
-                                    <button @click="resetSubjectColor('休憩')" class="text-xs text-gray-300 hover:text-gray-500 dark:hover:text-gray-400">
-                                        <i class="fa-solid fa-rotate-left"></i>
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </section>
@@ -1048,6 +1035,7 @@
                 const selectedReportSessions = ref([]);
                 const weeklyDates = ref([]);
                 const weeklyData = ref([]);
+                const selectedDayDetail = ref(null); // 日付ヘッダータップで表示する日別詳細
 
                 // Tutorial
                 const showTutorial = ref(false);
@@ -1965,7 +1953,7 @@
                     reportStartHour, reportEndHour, reportVisibleHours, visibleHourTicks,
                     sessionBlockStylePct, fmtTime, fmtTimeFull, allWeekSubjects,
                     subjectColor, setSubjectColor, resetSubjectColor,
-                    reportMode, sessionDetailPopup, onSessionClick,
+                    reportMode, sessionDetailPopup, onSessionClick, selectedDayDetail,
                     deleteSessionFromReport, editSessionFromReport, confirmEditSession, editingSession, editingDurationMin,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
