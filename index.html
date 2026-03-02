@@ -280,8 +280,9 @@
             <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 order-1 md:order-2 relative transition-colors duration-300"
                   :class="[
                       isStandbyMode ? '!p-0 !pb-0 !overflow-hidden' : '',
-                      isMobile && isLandscape ? 'pb-4 pt-3 px-3' : 'pb-28 md:pb-8'
-                  ]">
+                      isMobile && isLandscape ? 'pb-4 pt-3 px-3' : 'md:pb-8'
+                  ]"
+                  :style="!isStandbyMode && !(isMobile && isLandscape) && !isLandscape ? { paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px) + 8px)' } : {}">
                 <div class="tab-wrapper">
                 <transition :name="'tab-' + tabAnimation">
                 <div :key="currentTab" class="w-full">
@@ -292,29 +293,31 @@
                      :class="isStandbyMode ? 'fixed inset-0 z-[200] bg-black text-white p-0 justify-center' : 'max-w-4xl pb-8'">
                     
                     <!-- Header (通常時のみ表示) -->
-                    <header v-if="!isStandbyMode" class="mb-6 md:mb-10 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <h2 class="text-2xl font-bold">今日の学習</h2>
-                            <!-- タイマーモード切り替え（コンパクト） -->
-                            <div class="flex bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-full p-0.5 shadow-sm">
-                                <button @click="changeTimerMode('countup')"
-                                    class="px-2.5 py-1 rounded-full text-[11px] font-bold transition"
-                                    :class="timerMode==='countup' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'">
-                                    <i class="fa-solid fa-arrow-up mr-0.5"></i>UP
-                                </button>
-                                <button @click="changeTimerMode('countdown')"
-                                    class="px-2.5 py-1 rounded-full text-[11px] font-bold transition"
-                                    :class="timerMode==='countdown' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'">
-                                    <i class="fa-solid fa-arrow-down mr-0.5"></i>DOWN
-                                </button>
-                            </div>
+                    <header v-if="!isStandbyMode" class="mb-4 md:mb-10 flex items-center gap-2 min-w-0">
+                        <!-- タイトル（スマホでは小さめ） -->
+                        <h2 class="text-lg md:text-2xl font-bold whitespace-nowrap flex-shrink-0">今日の学習</h2>
+                        <!-- タイマーモード切り替え（アイコン+短ラベル、小さく） -->
+                        <div class="flex bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-full p-0.5 shadow-sm flex-shrink-0">
+                            <button @click="changeTimerMode('countup')"
+                                class="flex items-center gap-0.5 px-2 py-1 rounded-full font-bold transition"
+                                :class="timerMode==='countup' ? 'bg-primary text-white shadow-sm text-[11px]' : 'text-gray-400 hover:text-gray-600 text-[11px]'">
+                                <i class="fa-solid fa-arrow-up text-[9px]"></i>
+                                <span class="hidden sm:inline">UP</span>
+                            </button>
+                            <button @click="changeTimerMode('countdown')"
+                                class="flex items-center gap-0.5 px-2 py-1 rounded-full font-bold transition"
+                                :class="timerMode==='countdown' ? 'bg-primary text-white shadow-sm text-[11px]' : 'text-gray-400 hover:text-gray-600 text-[11px]'">
+                                <i class="fa-solid fa-arrow-down text-[9px]"></i>
+                                <span class="hidden sm:inline">DOWN</span>
+                            </button>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="flex items-center gap-1.5 text-xs font-mono text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm border dark:border-gray-700">
-                                <i class="fa-regular fa-clock text-[10px]"></i>
-                                <span class="font-bold">{{ currentTimeFormatted }}</span>
-                                <span class="text-gray-300 dark:text-gray-600">|</span>
-                                <span>{{ new Date().toLocaleDateString('ja-JP', {month:'numeric', day:'numeric'}) }}</span>
+                        <!-- 時刻・日付（flex-1で残りを使う、右寄せ） -->
+                        <div class="flex-1 flex justify-end min-w-0">
+                            <div class="flex items-center gap-1 text-xs font-mono text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1.5 rounded-full shadow-sm border dark:border-gray-700 min-w-0">
+                                <i class="fa-regular fa-clock text-[9px] flex-shrink-0"></i>
+                                <span class="font-bold tabular-nums flex-shrink-0">{{ currentTimeFormatted }}</span>
+                                <span class="text-gray-300 dark:text-gray-600 flex-shrink-0">|</span>
+                                <span class="flex-shrink-0">{{ new Date().toLocaleDateString('ja-JP', {month:'numeric', day:'numeric'}) }}</span>
                             </div>
                         </div>
                     </header>
@@ -484,7 +487,7 @@
                 </div>
 
                 <!-- 3. REPORT TAB -->
-                <div v-if="currentTab === 'report'" class="max-w-full mx-auto flex flex-col" style="height: calc(100vh - 80px); min-height: 0;">
+                <div v-if="currentTab === 'report'" class="max-w-full mx-auto flex flex-col" :style="{ height: (isMobile && !isLandscape) ? 'calc(100dvh - 5rem - 2rem)' : 'calc(100vh - 4rem)', minHeight: 0 }">
                     <!-- ヘッダー -->
                     <div class="flex-shrink-0 mb-2 flex flex-wrap gap-2 justify-between items-center">
                         <h2 class="text-xl font-bold">週間レポート</h2>
@@ -550,9 +553,7 @@
                         </div>
                         <!-- 右：選択日の学習時間詳細（日付ヘッダータップで表示） -->
                         <div class="flex-1 overflow-y-auto">
-                            <div v-if="!selectedDayDetail" class="h-full flex items-center justify-center">
-                                <p class="text-[10px] text-gray-300 dark:text-gray-600">↑ 日付をタップすると学習時間を表示</p>
-                            </div>
+                            <div v-if="!selectedDayDetail"></div>
                             <div v-else>
                                 <div class="flex items-center gap-1.5 mb-1.5">
                                     <span class="text-[11px] font-bold text-gray-600 dark:text-gray-300">{{ selectedDayDetail.dateStr }}</span>
