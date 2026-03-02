@@ -264,7 +264,7 @@
                             <!-- Controls (Standby時は下部に薄く表示) -->
                             <div v-if="isTimerRunning || isPaused" class="w-full max-w-sm flex flex-col gap-2 z-10"
                                  :class="isStandbyMode ? 'absolute bottom-8 px-12 opacity-30 hover:opacity-100 transition-opacity' : 'mt-6'">
-                                <!-- STOP（保存して終了） -->
+                                <!-- STOP / PAUSE / RESUME -->
                                 <div class="flex gap-3">
                                     <button @click="stopTimer(false)" class="flex-1 py-5 text-white text-xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
                                         :class="breakMode ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'">
@@ -277,11 +277,6 @@
                                         <i class="fa-solid fa-play"></i><span v-if="!isStandbyMode">RESUME</span>
                                     </button>
                                 </div>
-                                <!-- キャンセル（記録しない） -->
-                                <button v-if="!isStandbyMode" @click="cancelSession"
-                                    class="w-full py-2 text-xs text-gray-400 hover:text-red-400 dark:text-gray-500 dark:hover:text-red-400 font-medium rounded-xl border border-dashed border-gray-200 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-800 transition flex items-center justify-center gap-1.5">
-                                    <i class="fa-solid fa-xmark text-xs"></i> この記録をキャンセル（保存しない）
-                                </button>
                             </div>
                             
                             <p v-if="isTimerRunning && !isStandbyMode" class="text-center mt-3 text-gray-400 text-sm animate-pulse">{{ breakMode ? 'リラックス中...' : (timerMode === 'countdown' ? '集中...' : 'Focus...') }}</p>
@@ -387,121 +382,137 @@
                 </div>
 
                 <!-- 3. REPORT TAB -->
-                <div v-if="currentTab === 'report'" class="max-w-full mx-auto min-h-full flex flex-col pb-8">
+                <div v-if="currentTab === 'report'" class="max-w-full mx-auto flex flex-col" style="height: calc(100vh - 80px); min-height: 0;">
                     <!-- ヘッダー -->
-                    <header class="mb-4 flex flex-wrap gap-3 justify-between items-center">
-                        <h2 class="text-2xl font-bold">週間レポート</h2>
+                    <div class="flex-shrink-0 mb-2 flex flex-wrap gap-2 justify-between items-center">
+                        <h2 class="text-xl font-bold">週間レポート</h2>
                         <div class="flex items-center gap-2 flex-wrap">
                             <input type="month" :value="reportMonthValue" @change="jumpToMonth($event.target.value)"
                                    :max="todayMonthValue"
                                    class="text-xs border dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-primary cursor-pointer">
-                            <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-1">
-                                <button @click="shiftWeek(-7)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-left"></i></button>
-                                <span class="px-3 text-sm font-bold">{{ weekRangeLabel }}</span>
-                                <button @click="shiftWeek(7)" :disabled="isCurrentWeek" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+                            <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-0.5">
+                                <button @click="shiftWeek(-7)" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                                <span class="px-2 text-xs font-bold">{{ weekRangeLabel }}</span>
+                                <button @click="shiftWeek(7)" :disabled="isCurrentWeek" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                                     :class="isCurrentWeek ? 'text-gray-200 dark:text-gray-700 cursor-not-allowed' : 'text-gray-500'">
-                                    <i class="fa-solid fa-chevron-right"></i>
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <!-- 操作モードボタン -->
+                            <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-0.5 gap-0.5">
+                                <button @click="reportMode = reportMode === 'edit' ? 'view' : 'edit'"
+                                    class="px-2.5 py-1.5 rounded text-xs font-bold transition flex items-center gap-1"
+                                    :class="reportMode==='edit' ? 'bg-yellow-400 text-white' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-gray-700'">
+                                    <i class="fa-solid fa-pen text-[10px]"></i> 変更
+                                </button>
+                                <button @click="reportMode = reportMode === 'delete' ? 'view' : 'delete'"
+                                    class="px-2.5 py-1.5 rounded text-xs font-bold transition flex items-center gap-1"
+                                    :class="reportMode==='delete' ? 'bg-red-400 text-white' : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-gray-700'">
+                                    <i class="fa-solid fa-trash text-[10px]"></i> 削除
                                 </button>
                             </div>
                         </div>
-                    </header>
+                    </div>
 
-                    <!-- サマリー -->
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-primary-light dark:border-gray-700">
-                            <div class="text-xs text-primary font-bold mb-0.5">Total Study</div>
-                            <div class="text-xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
+                    <!-- モード案内バナー -->
+                    <div v-if="reportMode !== 'view'" class="flex-shrink-0 mb-2 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2"
+                         :class="reportMode==='edit' ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800' : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800'">
+                        <i :class="reportMode==='edit' ? 'fa-solid fa-pen' : 'fa-solid fa-trash'"></i>
+                        {{ reportMode==='edit' ? '変更モード：タイムラインのセッションをタップして時間を変更' : '削除モード：タイムラインのセッションをタップして削除' }}
+                        <button @click="reportMode='view'" class="ml-auto underline opacity-70 hover:opacity-100 font-normal">キャンセル</button>
+                    </div>
+
+                    <!-- サマリー（コンパクト） -->
+                    <div class="flex-shrink-0 grid grid-cols-2 gap-2 mb-2">
+                        <div class="bg-white dark:bg-gray-800 px-3 py-2 rounded-xl shadow-sm border border-primary-light dark:border-gray-700 flex items-center justify-between">
+                            <span class="text-[10px] text-primary font-bold">週合計</span>
+                            <span class="text-lg font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal) }}<span class="text-xs text-gray-400 ml-1">h</span></span>
                         </div>
-                        <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-green-100 dark:border-gray-700">
-                            <div class="text-xs text-green-500 font-bold mb-0.5">Daily Avg</div>
-                            <div class="text-xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal / 7) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
+                        <div class="bg-white dark:bg-gray-800 px-3 py-2 rounded-xl shadow-sm border border-green-100 dark:border-gray-700 flex items-center justify-between">
+                            <span class="text-[10px] text-green-500 font-bold">日平均</span>
+                            <span class="text-lg font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal / 7) }}<span class="text-xs text-gray-400 ml-1">h</span></span>
                         </div>
                     </div>
 
-                    <!-- ═══ 一週間横並びタイムライン ═══ -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex-1">
-                        <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 font-bold"><i class="fa-regular fa-clock mr-1.5 text-primary"></i>週間タイムライン　<span class="font-normal">— セッションをクリックで削除・編集</span></p>
+                    <!-- 教科凡例 -->
+                    <div class="flex-shrink-0 flex flex-wrap gap-1.5 mb-2">
+                        <div v-for="sub in allWeekSubjects" :key="sub"
+                             class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                             :style="{ backgroundColor: subjectColor(sub) + '22', borderColor: subjectColor(sub) + '55', color: subjectColor(sub) }">
+                            <span class="w-2 h-2 rounded-full inline-block" :style="{ backgroundColor: subjectColor(sub) }"></span>
+                            {{ sub }}
                         </div>
+                    </div>
 
-                        <!-- 横スクロール可能なグリッド -->
-                        <div class="overflow-x-auto overflow-y-auto" style="max-height: calc(100vh - 340px); min-height: 300px;">
-                            <div class="flex" style="min-width: 560px;">
+                    <!-- ═══ タイムライングリッド（スクロールなし） ═══ -->
+                    <div class="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col min-h-0">
+                        <!-- 内部スクロールなし：flex-1で残り全部 -->
+                        <div class="flex-1 overflow-x-auto overflow-y-hidden min-h-0">
+                            <div class="flex h-full" style="min-width: 480px;">
 
-                                <!-- 左端：時刻ラベル列 -->
-                                <div class="flex-shrink-0 w-10 border-r border-gray-100 dark:border-gray-700 relative" style="margin-top: 48px;">
-                                    <div v-for="h in reportHourTicks" :key="h"
-                                         class="absolute w-full text-right pr-1.5 text-[9px] font-mono text-gray-300 dark:text-gray-600 leading-none"
-                                         :style="{ top: (h * reportPxPerHour) + 'px' }">
-                                        {{ String(h).padStart(2,'0') }}
+                                <!-- 時刻ラベル列 -->
+                                <div class="flex-shrink-0 w-8 relative border-r border-gray-100 dark:border-gray-700"
+                                     :style="{ paddingTop: '48px' }">
+                                    <div class="absolute inset-x-0" :style="{ top: '48px', bottom: 0 }" >
+                                        <div v-for="h in visibleHourTicks" :key="'lbl-'+h"
+                                             class="absolute w-full text-right pr-1 text-[8px] font-mono text-gray-300 dark:text-gray-600 leading-none"
+                                             :style="{ top: ((h - reportStartHour) / reportVisibleHours * 100) + '%' }">
+                                            {{ String(h).padStart(2,'0') }}
+                                        </div>
                                     </div>
                                 </div>
 
                                 <!-- 7日分の列 -->
                                 <div v-for="(dateStr, idx) in weeklyDates" :key="dateStr"
-                                     class="flex-1 border-r border-gray-100 dark:border-gray-700 last:border-r-0 relative"
-                                     style="min-width: 70px;">
+                                     class="flex-1 border-r border-gray-100 dark:border-gray-700 last:border-r-0 flex flex-col min-w-0"
+                                     style="min-width: 58px;">
 
-                                    <!-- 日付ヘッダー -->
-                                    <div class="sticky top-0 z-10 text-center py-2 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800"
-                                         :class="dateStr === getTodayStr() ? 'bg-primary-light dark:bg-primary/20' : ''">
-                                        <div class="text-[11px] font-bold"
+                                    <!-- 日付ヘッダー（48px固定） -->
+                                    <div class="flex-shrink-0 text-center py-1 border-b border-gray-100 dark:border-gray-700"
+                                         style="height: 48px;"
+                                         :class="dateStr === getTodayStr() ? 'bg-primary-light dark:bg-primary/20' : 'bg-white dark:bg-gray-800'">
+                                        <div class="text-[11px] font-bold leading-tight"
                                              :class="dateStr === getTodayStr() ? 'text-primary' :
                                                      new Date(dateStr+'T12:00:00').getDay()===0 ? 'text-red-400' :
                                                      new Date(dateStr+'T12:00:00').getDay()===6 ? 'text-blue-400' : 'text-gray-600 dark:text-gray-300'">
                                             {{ ['日','月','火','水','木','金','土'][new Date(dateStr+'T12:00:00').getDay()] }}
                                         </div>
-                                        <div class="text-[10px] text-gray-400 dark:text-gray-500">{{ dateStr.slice(5).replace('-','/') }}</div>
-                                        <div class="text-[10px] font-mono font-bold mt-0.5"
+                                        <div class="text-[9px] text-gray-400 leading-tight">{{ dateStr.slice(5).replace('-','/') }}</div>
+                                        <div class="text-[9px] font-mono font-bold leading-tight"
                                              :class="calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? 'text-primary' : 'text-gray-300 dark:text-gray-600'">
                                             {{ calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? formatHours(calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}))+'h' : '—' }}
                                         </div>
                                     </div>
 
-                                    <!-- タイムライン本体（時間グリッド） -->
-                                    <div class="relative" :style="{ height: (reportTotalHours * reportPxPerHour) + 'px' }">
-
-                                        <!-- 1時間ごとの水平線 -->
-                                        <div v-for="h in reportHourTicks" :key="'grid-'+h"
-                                             class="absolute w-full border-t border-gray-50 dark:border-gray-700/50"
-                                             :style="{ top: (h * reportPxPerHour) + 'px' }">
+                                    <!-- タイムライン本体 -->
+                                    <div class="flex-1 relative min-h-0">
+                                        <!-- 時間グリッド線 -->
+                                        <div v-for="h in visibleHourTicks" :key="'grid-'+dateStr+h"
+                                             class="absolute w-full border-t border-gray-50 dark:border-gray-700/40 pointer-events-none"
+                                             :style="{ top: ((h - reportStartHour) / reportVisibleHours * 100) + '%' }">
                                         </div>
 
                                         <!-- セッションブロック -->
                                         <template v-if="weeklyData[idx]?.sessions?.length > 0">
                                             <div v-for="(session, si) in weeklyData[idx].sessions" :key="si"
-                                                 class="absolute left-0.5 right-0.5 rounded overflow-hidden cursor-pointer group transition-all hover:brightness-90 hover:z-20"
-                                                 :style="sessionBlockStyle(session)"
-                                                 :title="session.subject + '\n' + fmtTime(session.start) + '〜' + fmtTime(session.end) + '\n' + formatSeconds(session.duration)"
-                                                 :class="session.subject==='休憩'
-                                                    ? 'bg-green-400 dark:bg-green-600 border border-green-500 dark:border-green-700'
-                                                    : 'bg-primary border border-primary-hover'">
-                                                <!-- ブロック内テキスト（高さが十分なら表示） -->
-                                                <div class="px-1 py-0.5 h-full flex flex-col justify-start overflow-hidden">
-                                                    <div class="text-white text-[9px] font-bold truncate leading-tight">{{ session.subject }}</div>
-                                                    <div v-if="session.duration >= 900" class="text-white/80 text-[8px] font-mono truncate leading-tight">{{ fmtTime(session.start) }}〜{{ fmtTime(session.end) }}</div>
+                                                 class="absolute left-0.5 right-0.5 rounded overflow-hidden transition-all"
+                                                 :class="[
+                                                    reportMode !== 'view' ? 'cursor-pointer hover:brightness-75 hover:ring-2 hover:ring-white' : 'cursor-pointer hover:brightness-90',
+                                                    reportMode === 'delete' ? 'ring-1 ring-red-300' : ''
+                                                 ]"
+                                                 :style="sessionBlockStylePct(session)"
+                                                 @click="onSessionClick(dateStr, idx, si, session)">
+                                                <div class="px-1 py-0.5 h-full flex flex-col justify-start overflow-hidden"
+                                                     :style="{ backgroundColor: subjectColor(session.subject), opacity: 0.92 }">
+                                                    <div class="text-white text-[8px] font-bold truncate leading-tight drop-shadow-sm">{{ session.subject }}</div>
+                                                    <div v-if="session.duration >= 1200" class="text-white/80 text-[7px] font-mono truncate leading-tight">{{ fmtTime(session.start) }}-{{ fmtTime(session.end) }}</div>
                                                 </div>
-                                                <!-- ホバー時の操作ボタン -->
-                                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                                                    <button @click.stop="editSessionFromReport(dateStr, idx, si)"
-                                                        class="w-5 h-5 bg-white rounded text-gray-700 text-[9px] flex items-center justify-center hover:bg-yellow-100"
-                                                        title="時間を変更">
-                                                        <i class="fa-solid fa-pen"></i>
-                                                    </button>
-                                                    <button @click.stop="deleteSessionFromReport(dateStr, idx, si)"
-                                                        class="w-5 h-5 bg-white rounded text-red-500 text-[9px] flex items-center justify-center hover:bg-red-50"
-                                                        title="削除">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </button>
+                                                <!-- 削除モード時のオーバーレイ -->
+                                                <div v-if="reportMode==='delete'" class="absolute inset-0 bg-red-500/20 flex items-center justify-center">
+                                                    <i class="fa-solid fa-xmark text-white text-[10px] drop-shadow"></i>
                                                 </div>
                                             </div>
                                         </template>
-
-                                        <!-- 記録なし表示 -->
-                                        <div v-else-if="calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) === 0"
-                                             class="absolute inset-0 flex items-center justify-center">
-                                            <span class="text-[9px] text-gray-200 dark:text-gray-700">—</span>
-                                        </div>
                                     </div>
                                 </div>
 
@@ -510,29 +521,58 @@
                     </div>
                 </div>
 
+                <!-- セッション詳細ポップアップ（viewモード時） -->
+                <transition name="modal">
+                <div v-if="sessionDetailPopup" class="fixed inset-0 z-50 bg-black/50 flex items-end md:items-center justify-center p-4"
+                     @click.self="sessionDetailPopup = null">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-4 h-4 rounded-full flex-shrink-0" :style="{ backgroundColor: subjectColor(sessionDetailPopup.subject) }"></div>
+                            <h3 class="text-lg font-bold dark:text-white">{{ sessionDetailPopup.subject }}</h3>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 space-y-2 text-sm mb-4">
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">開始</span>
+                                <span class="font-mono font-bold">{{ fmtTimeFull(sessionDetailPopup.start) }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">終了</span>
+                                <span class="font-mono font-bold">{{ fmtTimeFull(sessionDetailPopup.end) }}</span>
+                            </div>
+                            <div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-2">
+                                <span class="text-gray-500">時間</span>
+                                <span class="font-mono font-bold text-base" :style="{ color: subjectColor(sessionDetailPopup.subject) }">{{ formatSeconds(sessionDetailPopup.duration) }}</span>
+                            </div>
+                        </div>
+                        <button @click="sessionDetailPopup = null" class="w-full py-2 text-gray-400 text-sm rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition">閉じる</button>
+                    </div>
+                </div>
+                </transition>
+
                 <!-- セッション編集モーダル -->
                 <transition name="modal">
-                <div v-if="editingSession" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+                <div v-if="editingSession" class="fixed inset-0 z-50 bg-black/60 flex items-end md:items-center justify-center p-4">
                     <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-                        <h3 class="text-lg font-bold mb-4 dark:text-white">
-                            <i class="fa-solid fa-pen text-primary mr-2"></i>セッションを編集
+                        <h3 class="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: subjectColor(editingSession.subject) }"></div>
+                            {{ editingSession.subject }} を編集
                         </h3>
-                        <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-sm text-gray-600 dark:text-gray-300">
-                            <div class="font-bold text-base mb-1">{{ editingSession.subject }}</div>
-                            <div class="font-mono text-xs text-gray-400">{{ fmtTime(editingSession.start) }} 〜 {{ fmtTime(editingSession.end) }}</div>
+                        <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-sm text-gray-500 dark:text-gray-400 font-mono">
+                            {{ fmtTime(editingSession.start) }} 〜 {{ fmtTime(editingSession.end) }}
                         </div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">時間（分）</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-2">時間（分）</label>
                         <div class="flex items-center gap-2 mb-6">
-                            <button @click="editingDurationMin = Math.max(1, editingDurationMin - 5)" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-gray-700 dark:text-white">-5</button>
-                            <button @click="editingDurationMin = Math.max(1, editingDurationMin - 1)" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-gray-700 dark:text-white">-1</button>
+                            <button @click="editingDurationMin = Math.max(1, editingDurationMin - 5)" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-sm text-gray-700 dark:text-white">-5</button>
+                            <button @click="editingDurationMin = Math.max(1, editingDurationMin - 1)" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-sm text-gray-700 dark:text-white">-1</button>
                             <input type="number" v-model.number="editingDurationMin" min="1"
                                 class="flex-1 text-center border-b-2 border-primary text-xl font-bold outline-none bg-transparent dark:text-white py-1">
-                            <button @click="editingDurationMin = editingDurationMin + 1" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-gray-700 dark:text-white">+1</button>
-                            <button @click="editingDurationMin = editingDurationMin + 5" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-gray-700 dark:text-white">+5</button>
+                            <span class="text-xs text-gray-400">分</span>
+                            <button @click="editingDurationMin = editingDurationMin + 1" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-sm text-gray-700 dark:text-white">+1</button>
+                            <button @click="editingDurationMin = editingDurationMin + 5" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-sm text-gray-700 dark:text-white">+5</button>
                         </div>
                         <div class="flex gap-2">
-                            <button @click="editingSession = null" class="flex-1 py-2 text-gray-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">キャンセル</button>
-                            <button @click="confirmEditSession" class="flex-1 py-2 bg-primary text-white rounded-lg font-bold shadow hover:bg-primary-hover">保存</button>
+                            <button @click="editingSession = null; reportMode = 'edit'" class="flex-1 py-2 text-gray-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">戻る</button>
+                            <button @click="confirmEditSession" class="flex-1 py-2 bg-primary text-white rounded-lg font-bold shadow hover:bg-primary-hover text-sm">保存</button>
                         </div>
                     </div>
                 </div>
@@ -723,6 +763,39 @@
                         </div>
                     </section>
 
+                    <!-- Subject Colors -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center gap-2">
+                            <i class="fa-solid fa-palette text-primary"></i> 教科カラー設定
+                        </div>
+                        <div class="p-6">
+                            <p class="text-xs text-gray-400 mb-4">レポートのタイムラインで使用する教科ごとの色を設定できます</p>
+                            <div class="space-y-3">
+                                <div v-for="sub in subjects" :key="'col-'+sub" class="flex items-center gap-3">
+                                    <div class="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0" :style="{ backgroundColor: subjectColor(sub) }"></div>
+                                    <span class="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">{{ sub }}</span>
+                                    <input type="color" :value="subjectColor(sub)"
+                                           @change="setSubjectColor(sub, $event.target.value)"
+                                           class="w-8 h-8 rounded cursor-pointer border border-gray-200 dark:border-gray-600 p-0.5">
+                                    <button @click="resetSubjectColor(sub)" class="text-xs text-gray-300 hover:text-gray-500 dark:hover:text-gray-400" title="デフォルトに戻す">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </button>
+                                </div>
+                                <!-- 休憩色 -->
+                                <div class="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                    <div class="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0" :style="{ backgroundColor: subjectColor('休憩') }"></div>
+                                    <span class="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">休憩</span>
+                                    <input type="color" :value="subjectColor('休憩')"
+                                           @change="setSubjectColor('休憩', $event.target.value)"
+                                           class="w-8 h-8 rounded cursor-pointer border border-gray-200 dark:border-gray-600 p-0.5">
+                                    <button @click="resetSubjectColor('休憩')" class="text-xs text-gray-300 hover:text-gray-500 dark:hover:text-gray-400">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- Links & Actions -->
                     <section class="space-y-3">
                         <button @click="startTutorial" class="w-full bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
@@ -864,6 +937,41 @@
                 const isDarkMode = ref(false);
                 const themeColor = ref('#2563eb');
                 const tempThemeColor = ref('#2563eb');
+
+                // 教科カラー
+                const DEFAULT_SUBJECT_COLORS = {
+                    '国語': '#ef4444', '数学': '#3b82f6', '理科': '#10b981',
+                    '社会': '#f59e0b', '英語': '#8b5cf6', 'その他': '#6b7280', '休憩': '#22c55e'
+                };
+                const PALETTE = ['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#06b6d4','#3b82f6','#6366f1','#8b5cf6','#ec4899'];
+                let paletteIdx = 0;
+                const subjectColors = ref({});
+
+                const subjectColor = (sub) => {
+                    if (subjectColors.value[sub]) return subjectColors.value[sub];
+                    if (DEFAULT_SUBJECT_COLORS[sub]) return DEFAULT_SUBJECT_COLORS[sub];
+                    // 未定義の教科には自動でパレットから割り当て
+                    const c = PALETTE[paletteIdx % PALETTE.length];
+                    paletteIdx++;
+                    subjectColors.value[sub] = c;
+                    return c;
+                };
+                const setSubjectColor = (sub, color) => {
+                    subjectColors.value[sub] = color;
+                    subjectColors.value = { ...subjectColors.value };
+                    saveSettings();
+                };
+                const resetSubjectColor = (sub) => {
+                    const fresh = { ...subjectColors.value };
+                    delete fresh[sub];
+                    subjectColors.value = fresh;
+                    saveSettings();
+                };
+
+                // レポートモード: 'view' | 'edit' | 'delete'
+                const reportMode = ref('view');
+                // セッション詳細ポップアップ
+                const sessionDetailPopup = ref(null);
 
                 const applyTheme = () => {
                     const root = document.documentElement;
@@ -1106,7 +1214,7 @@
                 };
                 
                 const loadSettings = async () => {
-                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', isDarkMode: false, notificationMode: 'sound_vibrate', tabAnimation: 'fade' };
+                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', isDarkMode: false, notificationMode: 'sound_vibrate', tabAnimation: 'fade', subjectColors: {} };
                     try {
                         if(isGuestMode.value) {
                             const s = localStorage.getItem('studyMate_settings');
@@ -1123,6 +1231,7 @@
                     isDarkMode.value = d.isDarkMode || false;
                     notificationMode.value = d.notificationMode || 'sound_vibrate';
                     tabAnimation.value = d.tabAnimation || 'fade';
+                    subjectColors.value = d.subjectColors || {};
                     applyTheme();
                 };
                 const saveSettings = async () => {
@@ -1132,7 +1241,8 @@
                         themeColor: themeColor.value, 
                         isDarkMode: isDarkMode.value,
                         notificationMode: notificationMode.value,
-                        tabAnimation: tabAnimation.value
+                        tabAnimation: tabAnimation.value,
+                        subjectColors: subjectColors.value
                     };
                     if(isGuestMode.value) localStorage.setItem('studyMate_settings', JSON.stringify(d));
                     else if(user.value) await setDoc(doc(db, "users", user.value.uid, "settings", "config"), d, {merge:true});
@@ -1473,26 +1583,73 @@
                 const setNotificationMode = (m) => { notificationMode.value = m; saveSettings(); };
                 const setTabAnimation = (m) => { tabAnimation.value = m; saveSettings(); };
 
-                // ── タイムライン レイアウト定数 ──
-                const reportPxPerHour = 60;   // 1時間 = 60px
-                const reportStartHour = 0;    // 表示開始時刻
-                const reportTotalHours = 24;  // 表示時間数
-                const reportHourTicks = Array.from({length: reportTotalHours}, (_, i) => i);
+                // ── タイムライン レイアウト ──
+                // 表示時間範囲：週のセッションから動的計算（最低6時間表示）
+                const reportStartHour = computed(() => {
+                    let minH = 23;
+                    for (const d of weeklyData.value) {
+                        for (const s of (d.sessions || [])) {
+                            const h = new Date(s.start).getHours();
+                            if (h < minH) minH = h;
+                        }
+                    }
+                    return Math.max(0, minH - 1);
+                });
+                const reportEndHour = computed(() => {
+                    let maxH = 0;
+                    for (const d of weeklyData.value) {
+                        for (const s of (d.sessions || [])) {
+                            const end = new Date(s.end);
+                            const h = end.getHours() + (end.getMinutes() > 0 ? 1 : 0);
+                            if (h > maxH) maxH = h;
+                        }
+                    }
+                    const raw = Math.min(24, maxH + 1);
+                    return Math.max(reportStartHour.value + 6, raw); // 最低6時間幅
+                });
+                const reportVisibleHours = computed(() => reportEndHour.value - reportStartHour.value);
+                const visibleHourTicks = computed(() => {
+                    const ticks = [];
+                    for (let h = reportStartHour.value; h <= reportEndHour.value; h++) ticks.push(h);
+                    return ticks;
+                });
 
-                // ISO文字列 → "HH:MM"
-                const fmtTime = (iso) => {
-                    const d = new Date(iso);
-                    return d.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
-                };
-
-                // セッションブロックの top / height を計算
-                const sessionBlockStyle = (session) => {
+                // セッションブロック位置（%ベース）
+                const sessionBlockStylePct = (session) => {
                     const start = new Date(session.start);
                     const startH = start.getHours() + start.getMinutes() / 60;
-                    const topPx = (startH - reportStartHour) * reportPxPerHour;
-                    const durH  = session.duration / 3600;
-                    const heightPx = Math.max(durH * reportPxPerHour, 6); // 最低6px
-                    return { top: topPx + 'px', height: heightPx + 'px' };
+                    const topPct = ((startH - reportStartHour.value) / reportVisibleHours.value) * 100;
+                    const durH = session.duration / 3600;
+                    const heightPct = Math.max((durH / reportVisibleHours.value) * 100, 1.2); // 最低1.2%
+                    return { top: topPct + '%', height: heightPct + '%' };
+                };
+
+                // ISO → "HH:MM"
+                const fmtTime = (iso) => new Date(iso).toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+                // ISO → "M/D HH:MM"
+                const fmtTimeFull = (iso) => {
+                    const d = new Date(iso);
+                    return `${d.getMonth()+1}/${d.getDate()} ${d.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}`;
+                };
+
+                // 週の全教科リスト（凡例用）
+                const allWeekSubjects = computed(() => {
+                    const set = new Set();
+                    for (const d of weeklyData.value) {
+                        for (const s of (d.sessions || [])) set.add(s.subject);
+                    }
+                    return [...set];
+                });
+
+                // セッションクリック処理（モードによって動作が変わる）
+                const onSessionClick = (dateStr, dayIdx, sessionIdx, session) => {
+                    if (reportMode.value === 'view') {
+                        sessionDetailPopup.value = { ...session };
+                    } else if (reportMode.value === 'edit') {
+                        editSessionFromReport(dateStr, dayIdx, sessionIdx);
+                    } else if (reportMode.value === 'delete') {
+                        deleteSessionFromReport(dateStr, dayIdx, sessionIdx);
+                    }
                 };
 
                 // ── セッション削除（レポートから） ──
@@ -1805,7 +1962,10 @@
                     weekRangeLabel, shiftWeek, loadWeeklyReport, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
                     selectedReportSessions, weeklyDates, weeklyData, selectReportDay, deleteSession,
                     isCurrentWeek, reportMonthValue, todayMonthValue, jumpToMonth,
-                    reportPxPerHour, reportTotalHours, reportHourTicks, sessionBlockStyle, fmtTime,
+                    reportStartHour, reportEndHour, reportVisibleHours, visibleHourTicks,
+                    sessionBlockStylePct, fmtTime, fmtTimeFull, allWeekSubjects,
+                    subjectColor, setSubjectColor, resetSubjectColor,
+                    reportMode, sessionDetailPopup, onSessionClick,
                     deleteSessionFromReport, editSessionFromReport, confirmEditSession, editingSession, editingDurationMin,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
