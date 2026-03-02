@@ -490,7 +490,7 @@
                 <div v-if="currentTab === 'report'" class="max-w-full mx-auto flex flex-col" :style="{ height: (isMobile && !isLandscape) ? 'calc(100dvh - 5rem - 2rem)' : 'calc(100vh - 4rem)', minHeight: 0 }">
                     <!-- ヘッダー -->
                     <div class="flex-shrink-0 mb-2 flex flex-wrap gap-2 justify-between items-center">
-                        <h2 class="text-xl font-bold">週間レポート</h2>
+                        <h2 class="font-bold" style="font-size: clamp(16px, 2vw, 26px);">週間レポート</h2>
                         <div class="flex items-center gap-2 flex-wrap">
                             <input type="month" :value="reportMonthValue" @change="jumpToMonth($event.target.value)"
                                    :max="todayMonthValue"
@@ -530,44 +530,46 @@
                     <!-- サマリー（コンパクト） -->
                     <div class="flex-shrink-0 grid grid-cols-2 gap-2 mb-2">
                         <div class="bg-white dark:bg-gray-800 px-3 py-2 rounded-xl shadow-sm border border-primary-light dark:border-gray-700 flex items-center justify-between">
-                            <span class="text-[10px] text-primary font-bold">週合計</span>
-                            <span class="text-lg font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal) }}<span class="text-xs text-gray-400 ml-1">h</span></span>
+                            <span class="text-primary font-bold" style="font-size: clamp(10px, 1.1vw, 14px);">週合計</span>
+                            <span class="font-bold text-gray-800 dark:text-white" style="font-size: clamp(16px, 2vw, 26px);">{{ formatHours(weeklyTotal) }}<span class="text-gray-400 ml-1" style="font-size: clamp(11px, 1.2vw, 15px);">h</span></span>
                         </div>
                         <div class="bg-white dark:bg-gray-800 px-3 py-2 rounded-xl shadow-sm border border-green-100 dark:border-gray-700 flex items-center justify-between">
-                            <span class="text-[10px] text-green-500 font-bold">日平均</span>
-                            <span class="text-lg font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal / 7) }}<span class="text-xs text-gray-400 ml-1">h</span></span>
+                            <span class="text-green-500 font-bold" style="font-size: clamp(10px, 1.1vw, 14px);">日平均</span>
+                            <span class="font-bold text-gray-800 dark:text-white" style="font-size: clamp(16px, 2vw, 26px);">{{ formatHours(weeklyTotal / 7) }}<span class="text-gray-400 ml-1" style="font-size: clamp(11px, 1.2vw, 15px);">h</span></span>
                         </div>
                     </div>
 
                     <!-- 凡例 + 日別詳細パネル（横並び） -->
-                    <div class="flex-shrink-0 flex gap-2 mb-2 min-h-0" style="max-height: 120px;">
+                    <div class="flex-shrink-0 flex gap-2 mb-2 min-h-0" style="max-height: clamp(80px, 12vw, 140px);">
                         <!-- 左：教科凡例 -->
-                        <div class="flex flex-col gap-1 overflow-y-auto flex-shrink-0 pr-2 border-r border-gray-100 dark:border-gray-700" style="min-width: 80px; max-width: 130px;">
+                        <div class="flex flex-col gap-1 overflow-y-auto flex-shrink-0 pr-2 border-r border-gray-100 dark:border-gray-700" style="min-width: clamp(70px, 10vw, 140px); max-width: clamp(100px, 14vw, 180px);">
                             <div v-for="sub in allWeekSubjects" :key="sub"
-                                 class="flex items-center gap-1 text-[10px] font-bold whitespace-nowrap"
+                                 class="flex items-center gap-1 font-bold whitespace-nowrap"
+                                 style="font-size: clamp(10px, 1.1vw, 14px);"
                                  :style="{ color: subjectColor(sub) }">
-                                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: subjectColor(sub) }"></span>
+                                <span class="rounded-full flex-shrink-0" style="width: clamp(8px, 1vw, 12px); height: clamp(8px, 1vw, 12px);" :style="{ backgroundColor: subjectColor(sub) }"></span>
                                 <span class="truncate">{{ sub }}</span>
                             </div>
-                            <div v-if="allWeekSubjects.length === 0" class="text-[10px] text-gray-300">記録なし</div>
+                            <div v-if="allWeekSubjects.length === 0" class="text-gray-300" style="font-size: clamp(10px, 1.1vw, 14px);">記録なし</div>
                         </div>
-                        <!-- 右：選択日の学習時間詳細（日付ヘッダータップで表示） -->
+                        <!-- 右：選択日の学習時間詳細 -->
                         <div class="flex-1 overflow-y-auto">
                             <div v-if="!selectedDayDetail"></div>
                             <div v-else>
                                 <div class="flex items-center gap-1.5 mb-1.5">
-                                    <span class="text-[11px] font-bold text-gray-600 dark:text-gray-300">{{ selectedDayDetail.dateStr }}</span>
-                                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-primary-light dark:bg-primary/20 text-primary">
+                                    <span class="font-bold text-gray-600 dark:text-gray-300" style="font-size: clamp(11px, 1.2vw, 15px);">{{ selectedDayDetail.dateStr }}</span>
+                                    <span class="font-mono font-bold px-1.5 py-0.5 rounded-full bg-primary-light dark:bg-primary/20 text-primary" style="font-size: clamp(10px, 1.1vw, 14px);">
                                         学習 {{ formatSeconds(calculateDailyStudyTotal(selectedDayDetail.subjects)) }}
                                     </span>
-                                    <button @click="selectedDayDetail = null" class="ml-auto text-gray-300 hover:text-gray-500 text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                                    <button @click="selectedDayDetail = null" class="ml-auto text-gray-300 hover:text-gray-500" style="font-size: clamp(10px, 1.1vw, 14px);"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
-                                <div v-if="Object.keys(selectedDayDetail.subjects).length === 0" class="text-[10px] text-gray-300">記録なし</div>
+                                <div v-if="Object.keys(selectedDayDetail.subjects).length === 0" class="text-gray-300" style="font-size: clamp(10px, 1.1vw, 14px);">記録なし</div>
                                 <div v-else class="flex flex-wrap gap-1">
                                     <div v-for="(sec, sub) in selectedDayDetail.subjects" :key="sub"
-                                         class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold"
+                                         class="flex items-center gap-1 px-1.5 py-0.5 rounded font-bold"
+                                         style="font-size: clamp(10px, 1.1vw, 14px);"
                                          :style="{ backgroundColor: subjectColor(sub)+'22', color: subjectColor(sub) }">
-                                        <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" :style="{ backgroundColor: subjectColor(sub) }"></span>
+                                        <span class="rounded-full flex-shrink-0" style="width: clamp(6px, 0.7vw, 10px); height: clamp(6px, 0.7vw, 10px);" :style="{ backgroundColor: subjectColor(sub) }"></span>
                                         {{ sub }}&nbsp;<span class="font-mono font-normal opacity-80">{{ formatSeconds(sec) }}</span>
                                     </div>
                                 </div>
@@ -577,16 +579,16 @@
 
                     <!-- ═══ タイムライングリッド（スクロールなし） ═══ -->
                     <div class="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col min-h-0">
-                        <!-- 内部スクロールなし：flex-1で残り全部 -->
                         <div class="flex-1 overflow-x-auto overflow-y-hidden min-h-0">
                             <div class="flex h-full" style="min-width: 480px;">
 
-                                <!-- 時刻ラベル列 -->
-                                <div class="flex-shrink-0 w-8 relative border-r border-gray-100 dark:border-gray-700"
-                                     :style="{ paddingTop: '48px' }">
-                                    <div class="absolute inset-x-0" :style="{ top: '48px', bottom: 0 }" >
+                                <!-- 時刻ラベル列：幅・文字サイズをレスポンシブ対応 -->
+                                <div class="flex-shrink-0 relative border-r border-gray-100 dark:border-gray-700"
+                                     style="width: clamp(28px, 4vw, 52px); padding-top: clamp(44px, 7vw, 64px);">
+                                    <div class="absolute inset-x-0" :style="{ top: 'clamp(44px, 7vw, 64px)', bottom: 0 }">
                                         <div v-for="h in visibleHourTicks" :key="'lbl-'+h"
-                                             class="absolute w-full text-right pr-1 text-[9px] font-mono font-bold text-gray-400 dark:text-gray-400 leading-none"
+                                             class="absolute w-full text-right font-mono font-bold text-gray-500 dark:text-gray-400 leading-none"
+                                             style="font-size: clamp(9px, 1.1vw, 13px); padding-right: clamp(3px, 0.4vw, 6px);"
                                              :style="{ top: ((h - reportStartHour) / reportVisibleHours * 100) + '%' }">
                                             {{ String(h).padStart(2,'0') }}
                                         </div>
@@ -596,21 +598,27 @@
                                 <!-- 7日分の列 -->
                                 <div v-for="(dateStr, idx) in weeklyDates" :key="dateStr"
                                      class="flex-1 border-r border-gray-100 dark:border-gray-700 last:border-r-0 flex flex-col min-w-0"
-                                     style="min-width: 58px;">
+                                     style="min-width: clamp(52px, 10vw, 120px);">
 
-                                    <!-- 日付ヘッダー（48px固定） -->
-                                    <div class="flex-shrink-0 text-center py-1 border-b border-gray-100 dark:border-gray-700 cursor-pointer select-none transition hover:brightness-95 active:brightness-90"
-                                         style="height: 48px;"
+                                    <!-- 日付ヘッダー：高さ・文字もclampでスケール -->
+                                    <div class="flex-shrink-0 text-center border-b border-gray-100 dark:border-gray-700 cursor-pointer select-none transition hover:brightness-95 active:brightness-90 flex flex-col items-center justify-center"
+                                         style="height: clamp(44px, 7vw, 64px); padding: clamp(2px, 0.5vw, 6px) 0;"
                                          :class="dateStr === getTodayStr() ? 'bg-primary-light dark:bg-primary/20' : 'bg-white dark:bg-gray-800'"
                                          @click="selectedDayDetail = { dateStr, subjects: weeklyData[idx]?.subjects || {} }">
-                                        <div class="text-[11px] font-bold leading-tight"
+                                        <!-- 曜日 -->
+                                        <div class="font-bold leading-tight"
+                                             style="font-size: clamp(11px, 1.4vw, 16px);"
                                              :class="dateStr === getTodayStr() ? 'text-primary' :
                                                      new Date(dateStr+'T12:00:00').getDay()===0 ? 'text-red-400' :
                                                      new Date(dateStr+'T12:00:00').getDay()===6 ? 'text-blue-400' : 'text-gray-600 dark:text-gray-300'">
                                             {{ ['日','月','火','水','木','金','土'][new Date(dateStr+'T12:00:00').getDay()] }}
                                         </div>
-                                        <div class="text-[9px] text-gray-400 leading-tight">{{ dateStr.slice(5).replace('-','/') }}</div>
-                                        <div class="text-[9px] font-mono font-bold leading-tight"
+                                        <!-- 日付 -->
+                                        <div class="text-gray-400 leading-tight" style="font-size: clamp(9px, 1.1vw, 13px);">
+                                            {{ dateStr.slice(5).replace('-','/') }}
+                                        </div>
+                                        <!-- 勉強時間 -->
+                                        <div class="font-mono font-bold leading-tight" style="font-size: clamp(9px, 1.1vw, 13px);"
                                              :class="calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? 'text-primary' : 'text-gray-300 dark:text-gray-600'">
                                             {{ calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? formatHours(calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}))+'h' : '—' }}
                                         </div>
@@ -628,21 +636,25 @@
                                         <!-- セッションブロック -->
                                         <template v-if="weeklyData[idx]?.sessions?.length > 0">
                                             <div v-for="(session, si) in weeklyData[idx].sessions" :key="si"
-                                                 class="absolute left-0.5 right-0.5 rounded overflow-hidden transition-all"
+                                                 class="absolute rounded overflow-hidden transition-all"
+                                                 style="left: clamp(1px, 0.3vw, 3px); right: clamp(1px, 0.3vw, 3px);"
                                                  :class="[
                                                     reportMode !== 'view' ? 'cursor-pointer hover:brightness-75 hover:ring-2 hover:ring-white' : 'cursor-pointer hover:brightness-90',
                                                     reportMode === 'delete' ? 'ring-1 ring-red-300' : ''
                                                  ]"
                                                  :style="sessionBlockStylePct(session)"
                                                  @click="onSessionClick(dateStr, idx, si, session)">
-                                                <div class="px-1 py-0.5 h-full flex flex-col justify-start overflow-hidden"
+                                                <div class="px-0.5 py-0.5 h-full flex flex-col justify-start overflow-hidden"
                                                      :style="{ backgroundColor: subjectColor(session.subject), opacity: 0.92 }">
-                                                    <div class="text-white text-[8px] font-bold truncate leading-tight drop-shadow-sm">{{ session.subject }}</div>
-                                                    <div v-if="session.duration >= 1200" class="text-white/80 text-[7px] font-mono truncate leading-tight">{{ fmtTime(session.start) }}-{{ fmtTime(session.end) }}</div>
+                                                    <div class="text-white font-bold truncate leading-tight drop-shadow-sm"
+                                                         style="font-size: clamp(8px, 1vw, 12px);">{{ session.subject }}</div>
+                                                    <div v-if="session.duration >= 1200"
+                                                         class="text-white/80 font-mono truncate leading-tight"
+                                                         style="font-size: clamp(7px, 0.85vw, 11px);">{{ fmtTime(session.start) }}-{{ fmtTime(session.end) }}</div>
                                                 </div>
                                                 <!-- 削除モード時のオーバーレイ -->
                                                 <div v-if="reportMode==='delete'" class="absolute inset-0 bg-red-500/20 flex items-center justify-center">
-                                                    <i class="fa-solid fa-xmark text-white text-[10px] drop-shadow"></i>
+                                                    <i class="fa-solid fa-xmark text-white drop-shadow" style="font-size: clamp(9px, 1vw, 13px);"></i>
                                                 </div>
                                             </div>
                                         </template>
