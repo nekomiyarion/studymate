@@ -387,18 +387,17 @@
                 </div>
 
                 <!-- 3. REPORT TAB -->
-                <div v-if="currentTab === 'report'" class="max-w-4xl mx-auto min-h-full flex flex-col pb-8">
-                    <header class="mb-6 flex flex-wrap gap-3 justify-between items-center">
+                <div v-if="currentTab === 'report'" class="max-w-full mx-auto min-h-full flex flex-col pb-8">
+                    <!-- ヘッダー -->
+                    <header class="mb-4 flex flex-wrap gap-3 justify-between items-center">
                         <h2 class="text-2xl font-bold">週間レポート</h2>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <!-- 年月ジャンプ -->
                             <input type="month" :value="reportMonthValue" @change="jumpToMonth($event.target.value)"
                                    :max="todayMonthValue"
                                    class="text-xs border dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-primary cursor-pointer">
-                            <!-- 週送り -->
                             <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-1">
                                 <button @click="shiftWeek(-7)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-left"></i></button>
-                                <span class="px-4 text-sm font-bold">{{ weekRangeLabel }}</span>
+                                <span class="px-3 text-sm font-bold">{{ weekRangeLabel }}</span>
                                 <button @click="shiftWeek(7)" :disabled="isCurrentWeek" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                                     :class="isCurrentWeek ? 'text-gray-200 dark:text-gray-700 cursor-not-allowed' : 'text-gray-500'">
                                     <i class="fa-solid fa-chevron-right"></i>
@@ -407,117 +406,137 @@
                         </div>
                     </header>
 
-                    <!-- サマリーカード -->
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-primary-light dark:border-gray-700">
-                            <div class="text-xs text-primary font-bold mb-1">Total Study</div>
-                            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
+                    <!-- サマリー -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-primary-light dark:border-gray-700">
+                            <div class="text-xs text-primary font-bold mb-0.5">Total Study</div>
+                            <div class="text-xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
                         </div>
-                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-green-100 dark:border-gray-700">
-                            <div class="text-xs text-green-500 font-bold mb-1">Daily Avg</div>
-                            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal / 7) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
-                        </div>
-                    </div>
-
-                    <!-- 曜日セレクター（見やすく改善） -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 overflow-x-auto">
-                        <div class="flex min-w-max">
-                            <button v-for="(dateStr, idx) in weeklyDates" :key="dateStr"
-                                @click="selectReportDay(dateStr, idx)"
-                                class="flex-1 min-w-[80px] py-3 px-2 text-center transition border-b-2"
-                                :class="selectedReportDate === dateStr
-                                    ? 'border-primary text-primary bg-primary-light dark:bg-primary/20 font-bold'
-                                    : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
-                                <div class="font-bold text-sm mb-0.5">{{ ['日','月','火','水','木','金','土'][new Date(dateStr+'T12:00:00').getDay()] }}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ dateStr.slice(5).replace('-','/') }}</div>
-                                <!-- 勉強時間バッジ：記録あり/なしで明確に色分け -->
-                                <div class="mt-1.5 mx-auto px-1.5 py-0.5 rounded text-[11px] font-mono font-bold inline-block"
-                                     :class="calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0
-                                        ? (selectedReportDate === dateStr
-                                            ? 'bg-primary text-white'
-                                            : 'bg-primary-light dark:bg-primary/20 text-primary dark:text-blue-300')
-                                        : 'text-gray-300 dark:text-gray-600'">
-                                    {{ calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? formatHours(calculateDailyStudyTotal(weeklyData[idx]?.subjects || {})) + 'h' : '—' }}
-                                </div>
-                            </button>
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-green-100 dark:border-gray-700">
+                            <div class="text-xs text-green-500 font-bold mb-0.5">Daily Avg</div>
+                            <div class="text-xl font-bold text-gray-800 dark:text-white">{{ formatHours(weeklyTotal / 7) }}<span class="text-xs text-gray-400 ml-1">時間</span></div>
                         </div>
                     </div>
 
-                    <!-- タイムスケジュール -->
+                    <!-- ═══ 一週間横並びタイムライン ═══ -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex-1">
-                        <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-700 dark:text-gray-200">
-                                <i class="fa-regular fa-clock mr-2 text-primary"></i>
-                                {{ selectedReportDate ? selectedReportDate + ' のタイムライン' : '日付を選択してください' }}
-                            </h3>
-                            <span v-if="selectedReportDetail" class="text-xs font-mono bg-primary-light dark:bg-primary/20 text-primary px-2 py-1 rounded-full">
-                                学習 {{ formatSeconds(calculateDailyStudyTotal(selectedReportDetail)) }}
-                            </span>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-bold"><i class="fa-regular fa-clock mr-1.5 text-primary"></i>週間タイムライン　<span class="font-normal">— セッションをクリックで削除・編集</span></p>
                         </div>
-                        <div class="p-4 md:p-6 overflow-y-auto" style="max-height: 480px;">
-                            <!-- 未選択 or セッションなし -->
-                            <div v-if="!selectedReportDate" class="text-center py-12 text-gray-400 text-sm">
-                                <i class="fa-regular fa-calendar-days text-3xl mb-3 block"></i>
-                                上の曜日から日付を選択してください
-                            </div>
-                            <div v-else-if="!selectedReportSessions || selectedReportSessions.length === 0" class="text-center py-12 text-gray-400 text-sm">
-                                <i class="fa-solid fa-mug-hot text-3xl mb-3 block opacity-30"></i>
-                                <p>この日の記録はありません</p>
-                                <p v-if="selectedReportDetail && Object.keys(selectedReportDetail).length > 0" class="mt-3 text-xs text-gray-300">（旧形式データ：時刻情報なし）</p>
-                                <!-- 旧形式データのフォールバック表示 -->
-                                <div v-if="selectedReportDetail && Object.keys(selectedReportDetail).length > 0" class="mt-4 text-left max-w-xs mx-auto">
-                                    <div v-for="(time, sub) in selectedReportDetail" :key="sub" class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 py-2 text-sm">
-                                        <span class="font-medium text-gray-600 dark:text-gray-300">{{ sub }}</span>
-                                        <span class="font-mono" :class="sub==='休憩'?'text-green-500':'text-primary'">{{ formatSeconds(time) }}</span>
+
+                        <!-- 横スクロール可能なグリッド -->
+                        <div class="overflow-x-auto overflow-y-auto" style="max-height: calc(100vh - 340px); min-height: 300px;">
+                            <div class="flex" style="min-width: 560px;">
+
+                                <!-- 左端：時刻ラベル列 -->
+                                <div class="flex-shrink-0 w-10 border-r border-gray-100 dark:border-gray-700 relative" style="margin-top: 48px;">
+                                    <div v-for="h in reportHourTicks" :key="h"
+                                         class="absolute w-full text-right pr-1.5 text-[9px] font-mono text-gray-300 dark:text-gray-600 leading-none"
+                                         :style="{ top: (h * reportPxPerHour) + 'px' }">
+                                        {{ String(h).padStart(2,'0') }}
                                     </div>
                                 </div>
-                            </div>
-                            <!-- タイムライン表示 -->
-                            <div v-else>
-                                <div class="relative">
-                                    <!-- タイムライン本体 -->
-                                    <div v-for="(session, i) in [...selectedReportSessions].sort((a,b)=>a.start.localeCompare(b.start))" :key="i"
-                                         class="flex gap-4 mb-4 items-start">
-                                        <!-- 左：時刻ライン -->
-                                        <div class="flex flex-col items-center w-14 flex-shrink-0">
-                                            <div class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400 leading-tight">
-                                                {{ new Date(session.start).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}
-                                            </div>
-                                            <div class="w-px flex-1 mt-1" :class="session.subject==='休憩' ? 'bg-green-200 dark:bg-green-800' : 'bg-primary-light dark:bg-primary/30'" style="min-height:24px;"></div>
-                                            <div class="text-xs font-mono text-gray-400 dark:text-gray-500 leading-tight">
-                                                {{ new Date(session.end).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}
-                                            </div>
+
+                                <!-- 7日分の列 -->
+                                <div v-for="(dateStr, idx) in weeklyDates" :key="dateStr"
+                                     class="flex-1 border-r border-gray-100 dark:border-gray-700 last:border-r-0 relative"
+                                     style="min-width: 70px;">
+
+                                    <!-- 日付ヘッダー -->
+                                    <div class="sticky top-0 z-10 text-center py-2 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800"
+                                         :class="dateStr === getTodayStr() ? 'bg-primary-light dark:bg-primary/20' : ''">
+                                        <div class="text-[11px] font-bold"
+                                             :class="dateStr === getTodayStr() ? 'text-primary' :
+                                                     new Date(dateStr+'T12:00:00').getDay()===0 ? 'text-red-400' :
+                                                     new Date(dateStr+'T12:00:00').getDay()===6 ? 'text-blue-400' : 'text-gray-600 dark:text-gray-300'">
+                                            {{ ['日','月','火','水','木','金','土'][new Date(dateStr+'T12:00:00').getDay()] }}
                                         </div>
-                                        <!-- 右：カード -->
-                                        <div class="flex-1 rounded-xl p-3 border transition"
-                                             :class="session.subject==='休憩'
-                                                ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800'
-                                                : 'bg-primary-light dark:bg-primary/10 border-blue-100 dark:border-primary/30'">
-                                            <div class="flex justify-between items-center">
-                                                <span class="font-bold text-sm" :class="session.subject==='休憩' ? 'text-green-700 dark:text-green-400' : 'text-primary'">
-                                                    <i v-if="session.subject==='休憩'" class="fa-solid fa-mug-hot mr-1"></i>
-                                                    <i v-else class="fa-solid fa-book mr-1"></i>
-                                                    {{ session.subject }}
-                                                </span>
-                                                <span class="font-mono text-xs font-bold" :class="session.subject==='休憩' ? 'text-green-600 dark:text-green-400' : 'text-primary'">
-                                                    {{ formatSeconds(session.duration) }}
-                                                </span>
+                                        <div class="text-[10px] text-gray-400 dark:text-gray-500">{{ dateStr.slice(5).replace('-','/') }}</div>
+                                        <div class="text-[10px] font-mono font-bold mt-0.5"
+                                             :class="calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? 'text-primary' : 'text-gray-300 dark:text-gray-600'">
+                                            {{ calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? formatHours(calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}))+'h' : '—' }}
+                                        </div>
+                                    </div>
+
+                                    <!-- タイムライン本体（時間グリッド） -->
+                                    <div class="relative" :style="{ height: (reportTotalHours * reportPxPerHour) + 'px' }">
+
+                                        <!-- 1時間ごとの水平線 -->
+                                        <div v-for="h in reportHourTicks" :key="'grid-'+h"
+                                             class="absolute w-full border-t border-gray-50 dark:border-gray-700/50"
+                                             :style="{ top: (h * reportPxPerHour) + 'px' }">
+                                        </div>
+
+                                        <!-- セッションブロック -->
+                                        <template v-if="weeklyData[idx]?.sessions?.length > 0">
+                                            <div v-for="(session, si) in weeklyData[idx].sessions" :key="si"
+                                                 class="absolute left-0.5 right-0.5 rounded overflow-hidden cursor-pointer group transition-all hover:brightness-90 hover:z-20"
+                                                 :style="sessionBlockStyle(session)"
+                                                 :title="session.subject + '\n' + fmtTime(session.start) + '〜' + fmtTime(session.end) + '\n' + formatSeconds(session.duration)"
+                                                 :class="session.subject==='休憩'
+                                                    ? 'bg-green-400 dark:bg-green-600 border border-green-500 dark:border-green-700'
+                                                    : 'bg-primary border border-primary-hover'">
+                                                <!-- ブロック内テキスト（高さが十分なら表示） -->
+                                                <div class="px-1 py-0.5 h-full flex flex-col justify-start overflow-hidden">
+                                                    <div class="text-white text-[9px] font-bold truncate leading-tight">{{ session.subject }}</div>
+                                                    <div v-if="session.duration >= 900" class="text-white/80 text-[8px] font-mono truncate leading-tight">{{ fmtTime(session.start) }}〜{{ fmtTime(session.end) }}</div>
+                                                </div>
+                                                <!-- ホバー時の操作ボタン -->
+                                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                                                    <button @click.stop="editSessionFromReport(dateStr, idx, si)"
+                                                        class="w-5 h-5 bg-white rounded text-gray-700 text-[9px] flex items-center justify-center hover:bg-yellow-100"
+                                                        title="時間を変更">
+                                                        <i class="fa-solid fa-pen"></i>
+                                                    </button>
+                                                    <button @click.stop="deleteSessionFromReport(dateStr, idx, si)"
+                                                        class="w-5 h-5 bg-white rounded text-red-500 text-[9px] flex items-center justify-center hover:bg-red-50"
+                                                        title="削除">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div class="text-[10px] text-gray-400 dark:text-gray-500 mt-1 font-mono">
-                                                {{ new Date(session.start).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }} 〜 {{ new Date(session.end).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}
-                                            </div>
+                                        </template>
+
+                                        <!-- 記録なし表示 -->
+                                        <div v-else-if="calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) === 0"
+                                             class="absolute inset-0 flex items-center justify-center">
+                                            <span class="text-[9px] text-gray-200 dark:text-gray-700">—</span>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- 合計 -->
-                                <div class="pt-4 mt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between font-bold text-sm">
-                                    <span class="text-gray-600 dark:text-gray-300">学習合計（休憩除く）</span>
-                                    <span class="text-primary font-mono">{{ formatSeconds(calculateDailyStudyTotal(selectedReportDetail)) }}</span>
-                                </div>
+
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- セッション編集モーダル -->
+                <transition name="modal">
+                <div v-if="editingSession" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+                        <h3 class="text-lg font-bold mb-4 dark:text-white">
+                            <i class="fa-solid fa-pen text-primary mr-2"></i>セッションを編集
+                        </h3>
+                        <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-sm text-gray-600 dark:text-gray-300">
+                            <div class="font-bold text-base mb-1">{{ editingSession.subject }}</div>
+                            <div class="font-mono text-xs text-gray-400">{{ fmtTime(editingSession.start) }} 〜 {{ fmtTime(editingSession.end) }}</div>
+                        </div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">時間（分）</label>
+                        <div class="flex items-center gap-2 mb-6">
+                            <button @click="editingDurationMin = Math.max(1, editingDurationMin - 5)" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-gray-700 dark:text-white">-5</button>
+                            <button @click="editingDurationMin = Math.max(1, editingDurationMin - 1)" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-gray-700 dark:text-white">-1</button>
+                            <input type="number" v-model.number="editingDurationMin" min="1"
+                                class="flex-1 text-center border-b-2 border-primary text-xl font-bold outline-none bg-transparent dark:text-white py-1">
+                            <button @click="editingDurationMin = editingDurationMin + 1" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-gray-700 dark:text-white">+1</button>
+                            <button @click="editingDurationMin = editingDurationMin + 5" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-gray-700 dark:text-white">+5</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button @click="editingSession = null" class="flex-1 py-2 text-gray-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">キャンセル</button>
+                            <button @click="confirmEditSession" class="flex-1 py-2 bg-primary text-white rounded-lg font-bold shadow hover:bg-primary-hover">保存</button>
+                        </div>
+                    </div>
+                </div>
+                </transition>
 
                 <!-- 4. SETTINGS TAB -->
                 <div v-if="currentTab === 'settings'" class="max-w-xl mx-auto min-h-full pb-8">
@@ -1453,6 +1472,90 @@
                 const changeTimerMode = (m) => { timerMode.value = m; saveSettings(); };
                 const setNotificationMode = (m) => { notificationMode.value = m; saveSettings(); };
                 const setTabAnimation = (m) => { tabAnimation.value = m; saveSettings(); };
+
+                // ── タイムライン レイアウト定数 ──
+                const reportPxPerHour = 60;   // 1時間 = 60px
+                const reportStartHour = 0;    // 表示開始時刻
+                const reportTotalHours = 24;  // 表示時間数
+                const reportHourTicks = Array.from({length: reportTotalHours}, (_, i) => i);
+
+                // ISO文字列 → "HH:MM"
+                const fmtTime = (iso) => {
+                    const d = new Date(iso);
+                    return d.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+                };
+
+                // セッションブロックの top / height を計算
+                const sessionBlockStyle = (session) => {
+                    const start = new Date(session.start);
+                    const startH = start.getHours() + start.getMinutes() / 60;
+                    const topPx = (startH - reportStartHour) * reportPxPerHour;
+                    const durH  = session.duration / 3600;
+                    const heightPx = Math.max(durH * reportPxPerHour, 6); // 最低6px
+                    return { top: topPx + 'px', height: heightPx + 'px' };
+                };
+
+                // ── セッション削除（レポートから） ──
+                const deleteSessionFromReport = async (dateStr, dayIdx, sessionIdx) => {
+                    if (!confirm('このセッションを削除しますか？')) return;
+                    const dayData = JSON.parse(JSON.stringify(weeklyData.value[dayIdx]));
+                    if (!dayData.sessions) return;
+                    dayData.sessions.splice(sessionIdx, 1);
+                    // subjects を sessions から再計算
+                    const newSubjects = {};
+                    for (const s of dayData.sessions) {
+                        newSubjects[s.subject] = (newSubjects[s.subject] || 0) + s.duration;
+                    }
+                    dayData.subjects = newSubjects;
+                    await saveDataForDate(dateStr, dayData);
+                    // 今日なら todayLog も更新
+                    if (dateStr === getTodayStr()) {
+                        todayLog.value = JSON.parse(JSON.stringify(dayData));
+                    }
+                    weeklyData.value[dayIdx] = dayData;
+                    weeklyTotal.value = weeklyData.value.reduce((acc, d) => acc + calculateDailyStudyTotal(d.subjects || {}), 0);
+                };
+
+                // ── セッション編集モーダル ──
+                const editingSession = ref(null);
+                const editingDurationMin = ref(0);
+                let editingDateStr = null;
+                let editingDayIdx = null;
+                let editingSessionIdx = null;
+
+                const editSessionFromReport = (dateStr, dayIdx, sessionIdx) => {
+                    const s = weeklyData.value[dayIdx]?.sessions?.[sessionIdx];
+                    if (!s) return;
+                    editingSession.value = { ...s };
+                    editingDurationMin.value = Math.round(s.duration / 60);
+                    editingDateStr = dateStr;
+                    editingDayIdx = dayIdx;
+                    editingSessionIdx = sessionIdx;
+                };
+
+                const confirmEditSession = async () => {
+                    if (!editingSession.value) return;
+                    const newDuration = editingDurationMin.value * 60;
+                    if (newDuration < 60) { alert('1分以上に設定してください'); return; }
+                    const dayData = JSON.parse(JSON.stringify(weeklyData.value[editingDayIdx]));
+                    dayData.sessions[editingSessionIdx].duration = newDuration;
+                    // endをstartから再計算
+                    const startMs = new Date(dayData.sessions[editingSessionIdx].start).getTime();
+                    dayData.sessions[editingSessionIdx].end = new Date(startMs + newDuration * 1000).toISOString();
+                    // subjects再計算
+                    const newSubjects = {};
+                    for (const s of dayData.sessions) {
+                        newSubjects[s.subject] = (newSubjects[s.subject] || 0) + s.duration;
+                    }
+                    dayData.subjects = newSubjects;
+                    await saveDataForDate(editingDateStr, dayData);
+                    if (editingDateStr === getTodayStr()) {
+                        todayLog.value = JSON.parse(JSON.stringify(dayData));
+                    }
+                    weeklyData.value[editingDayIdx] = dayData;
+                    weeklyTotal.value = weeklyData.value.reduce((acc, d) => acc + calculateDailyStudyTotal(d.subjects || {}), 0);
+                    editingSession.value = null;
+                };
                 
                 // セッション削除（ロールバック）
                 const deleteSession = async (displayIdx) => {
@@ -1693,7 +1796,7 @@
                 const formatHours = (sec) => (sec/3600).toFixed(1);
 
                 return {
-                    user, isGuestMode, isAuthLoading, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects,
+                    user, isGuestMode, isAuthLoading, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects, getTodayStr,
                     isTimerRunning, isPaused, timerMode, breakMode, handleSubjectClick, currentSubject, stopTimer, cancelSession, pauseTimer, resumeTimer, formattedTime, todayLog, formatSeconds,
                     showCountdownModal, targetSubject, customCountdownMin, setCountdown, adjustCustomTime, startCountdownSession, openCountdownModal,
                     isAlarmRinging, stopAlarm, notificationMode, setNotificationMode,
@@ -1702,6 +1805,8 @@
                     weekRangeLabel, shiftWeek, loadWeeklyReport, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
                     selectedReportSessions, weeklyDates, weeklyData, selectReportDay, deleteSession,
                     isCurrentWeek, reportMonthValue, todayMonthValue, jumpToMonth,
+                    reportPxPerHour, reportTotalHours, reportHourTicks, sessionBlockStyle, fmtTime,
+                    deleteSessionFromReport, editSessionFromReport, confirmEditSession, editingSession, editingDurationMin,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
                     isDarkMode, toggleDarkMode, themeColor, tempThemeColor, changeThemeColor, resetTheme,
