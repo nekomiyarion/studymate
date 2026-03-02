@@ -82,6 +82,32 @@
             font-variant-numeric: tabular-nums;
             font-feature-settings: "tnum";
         }
+
+        /* ========== タブ切り替えアニメーション ========== */
+        /* fade */
+        .tab-fade-enter-active { transition: opacity 0.25s ease, transform 0.25s ease; }
+        .tab-fade-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
+        .tab-fade-enter-from  { opacity: 0; transform: translateY(8px); }
+        .tab-fade-leave-to    { opacity: 0; transform: translateY(-8px); }
+
+        /* slide */
+        .tab-slide-enter-active { transition: opacity 0.28s cubic-bezier(.4,0,.2,1), transform 0.28s cubic-bezier(.4,0,.2,1); }
+        .tab-slide-leave-active { transition: opacity 0.2s cubic-bezier(.4,0,.2,1), transform 0.2s cubic-bezier(.4,0,.2,1); position: absolute; width: 100%; }
+        .tab-slide-enter-from  { opacity: 0; transform: translateX(32px); }
+        .tab-slide-leave-to    { opacity: 0; transform: translateX(-32px); }
+
+        /* zoom */
+        .tab-zoom-enter-active { transition: opacity 0.25s ease, transform 0.25s cubic-bezier(.34,1.56,.64,1); }
+        .tab-zoom-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; position: absolute; width: 100%; }
+        .tab-zoom-enter-from  { opacity: 0; transform: scale(0.95); }
+        .tab-zoom-leave-to    { opacity: 0; transform: scale(1.03); }
+
+        /* none */
+        .tab-none-enter-active, .tab-none-leave-active { transition: none; }
+        .tab-none-enter-from, .tab-none-leave-to { opacity: 1; }
+
+        .tab-wrapper { position: relative; width: 100%; height: 100%; }
+        /* ================================================= */
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans h-screen overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
@@ -166,6 +192,9 @@
             <!-- Content Area -->
             <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 pb-28 md:pb-8 order-1 md:order-2 relative transition-colors duration-300"
                   :class="{'!p-0 !pb-0 !overflow-hidden': isStandbyMode}">
+                <div class="tab-wrapper">
+                <transition :name="'tab-' + tabAnimation">
+                <div :key="currentTab" class="w-full">
                 
                 <!-- 1. TIMER TAB (Modified for Standby Mode) -->
                 <div v-if="currentTab === 'timer'" 
@@ -176,8 +205,11 @@
                     <header v-if="!isStandbyMode" class="mb-6 md:mb-10 flex justify-between items-center">
                         <h2 class="text-2xl font-bold">今日の学習</h2>
                         <div class="flex items-center gap-2">
-                             <div class="text-sm font-mono text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border dark:border-gray-700">
-                                {{ new Date().toLocaleDateString() }}
+                            <div class="flex items-center gap-1.5 text-xs font-mono text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm border dark:border-gray-700">
+                                <i class="fa-regular fa-clock text-[10px]"></i>
+                                <span class="font-bold">{{ currentTimeFormatted }}</span>
+                                <span class="text-gray-300 dark:text-gray-600">|</span>
+                                <span>{{ new Date().toLocaleDateString('ja-JP', {month:'numeric', day:'numeric'}) }}</span>
                             </div>
                         </div>
                     </header>
@@ -230,17 +262,25 @@
                             </div>
                             
                             <!-- Controls (Standby時は下部に薄く表示) -->
-                            <div v-if="isTimerRunning || isPaused" class="w-full max-w-sm flex gap-3 z-10"
+                            <div v-if="isTimerRunning || isPaused" class="w-full max-w-sm flex flex-col gap-2 z-10"
                                  :class="isStandbyMode ? 'absolute bottom-8 px-12 opacity-30 hover:opacity-100 transition-opacity' : 'mt-6'">
-                                <button @click="stopTimer(false)" class="flex-1 py-6 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
-                                    :class="breakMode ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'">
-                                    <i class="fa-solid fa-stop"></i><span v-if="!isStandbyMode">STOP</span>
-                                </button>
-                                <button v-if="!isPaused" @click="pauseTimer" class="flex-1 py-6 bg-yellow-400 hover:bg-yellow-500 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-pause"></i><span v-if="!isStandbyMode">PAUSE</span>
-                                </button>
-                                <button v-else @click="resumeTimer" class="flex-1 py-6 bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-play"></i><span v-if="!isStandbyMode">RESUME</span>
+                                <!-- STOP（保存して終了） -->
+                                <div class="flex gap-3">
+                                    <button @click="stopTimer(false)" class="flex-1 py-5 text-white text-xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
+                                        :class="breakMode ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'">
+                                        <i class="fa-solid fa-stop"></i><span v-if="!isStandbyMode">STOP</span>
+                                    </button>
+                                    <button v-if="!isPaused" @click="pauseTimer" class="flex-1 py-5 bg-yellow-400 hover:bg-yellow-500 text-white text-xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-pause"></i><span v-if="!isStandbyMode">PAUSE</span>
+                                    </button>
+                                    <button v-else @click="resumeTimer" class="flex-1 py-5 bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-play"></i><span v-if="!isStandbyMode">RESUME</span>
+                                    </button>
+                                </div>
+                                <!-- キャンセル（記録しない） -->
+                                <button v-if="!isStandbyMode" @click="cancelSession"
+                                    class="w-full py-2 text-xs text-gray-400 hover:text-red-400 dark:text-gray-500 dark:hover:text-red-400 font-medium rounded-xl border border-dashed border-gray-200 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-800 transition flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-xmark text-xs"></i> この記録をキャンセル（保存しない）
                                 </button>
                             </div>
                             
@@ -348,12 +388,22 @@
 
                 <!-- 3. REPORT TAB -->
                 <div v-if="currentTab === 'report'" class="max-w-4xl mx-auto min-h-full flex flex-col pb-8">
-                    <header class="mb-6 flex justify-between items-center">
+                    <header class="mb-6 flex flex-wrap gap-3 justify-between items-center">
                         <h2 class="text-2xl font-bold">週間レポート</h2>
-                        <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-1">
-                            <button @click="shiftWeek(-7)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-left"></i></button>
-                            <span class="px-4 text-sm font-bold">{{ weekRangeLabel }}</span>
-                            <button @click="shiftWeek(7)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-right"></i></button>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <!-- 年月ジャンプ -->
+                            <input type="month" :value="reportMonthValue" @change="jumpToMonth($event.target.value)"
+                                   :max="todayMonthValue"
+                                   class="text-xs border dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                            <!-- 週送り -->
+                            <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-1">
+                                <button @click="shiftWeek(-7)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><i class="fa-solid fa-chevron-left"></i></button>
+                                <span class="px-4 text-sm font-bold">{{ weekRangeLabel }}</span>
+                                <button @click="shiftWeek(7)" :disabled="isCurrentWeek" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+                                    :class="isCurrentWeek ? 'text-gray-200 dark:text-gray-700 cursor-not-allowed' : 'text-gray-500'">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
                         </div>
                     </header>
 
@@ -369,19 +419,25 @@
                         </div>
                     </div>
 
-                    <!-- 曜日セレクター -->
+                    <!-- 曜日セレクター（見やすく改善） -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 overflow-x-auto">
                         <div class="flex min-w-max">
                             <button v-for="(dateStr, idx) in weeklyDates" :key="dateStr"
                                 @click="selectReportDay(dateStr, idx)"
-                                class="flex-1 min-w-[80px] py-3 px-2 text-center transition border-b-2 text-sm"
+                                class="flex-1 min-w-[80px] py-3 px-2 text-center transition border-b-2"
                                 :class="selectedReportDate === dateStr
-                                    ? 'border-primary text-primary bg-primary-light dark:bg-gray-700 font-bold'
-                                    : 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
-                                <div class="font-bold text-xs mb-1">{{ ['日','月','火','水','木','金','土'][new Date(dateStr+'T12:00:00').getDay()] }}</div>
-                                <div>{{ dateStr.slice(5).replace('-','/') }}</div>
-                                <div class="text-[10px] mt-1 font-mono" :class="selectedReportDate === dateStr ? 'text-primary' : 'text-gray-300 dark:text-gray-600'">
-                                    {{ formatHours(calculateDailyStudyTotal(weeklyData[idx]?.subjects || {})) }}h
+                                    ? 'border-primary text-primary bg-primary-light dark:bg-primary/20 font-bold'
+                                    : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
+                                <div class="font-bold text-sm mb-0.5">{{ ['日','月','火','水','木','金','土'][new Date(dateStr+'T12:00:00').getDay()] }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ dateStr.slice(5).replace('-','/') }}</div>
+                                <!-- 勉強時間バッジ：記録あり/なしで明確に色分け -->
+                                <div class="mt-1.5 mx-auto px-1.5 py-0.5 rounded text-[11px] font-mono font-bold inline-block"
+                                     :class="calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0
+                                        ? (selectedReportDate === dateStr
+                                            ? 'bg-primary text-white'
+                                            : 'bg-primary-light dark:bg-primary/20 text-primary dark:text-blue-300')
+                                        : 'text-gray-300 dark:text-gray-600'">
+                                    {{ calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? formatHours(calculateDailyStudyTotal(weeklyData[idx]?.subjects || {})) + 'h' : '—' }}
                                 </div>
                             </button>
                         </div>
@@ -496,6 +552,25 @@
                     <!-- Timer Mode -->
                     <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
                         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-2 text-primary"></i>アニメーション設定
+                        </div>
+                        <div class="p-6 flex items-center justify-between">
+                            <div>
+                                <h4 class="font-bold text-sm">タブ切り替えアニメーション</h4>
+                                <p class="text-xs text-gray-500">画面切り替え時のエフェクト</p>
+                            </div>
+                            <div class="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg gap-1">
+                                <button @click="setTabAnimation('fade')" class="px-3 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='fade' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">フェード</button>
+                                <button @click="setTabAnimation('slide')" class="px-3 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='slide' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">スライド</button>
+                                <button @click="setTabAnimation('zoom')" class="px-3 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='zoom' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">ズーム</button>
+                                <button @click="setTabAnimation('none')" class="px-3 py-1.5 rounded-md text-xs font-bold transition" :class="tabAnimation==='none' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">なし</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Timer Mode -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
                             <i class="fa-solid fa-clock mr-2"></i>タイマー設定
                         </div>
                         <div class="p-6 flex items-center justify-between">
@@ -558,7 +633,29 @@
                             <i class="fa-solid fa-eraser mr-2"></i>記録の修正
                         </div>
                         <div class="p-6">
-                            <p class="text-xs text-gray-500 mb-4">ボタンで時間を簡単に増減できます（分単位）</p>
+                            <p class="text-xs text-gray-500 mb-4">セッションを個別に削除するか、分単位で増減できます</p>
+                            
+                            <!-- セッション削除 -->
+                            <div v-if="todayLog.sessions && todayLog.sessions.length > 0" class="mb-6">
+                                <h5 class="text-xs font-bold text-gray-400 uppercase mb-3">セッション削除（ロールバック）</h5>
+                                <div class="space-y-2 max-h-48 overflow-y-auto">
+                                    <div v-for="(session, i) in [...(todayLog.sessions || [])].sort((a,b)=>b.start.localeCompare(a.start))" :key="i"
+                                         class="flex items-center justify-between p-3 rounded-lg border text-xs"
+                                         :class="session.subject==='休憩' ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700'">
+                                        <div>
+                                            <span class="font-bold" :class="session.subject==='休憩' ? 'text-green-700 dark:text-green-400' : 'text-primary'">{{ session.subject }}</span>
+                                            <span class="text-gray-400 ml-2">{{ new Date(session.start).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}〜{{ new Date(session.end).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}</span>
+                                            <span class="font-mono text-gray-500 ml-2">({{ formatSeconds(session.duration) }})</span>
+                                        </div>
+                                        <button @click="deleteSession(i)" class="ml-2 text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 科目別時間増減 -->
+                            <h5 class="text-xs font-bold text-gray-400 uppercase mb-3">科目別 時間増減（分単位）</h5>
                             <div v-if="Object.keys(todayLog.subjects).length === 0" class="text-center text-gray-300 text-sm">本日の記録はありません</div>
                             <div v-else class="space-y-4">
                                 <div v-for="(time, sub) in todayLog.subjects" :key="sub" class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-2 border-b dark:border-gray-700 last:border-0">
@@ -640,6 +737,9 @@
                         </div>
                     </section>
                 </div>
+                </div><!-- end key wrapper -->
+                </transition>
+                </div><!-- end tab-wrapper -->
             </main>
 
             <!-- COUNTDOWN / BREAK MODAL -->
@@ -794,6 +894,18 @@
                 // Notification Settings
                 // 'sound_vibrate', 'vibrate_only', 'silent', 'flash'
                 const notificationMode = ref('sound_vibrate'); 
+
+                // Tab animation
+                const tabAnimation = ref('fade'); // 'fade', 'slide', 'zoom', 'none'
+
+                // 現在時刻
+                const currentTimeFormatted = ref('');
+                const updateCurrentTime = () => {
+                    const now = new Date();
+                    currentTimeFormatted.value = now.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                };
+                updateCurrentTime();
+                setInterval(updateCurrentTime, 1000);
 
                 // Audio
                 const customAudioData = ref(localStorage.getItem('studyMate_audio'));
@@ -955,23 +1067,27 @@
                         }
                     } catch(e) { todayLog.value = {total:0, subjects:{}, sessions:[]}; }
                 };
-                const saveData = async () => {
-                    const d = getTodayStr();
+                const saveDataForDate = async (dateStr, logData) => {
                     let realTotal = 0;
-                    for(const [sub, t] of Object.entries(todayLog.value.subjects)){
+                    for(const [sub, t] of Object.entries(logData.subjects || {})){
                         if(sub !== '休憩') realTotal += t;
                     }
-                    todayLog.value.total = realTotal;
-
-                    const data = JSON.parse(JSON.stringify(todayLog.value));
+                    logData.total = realTotal;
+                    const data = JSON.parse(JSON.stringify(logData));
                     if(isGuestMode.value) {
-                        localStorage.setItem(`studyMate_log_${d}`, JSON.stringify(data));
+                        localStorage.setItem(`studyMate_log_${dateStr}`, JSON.stringify(data));
                         localStorage.setItem('studyMate_guest_todayLog', 'true');
-                    } else if(user.value) await setDoc(doc(db, "users", user.value.uid, "logs", d), data, {merge:true});
+                    } else if(user.value) {
+                        await setDoc(doc(db, "users", user.value.uid, "logs", dateStr), data, {merge:true});
+                    }
+                };
+
+                const saveData = async () => {
+                    await saveDataForDate(getTodayStr(), todayLog.value);
                 };
                 
                 const loadSettings = async () => {
-                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', isDarkMode: false, notificationMode: 'sound_vibrate' };
+                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', isDarkMode: false, notificationMode: 'sound_vibrate', tabAnimation: 'fade' };
                     try {
                         if(isGuestMode.value) {
                             const s = localStorage.getItem('studyMate_settings');
@@ -987,6 +1103,7 @@
                     tempThemeColor.value = themeColor.value;
                     isDarkMode.value = d.isDarkMode || false;
                     notificationMode.value = d.notificationMode || 'sound_vibrate';
+                    tabAnimation.value = d.tabAnimation || 'fade';
                     applyTheme();
                 };
                 const saveSettings = async () => {
@@ -995,7 +1112,8 @@
                         timerMode: timerMode.value, 
                         themeColor: themeColor.value, 
                         isDarkMode: isDarkMode.value,
-                        notificationMode: notificationMode.value
+                        notificationMode: notificationMode.value,
+                        tabAnimation: tabAnimation.value
                     };
                     if(isGuestMode.value) localStorage.setItem('studyMate_settings', JSON.stringify(d));
                     else if(user.value) await setDoc(doc(db, "users", user.value.uid, "settings", "config"), d, {merge:true});
@@ -1167,17 +1285,59 @@
                     }
 
                     const sub = currentSubject.value;
-                    if(sub && todayLog.value.subjects) {
-                        const oldVal = todayLog.value.subjects[sub] || 0;
-                        todayLog.value.subjects[sub] = oldVal + addedTime;
+                    if(sub) {
+                        const wallEnd = new Date();
+                        const wallStart = sessionWallStart.value 
+                            ? new Date(sessionWallStart.value) 
+                            : new Date(wallEnd.getTime() - addedTime * 1000);
                         
-                        // セッション時刻を記録
-                        const wallEnd = new Date().toISOString();
-                        const wallStart = sessionWallStart.value || new Date(Date.now() - addedTime * 1000).toISOString();
-                        if (!todayLog.value.sessions) todayLog.value.sessions = [];
-                        todayLog.value.sessions.push({ subject: sub, start: wallStart, end: wallEnd, duration: addedTime });
+                        // 日をまたいでいるか確認
+                        const startDateStr = wallStart.toLocaleDateString('en-CA');
+                        const endDateStr = wallEnd.toLocaleDateString('en-CA');
                         
-                        await saveData();
+                        if (startDateStr !== endDateStr) {
+                            // 日またぎ：前日と当日に分割保存
+                            // 前日分：wallStart ～ 23:59:59
+                            const midnight = new Date(endDateStr + 'T00:00:00');
+                            const prevDayDuration = Math.floor((midnight.getTime() - wallStart.getTime()) / 1000);
+                            const todayDuration = Math.floor((wallEnd.getTime() - midnight.getTime()) / 1000);
+                            
+                            // 前日のデータを読み込んで保存
+                            let prevLog = {total:0, subjects:{}, sessions:[]};
+                            try {
+                                if(isGuestMode.value) {
+                                    const raw = localStorage.getItem(`studyMate_log_${startDateStr}`);
+                                    if(raw) prevLog = JSON.parse(raw);
+                                } else if(user.value) {
+                                    const s = await getDoc(doc(db, "users", user.value.uid, "logs", startDateStr));
+                                    if(s.exists()) prevLog = s.data();
+                                }
+                            } catch(e) {}
+                            if(!prevLog.subjects) prevLog.subjects = {};
+                            if(!prevLog.sessions) prevLog.sessions = [];
+                            
+                            if(prevDayDuration > 0) {
+                                prevLog.subjects[sub] = (prevLog.subjects[sub] || 0) + prevDayDuration;
+                                prevLog.sessions.push({ subject: sub, start: wallStart.toISOString(), end: new Date(midnight.getTime() - 1000).toISOString(), duration: prevDayDuration });
+                                await saveDataForDate(startDateStr, prevLog);
+                            }
+                            
+                            // 当日分
+                            if(todayDuration > 0 && todayLog.value.subjects) {
+                                todayLog.value.subjects[sub] = (todayLog.value.subjects[sub] || 0) + todayDuration;
+                                if(!todayLog.value.sessions) todayLog.value.sessions = [];
+                                todayLog.value.sessions.push({ subject: sub, start: midnight.toISOString(), end: wallEnd.toISOString(), duration: todayDuration });
+                                await saveData();
+                            }
+                        } else {
+                            // 通常（同日内）
+                            if(todayLog.value.subjects) {
+                                todayLog.value.subjects[sub] = (todayLog.value.subjects[sub] || 0) + addedTime;
+                            }
+                            if(!todayLog.value.sessions) todayLog.value.sessions = [];
+                            todayLog.value.sessions.push({ subject: sub, start: wallStart.toISOString(), end: wallEnd.toISOString(), duration: addedTime });
+                            await saveData();
+                        }
                     }
                     
                     sessionWallStart.value = null;
@@ -1187,6 +1347,20 @@
                     elapsedTime.value = 0;
                     currentSubject.value = null;
                     breakMode.value = false; 
+                };
+
+                // キャンセル：記録せずにタイマーをリセット
+                const cancelSession = () => {
+                    clearInterval(timerInterval);
+                    isTimerRunning.value = false;
+                    isPaused.value = false;
+                    startTime.value = 0;
+                    elapsedTime.value = 0;
+                    currentSubject.value = null;
+                    breakMode.value = false;
+                    sessionWallStart.value = null;
+                    releaseWakeLock();
+                    localStorage.removeItem(TIMER_STATE_KEY);
                 };
 
                 // ★タイマー復元処理
@@ -1278,6 +1452,58 @@
 
                 const changeTimerMode = (m) => { timerMode.value = m; saveSettings(); };
                 const setNotificationMode = (m) => { notificationMode.value = m; saveSettings(); };
+                const setTabAnimation = (m) => { tabAnimation.value = m; saveSettings(); };
+                
+                // セッション削除（ロールバック）
+                const deleteSession = async (displayIdx) => {
+                    if(!confirm('このセッションを削除しますか？')) return;
+                    // displayIdxは逆順ソートのインデックス、元のsessions配列の対応を探す
+                    const sorted = [...(todayLog.value.sessions || [])].sort((a,b)=>b.start.localeCompare(a.start));
+                    const sessionToDelete = sorted[displayIdx];
+                    if(!sessionToDelete) return;
+                    
+                    const origIdx = todayLog.value.sessions.findIndex(s => s.start === sessionToDelete.start && s.end === sessionToDelete.end && s.subject === sessionToDelete.subject);
+                    if(origIdx === -1) return;
+                    
+                    // sessionsから削除
+                    todayLog.value.sessions.splice(origIdx, 1);
+                    
+                    // subjects の合計時間を再計算（全sessionから積算）
+                    const newSubjects = {};
+                    for(const s of todayLog.value.sessions) {
+                        newSubjects[s.subject] = (newSubjects[s.subject] || 0) + s.duration;
+                    }
+                    todayLog.value.subjects = newSubjects;
+                    await saveData();
+                };
+
+                // Report: computed helpers
+                const isCurrentWeek = computed(() => {
+                    const today = new Date();
+                    const weekStart = new Date(reportWeekStart.value);
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekStart.getDate() + 6);
+                    return today >= weekStart && today <= weekEnd;
+                });
+
+                const reportMonthValue = computed(() => {
+                    const d = new Date(reportWeekStart.value);
+                    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                });
+
+                const todayMonthValue = computed(() => {
+                    const d = new Date();
+                    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                });
+
+                const jumpToMonth = (monthStr) => {
+                    if(!monthStr) return;
+                    const [y, m] = monthStr.split('-').map(Number);
+                    const target = new Date(y, m-1, 1);
+                    // その月の最初の日曜日週に移動
+                    reportWeekStart.value = target;
+                    loadWeeklyReport();
+                };
                 
                 const updateSubjectTime = async (sub, deltaMin) => {
                     const oldSec = todayLog.value.subjects[sub] || 0;
@@ -1392,7 +1618,19 @@
                 const addSubject = ()=>{ if(newSubjectName.value){ subjects.value.push(newSubjectName.value); newSubjectName.value=""; saveSettings(); } };
                 const removeSubject = (i)=>{ if(confirm("削除？")){ subjects.value.splice(i,1); saveSettings(); } };
 
-                const shiftWeek = (d) => { const n=new Date(reportWeekStart.value); n.setDate(n.getDate()+d); reportWeekStart.value=n; loadWeeklyReport(); };
+                const shiftWeek = (d) => { 
+                    const n=new Date(reportWeekStart.value); 
+                    n.setDate(n.getDate()+d); 
+                    // 未来週への移動を禁止
+                    if(d > 0) {
+                        const today = new Date();
+                        const weekStart = new Date(n);
+                        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+                        if(weekStart > today) return;
+                    }
+                    reportWeekStart.value=n; 
+                    loadWeeklyReport(); 
+                };
                 const calculateDailyStudyTotal = (subs) => {
                     return Object.entries(subs || {}).reduce((acc, [k, v]) => k !== '休憩' ? acc + v : acc, 0);
                 };
@@ -1456,16 +1694,19 @@
 
                 return {
                     user, isGuestMode, isAuthLoading, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects,
-                    isTimerRunning, isPaused, timerMode, breakMode, handleSubjectClick, currentSubject, stopTimer, pauseTimer, resumeTimer, formattedTime, todayLog, formatSeconds,
+                    isTimerRunning, isPaused, timerMode, breakMode, handleSubjectClick, currentSubject, stopTimer, cancelSession, pauseTimer, resumeTimer, formattedTime, todayLog, formatSeconds,
                     showCountdownModal, targetSubject, customCountdownMin, setCountdown, adjustCustomTime, startCountdownSession, openCountdownModal,
                     isAlarmRinging, stopAlarm, notificationMode, setNotificationMode,
                     tasks, newTaskTitle, showCompletedTasks, filteredTasks, createTask, deleteTask, toggleTaskStatus, updateTaskTitle,
                     tokenExpired, refreshToken,
                     weekRangeLabel, shiftWeek, loadWeeklyReport, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
-                    selectedReportSessions, weeklyDates, weeklyData, selectReportDay,
+                    selectedReportSessions, weeklyDates, weeklyData, selectReportDay, deleteSession,
+                    isCurrentWeek, reportMonthValue, todayMonthValue, jumpToMonth,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
                     isDarkMode, toggleDarkMode, themeColor, tempThemeColor, changeThemeColor, resetTheme,
+                    tabAnimation, setTabAnimation,
+                    currentTimeFormatted,
                     showTutorial, tutorialStep, tutorialSteps, 
                     nextTutorial:()=>{if(tutorialStep.value<tutorialSteps.length-1)tutorialStep.value++;else{showTutorial.value=false;localStorage.setItem('studyMate_seenTutorial','true');}}, 
                     startTutorial:()=>{showTutorial.value=true;tutorialStep.value=0;},
