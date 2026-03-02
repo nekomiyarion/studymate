@@ -85,10 +85,17 @@
 
         /* ========== タブ切り替えアニメーション ========== */
         /* fade */
-        .tab-fade-enter-active { transition: opacity 0.25s ease, transform 0.25s ease; }
-        .tab-fade-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
-        .tab-fade-enter-from  { opacity: 0; transform: translateY(8px); }
-        .tab-fade-leave-to    { opacity: 0; transform: translateY(-8px); }
+        .tab-fade-enter-active { 
+            transition: opacity 0.22s ease, transform 0.22s ease; 
+            will-change: opacity, transform;
+        }
+        .tab-fade-leave-active { 
+            transition: opacity 0.18s ease, transform 0.18s ease; 
+            position: absolute; width: 100%;
+            will-change: opacity, transform;
+        }
+        .tab-fade-enter-from  { opacity: 0; transform: translateY(6px); }
+        .tab-fade-leave-to    { opacity: 0; transform: translateY(-6px); }
 
         /* slide */
         .tab-slide-enter-active { transition: opacity 0.28s cubic-bezier(.4,0,.2,1), transform 0.28s cubic-bezier(.4,0,.2,1); }
@@ -97,10 +104,17 @@
         .tab-slide-leave-to    { opacity: 0; transform: translateX(-32px); }
 
         /* zoom */
-        .tab-zoom-enter-active { transition: opacity 0.25s ease, transform 0.25s cubic-bezier(.34,1.56,.64,1); }
-        .tab-zoom-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; position: absolute; width: 100%; }
-        .tab-zoom-enter-from  { opacity: 0; transform: scale(0.95); }
-        .tab-zoom-leave-to    { opacity: 0; transform: scale(1.03); }
+        .tab-zoom-enter-active { 
+            transition: opacity 0.22s ease, transform 0.22s cubic-bezier(.25, .46, .45, .94); 
+            will-change: opacity, transform;
+        }
+        .tab-zoom-leave-active { 
+            transition: opacity 0.16s ease, transform 0.16s ease; 
+            position: absolute; width: 100%;
+            will-change: opacity, transform;
+        }
+        .tab-zoom-enter-from  { opacity: 0; transform: scale(0.97); }
+        .tab-zoom-leave-to    { opacity: 0; transform: scale(1.01); }
 
         /* none */
         .tab-none-enter-active, .tab-none-leave-active { transition: none; }
@@ -108,6 +122,30 @@
 
         .tab-wrapper { position: relative; width: 100%; height: 100%; }
         /* ================================================= */
+
+        /* ========== スマホ横画面レイアウト ========== */
+        .landscape-mobile-nav {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            height: 100%;
+            padding: 8px 4px;
+            gap: 4px;
+        }
+        .landscape-mobile-nav .nav-icon-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            font-size: 18px;
+            transition: all 0.15s;
+            gap: 2px;
+        }
+        /* ============================================ */
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans h-screen overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
@@ -159,13 +197,38 @@
         <template v-else>
             
             <!-- Navigation (スタンバイモード時は非表示) -->
-            <nav v-show="!isStandbyMode" class="md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col md:h-full flex-shrink-0 order-2 md:order-1 fixed md:relative bottom-0 w-full md:w-auto z-40 h-20 md:h-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:shadow-none pb-safe">
+            <nav v-show="!isStandbyMode" 
+                 :class="isMobile && isLandscape 
+                    ? 'w-14 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full flex-shrink-0 z-40'
+                    : 'md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col md:h-full flex-shrink-0 order-2 md:order-1 fixed md:relative bottom-0 w-full md:w-auto z-40 h-20 md:h-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:shadow-none pb-safe'">
+                <!-- PCサイドバーロゴ -->
                 <div class="hidden md:flex items-center gap-3 p-6 border-b border-gray-100 dark:border-gray-700">
                     <img src="./studymate.png" onerror="this.style.display='none'" class="w-8 h-8 rounded-lg">
                     <span class="font-bold text-xl tracking-tight">Study Mate</span>
                 </div>
 
-                <div class="flex md:flex-col justify-around md:justify-start h-full md:p-4 md:gap-2 items-center md:items-stretch">
+                <!-- スマホ横画面：縦アイコンナビ -->
+                <div v-if="isMobile && isLandscape" class="landscape-mobile-nav flex-1">
+                    <button @click="currentTab = 'timer'" class="nav-icon-btn w-full"
+                        :class="currentTab === 'timer' ? 'text-primary bg-primary-light dark:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
+                        <i class="fa-solid fa-stopwatch"></i>
+                    </button>
+                    <button @click="currentTab = 'tasks'" class="nav-icon-btn w-full"
+                        :class="currentTab === 'tasks' ? 'text-primary bg-primary-light dark:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
+                        <i class="fa-solid fa-list-check"></i>
+                    </button>
+                    <button @click="loadWeeklyReport(); currentTab = 'report'" class="nav-icon-btn w-full"
+                        :class="currentTab === 'report' ? 'text-primary bg-primary-light dark:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
+                        <i class="fa-solid fa-chart-simple"></i>
+                    </button>
+                    <button @click="currentTab = 'settings'" class="nav-icon-btn w-full"
+                        :class="currentTab === 'settings' ? 'text-primary bg-primary-light dark:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+
+                <!-- 通常モード（スマホ縦 or PC）ナビ -->
+                <div v-else class="flex md:flex-col justify-around md:justify-start h-full md:p-4 md:gap-2 items-center md:items-stretch">
                     <button @click="currentTab = 'timer'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" 
                         :class="currentTab === 'timer' ? 'text-primary md:bg-primary-light dark:md:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
                         <i class="fa-solid fa-stopwatch text-xl md:text-lg"></i>
@@ -190,8 +253,11 @@
             </nav>
 
             <!-- Content Area -->
-            <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 pb-28 md:pb-8 order-1 md:order-2 relative transition-colors duration-300"
-                  :class="{'!p-0 !pb-0 !overflow-hidden': isStandbyMode}">
+            <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 order-1 md:order-2 relative transition-colors duration-300"
+                  :class="[
+                      isStandbyMode ? '!p-0 !pb-0 !overflow-hidden' : '',
+                      isMobile && isLandscape ? 'pb-4 pt-3 px-3' : 'pb-28 md:pb-8'
+                  ]">
                 <div class="tab-wrapper">
                 <transition :name="'tab-' + tabAnimation">
                 <div :key="currentTab" class="w-full">
@@ -203,7 +269,22 @@
                     
                     <!-- Header (通常時のみ表示) -->
                     <header v-if="!isStandbyMode" class="mb-6 md:mb-10 flex justify-between items-center">
-                        <h2 class="text-2xl font-bold">今日の学習</h2>
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-2xl font-bold">今日の学習</h2>
+                            <!-- タイマーモード切り替え（コンパクト） -->
+                            <div class="flex bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-full p-0.5 shadow-sm">
+                                <button @click="changeTimerMode('countup')"
+                                    class="px-2.5 py-1 rounded-full text-[11px] font-bold transition"
+                                    :class="timerMode==='countup' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'">
+                                    <i class="fa-solid fa-arrow-up mr-0.5"></i>UP
+                                </button>
+                                <button @click="changeTimerMode('countdown')"
+                                    class="px-2.5 py-1 rounded-full text-[11px] font-bold transition"
+                                    :class="timerMode==='countdown' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'">
+                                    <i class="fa-solid fa-arrow-down mr-0.5"></i>DOWN
+                                </button>
+                            </div>
+                        </div>
                         <div class="flex items-center gap-2">
                             <div class="flex items-center gap-1.5 text-xs font-mono text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm border dark:border-gray-700">
                                 <i class="fa-regular fa-clock text-[10px]"></i>
@@ -297,11 +378,8 @@
                             </button>
 
                             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                                <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-3 border-b border-gray-100 dark:border-gray-700 text-xs font-bold text-gray-400 uppercase flex justify-between items-center">
+                                <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-3 border-b border-gray-100 dark:border-gray-700 text-xs font-bold text-gray-400 uppercase">
                                     <span>本日の内訳</span>
-                                    <button @click="currentTab='settings'; showEditLog=true" class="text-primary hover:text-primary-hover">
-                                        <i class="fa-solid fa-pen"></i> 修正
-                                    </button>
                                 </div>
                                 <div class="p-2 max-h-60 overflow-y-auto">
                                     <div v-if="Object.keys(todayLog.subjects).length === 0" class="text-center py-6 text-gray-400 text-sm">記録なし</div>
@@ -319,8 +397,8 @@
                         </div>
                     </div>
 
-                    <!-- Fullscreen Button (Mobile Only, not in Standby) -->
-                    <div v-if="isMobile && !isFullscreen && !isStandbyMode" class="fixed bottom-28 left-4 md:hidden slide-up z-30">
+                    <!-- Fullscreen Button (Mobile Only, not in Standby, not in landscape) -->
+                    <div v-if="isMobile && !isFullscreen && !isStandbyMode && !isLandscape" class="fixed bottom-28 left-4 md:hidden slide-up z-30">
                         <button @click="toggleFullscreen" class="bg-gray-800/80 dark:bg-gray-700/80 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition transform active:scale-95 text-xs font-medium flex items-center gap-1.5">
                             <i class="fa-solid fa-expand text-sm"></i>
                             <span>全画面</span>
@@ -483,7 +561,7 @@
                                      :style="{ paddingTop: '48px' }">
                                     <div class="absolute inset-x-0" :style="{ top: '48px', bottom: 0 }" >
                                         <div v-for="h in visibleHourTicks" :key="'lbl-'+h"
-                                             class="absolute w-full text-right pr-1 text-[8px] font-mono text-gray-300 dark:text-gray-600 leading-none"
+                                             class="absolute w-full text-right pr-1 text-[9px] font-mono font-bold text-gray-400 dark:text-gray-400 leading-none"
                                              :style="{ top: ((h - reportStartHour) / reportVisibleHours * 100) + '%' }">
                                             {{ String(h).padStart(2,'0') }}
                                         </div>
@@ -1101,7 +1179,11 @@
                     }
 
                     const storedToken = localStorage.getItem('google_tasks_token');
-                    if (storedToken) accessToken.value = storedToken;
+                    if (storedToken) {
+                        accessToken.value = storedToken;
+                        // ページ読み込み後1秒後に無音でトークン有効性確認
+                        setTimeout(() => silentRefreshToken(), 1500);
+                    }
 
                     // ★タイマー状態の復元（リロード・再開対策）
                     restoreTimerState();
@@ -1575,27 +1657,39 @@
                 // 表示時間範囲：週のセッションから動的計算（最低6時間表示）
                 const reportStartHour = computed(() => {
                     let minH = 23;
+                    let found = false;
                     for (const d of weeklyData.value) {
                         for (const s of (d.sessions || [])) {
-                            const h = new Date(s.start).getHours();
-                            if (h < minH) minH = h;
+                            const startDate = new Date(s.start);
+                            const sessionDateStr = s.start.slice(0, 10);
+                            // そのセッションのstart時刻が、その日付のものかチェック
+                            const h = startDate.getHours();
+                            // 異常値（別日のISOが混入）は除外: セッションdurationが48時間超はスキップ
+                            if (s.duration > 0 && s.duration < 86400) {
+                                if (h < minH) { minH = h; found = true; }
+                            }
                         }
                     }
-                    return Math.max(0, minH - 1);
+                    return found ? Math.max(0, minH - 1) : 6; // データなければ6時スタート
                 });
                 const reportEndHour = computed(() => {
                     let maxH = 0;
+                    let found = false;
                     for (const d of weeklyData.value) {
                         for (const s of (d.sessions || [])) {
+                            if (s.duration <= 0 || s.duration >= 86400) continue; // 異常値スキップ
                             const end = new Date(s.end);
                             const h = end.getHours() + (end.getMinutes() > 0 ? 1 : 0);
-                            if (h > maxH) maxH = h;
+                            // endが翌日になっているケース(h=0で深夜0時超え)は23時扱い
+                            const clampedH = Math.min(h, 24);
+                            if (clampedH > maxH) { maxH = clampedH; found = true; }
                         }
                     }
+                    if (!found) return reportStartHour.value + 8; // デフォルト8時間表示
                     const raw = Math.min(24, maxH + 1);
-                    return Math.max(reportStartHour.value + 6, raw); // 最低6時間幅
+                    return Math.max(reportStartHour.value + 4, raw); // 最低4時間幅
                 });
-                const reportVisibleHours = computed(() => reportEndHour.value - reportStartHour.value);
+                const reportVisibleHours = computed(() => Math.max(1, reportEndHour.value - reportStartHour.value));
                 const visibleHourTicks = computed(() => {
                     const ticks = [];
                     for (let h = reportStartHour.value; h <= reportEndHour.value; h++) ticks.push(h);
@@ -1604,11 +1698,14 @@
 
                 // セッションブロック位置（%ベース）
                 const sessionBlockStylePct = (session) => {
+                    if (!session.start || !session.end || session.duration <= 0) return { display: 'none' };
                     const start = new Date(session.start);
                     const startH = start.getHours() + start.getMinutes() / 60;
                     const topPct = ((startH - reportStartHour.value) / reportVisibleHours.value) * 100;
-                    const durH = session.duration / 3600;
-                    const heightPct = Math.max((durH / reportVisibleHours.value) * 100, 1.2); // 最低1.2%
+                    const durH = Math.min(session.duration, 86399) / 3600;
+                    const heightPct = Math.max((durH / reportVisibleHours.value) * 100, 1.5);
+                    // 表示範囲外ならhide
+                    if (startH < reportStartHour.value - 0.5 || startH > reportEndHour.value + 0.5) return { display: 'none' };
                     return { top: topPct + '%', height: heightPct + '%' };
                 };
 
@@ -1772,6 +1869,42 @@
                 const startTokenCheck = () => {
                     if (tokenCheckInterval) clearInterval(tokenCheckInterval);
                     tokenCheckInterval = setInterval(() => { checkTokenExpiry(); }, 60000);
+                };
+
+                // 無音のトークン自動更新（ポップアップなし）
+                const silentRefreshToken = async () => {
+                    if (!user.value) return;
+                    try {
+                        // Firebase の getIdToken は認証状態を維持するが Google Tasks には使えない
+                        // 代わりに signInWithPopup の代わりに credential を取り直す
+                        // まず既存のトークンが使えるか確認
+                        const testRes = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?maxResults=1', {
+                            headers: { Authorization: `Bearer ${accessToken.value}` }
+                        });
+                        if (testRes.status === 401) {
+                            // 期限切れ → ポップアップなしで再取得を試みる
+                            // Google OAuth の silent flow: prompt=none
+                            try {
+                                const silentProvider = new GoogleAuthProvider();
+                                silentProvider.addScope('https://www.googleapis.com/auth/tasks');
+                                silentProvider.setCustomParameters({ prompt: 'none' });
+                                const r = await signInWithPopup(auth, silentProvider);
+                                const credential = GoogleAuthProvider.credentialFromResult(r);
+                                if (credential?.accessToken) {
+                                    accessToken.value = credential.accessToken;
+                                    localStorage.setItem('google_tasks_token', credential.accessToken);
+                                    lastTokenRefresh.value = Date.now();
+                                    tokenExpired.value = false;
+                                    await fetchTasks();
+                                }
+                            } catch(e) {
+                                // prompt=none で失敗した場合は期限切れ表示
+                                tokenExpired.value = true;
+                            }
+                        } else {
+                            tokenExpired.value = false;
+                        }
+                    } catch(e) {}
                 };
 
                 const refreshToken = async () => {
@@ -1957,6 +2090,7 @@
                     deleteSessionFromReport, editSessionFromReport, confirmEditSession, editingSession, editingDurationMin,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
+                    silentRefreshToken,
                     isDarkMode, toggleDarkMode, themeColor, tempThemeColor, changeThemeColor, resetTheme,
                     tabAnimation, setTabAnimation,
                     currentTimeFormatted,
