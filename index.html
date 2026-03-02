@@ -162,34 +162,58 @@
         <!-- ================= Login / Guest Landing ================= -->
         <div v-else-if="!user && !isGuestMode" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-6 z-50 absolute inset-0 overflow-y-auto">
             <img src="./studymate.png" onerror="this.style.display='none'" alt="Logo" class="w-24 h-24 mb-4 rounded-2xl shadow-lg">
-            
             <h1 class="text-5xl font-bold mb-2 text-primary tracking-tighter text-center transition-colors">Study Mate</h1>
-            <p class="text-gray-500 dark:text-gray-400 mb-10 text-center">勉強も、休憩も、これひとつで。</p>
-            
-            <div class="space-y-4 w-full max-w-sm">
+            <p class="text-gray-500 dark:text-gray-400 mb-8 text-center">勉強も、休憩も、これひとつで。</p>
+
+            <!-- メール認証フォーム（表示/非表示切り替え） -->
+            <div v-if="showEmailAuth" class="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg dark:text-white">{{ emailLoginForm.mode === 'login' ? 'メールでログイン' : 'アカウント作成' }}</h3>
+                    <button @click="showEmailAuth = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="space-y-3">
+                    <input type="email" v-model="emailLoginForm.email" placeholder="メールアドレス"
+                        class="w-full border dark:border-gray-600 rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                    <input type="password" v-model="emailLoginForm.password" placeholder="パスワード（6文字以上）"
+                        class="w-full border dark:border-gray-600 rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white"
+                        @keydown.enter="loginWithEmail">
+                    <input v-if="emailLoginForm.mode === 'register'" type="password" v-model="emailLoginForm.confirm" placeholder="パスワード確認"
+                        class="w-full border dark:border-gray-600 rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                    <p v-if="emailAuthError" class="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{{ emailAuthError }}</p>
+                    <button @click="loginWithEmail" class="w-full py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-hover transition shadow">
+                        {{ emailLoginForm.mode === 'login' ? 'ログイン' : 'アカウントを作成' }}
+                    </button>
+                    <div class="flex justify-between text-xs text-primary">
+                        <button @click="emailLoginForm.mode = emailLoginForm.mode === 'login' ? 'register' : 'login'; emailAuthError=''" class="hover:underline">
+                            {{ emailLoginForm.mode === 'login' ? '新規アカウントを作成' : 'ログインに戻る' }}
+                        </button>
+                        <button v-if="emailLoginForm.mode === 'login'" @click="resetPassword" class="hover:underline">パスワードを忘れた</button>
+                    </div>
+                </div>
+            </div>
+
+            <div v-else class="space-y-3 w-full max-w-sm">
                 <button @click="login" class="w-full px-8 py-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-lg hover:bg-primary-light dark:hover:bg-gray-700 flex items-center justify-center gap-4 font-bold text-gray-700 dark:text-gray-200 transition transform hover:scale-105">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6">
                     <span>Googleでログイン</span>
+                </button>
+                <button @click="showEmailAuth = true; emailLoginForm.mode = 'login'; emailAuthError = ''" class="w-full px-8 py-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-lg hover:bg-primary-light dark:hover:bg-gray-700 flex items-center justify-center gap-4 font-bold text-gray-700 dark:text-gray-200 transition transform hover:scale-105">
+                    <i class="fa-solid fa-envelope text-primary text-xl"></i>
+                    <span>メールアドレスでログイン</span>
                 </button>
                 <button @click="startGuest" class="w-full px-8 py-4 bg-gray-800 dark:bg-gray-700 text-white rounded-xl shadow-lg hover:bg-gray-700 dark:hover:bg-gray-600 flex items-center justify-center gap-4 font-bold transition transform hover:scale-105">
                     <i class="fa-solid fa-user-secret"></i>
                     <span>ゲストとして利用する</span>
                 </button>
             </div>
-            
-            <div class="mt-8 flex gap-6 text-xs text-gray-400">
+
+            <div class="mt-6 flex gap-6 text-xs text-gray-400">
                 <a href="https://nekomiyarion.github.io/studymate/terms.html" target="_blank" class="hover:text-primary underline">利用規約</a>
                 <a href="https://nekomiyarion.github.io/studymate/privacy.html" target="_blank" class="hover:text-primary underline">プライバシーポリシー</a>
             </div>
-
-            <p class="mt-4 text-xs text-gray-300 max-w-sm text-center">
-                ※ゲストモードの記録は、あとでログインした際にアカウントへ統合されます。
-            </p>
-            
+            <p class="mt-3 text-xs text-gray-300 max-w-sm text-center">※ゲストモードの記録は、あとでログインした際にアカウントへ統合されます。</p>
             <div class="absolute bottom-4 right-4">
-                <button @click="hardReset" class="text-xs text-gray-300 underline hover:text-red-500">
-                    不具合時リセット
-                </button>
+                <button @click="hardReset" class="text-xs text-gray-300 underline hover:text-red-500">不具合時リセット</button>
             </div>
         </div>
 
@@ -595,7 +619,8 @@
                                     <div class="flex-1 relative min-h-0">
                                         <!-- 時間グリッド線 -->
                                         <div v-for="h in visibleHourTicks" :key="'grid-'+dateStr+h"
-                                             class="absolute w-full border-t border-gray-50 dark:border-gray-700/40 pointer-events-none"
+                                             class="absolute w-full pointer-events-none"
+                                             :class="h % 3 === 0 ? 'border-t border-gray-300 dark:border-gray-500' : 'border-t border-gray-200 dark:border-gray-600/70'"
                                              :style="{ top: ((h - reportStartHour) / reportVisibleHours * 100) + '%' }">
                                         </div>
 
@@ -689,21 +714,37 @@
                 <div v-if="currentTab === 'settings'" class="max-w-xl mx-auto min-h-full pb-8">
                     <header class="mb-6"><h2 class="text-2xl font-bold">設定</h2></header>
 
-                    <!-- Theme Settings -->
+                    <!-- 1. 外観設定 -->
                     <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
                         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
                             <i class="fa-solid fa-palette mr-2 text-primary"></i>外観設定
                         </div>
                         <div class="p-6 space-y-6">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-bold text-sm">ダークモード</h4>
-                                    <p class="text-xs text-gray-500">画面を暗くして目の負担を軽減します</p>
+                            <!-- テーマモード -->
+                            <div>
+                                <h4 class="font-bold text-sm mb-3">テーマ</h4>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button @click="setThemeMode('light')"
+                                        class="flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition text-xs font-bold"
+                                        :class="themeMode==='light' ? 'border-primary bg-primary-light dark:bg-primary/20 text-primary' : 'border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-300'">
+                                        <i class="fa-solid fa-sun text-xl text-yellow-400"></i>
+                                        ライト
+                                    </button>
+                                    <button @click="setThemeMode('dark')"
+                                        class="flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition text-xs font-bold"
+                                        :class="themeMode==='dark' ? 'border-primary bg-primary-light dark:bg-primary/20 text-primary' : 'border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-300'">
+                                        <i class="fa-solid fa-moon text-xl text-indigo-400"></i>
+                                        ダーク
+                                    </button>
+                                    <button @click="setThemeMode('system')"
+                                        class="flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition text-xs font-bold"
+                                        :class="themeMode==='system' ? 'border-primary bg-primary-light dark:bg-primary/20 text-primary' : 'border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-300'">
+                                        <i class="fa-solid fa-display text-xl text-gray-400"></i>
+                                        システム
+                                    </button>
                                 </div>
-                                <button @click="toggleDarkMode" class="w-14 h-8 rounded-full p-1 transition-colors duration-300" :class="isDarkMode ? 'bg-primary' : 'bg-gray-300'">
-                                    <div class="w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300" :class="isDarkMode ? 'translate-x-6' : ''"></div>
-                                </button>
                             </div>
+                            <!-- テーマカラー -->
                             <div>
                                 <h4 class="font-bold text-sm mb-2">テーマカラー</h4>
                                 <div class="flex items-center gap-4">
@@ -715,7 +756,102 @@
                         </div>
                     </section>
 
-                    <!-- Timer Mode -->
+                    <!-- 2. 教科の編集・カラー設定 -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square text-primary"></i> 教科の編集・カラー設定
+                        </div>
+                        <div class="p-6">
+                            <p class="text-xs text-gray-400 mb-4">教科名の変更・色の設定ができます。色はレポートのタイムラインに使用されます。</p>
+                            <ul class="space-y-3 mb-4">
+                                <li v-for="(sub, index) in subjects" :key="index" class="flex items-center gap-2">
+                                    <div class="relative flex-shrink-0">
+                                        <div class="w-8 h-8 rounded-full border-2 border-white shadow cursor-pointer hover:scale-110 transition"
+                                             :style="{ backgroundColor: subjectColor(sub) }"
+                                             @click="$refs['colorPicker_'+index][0].click()"></div>
+                                        <input type="color" :ref="'colorPicker_'+index"
+                                               :value="subjectColor(sub)"
+                                               @change="setSubjectColor(sub, $event.target.value)"
+                                               class="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none">
+                                    </div>
+                                    <input type="text" v-model="subjects[index]" @change="saveSettings"
+                                           class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-primary outline-none bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 transition">
+                                    <button @click="resetSubjectColor(sub)" class="text-gray-300 hover:text-gray-500 p-1.5 transition" title="色をデフォルトに戻す">
+                                        <i class="fa-solid fa-rotate-left text-xs"></i>
+                                    </button>
+                                    <button @click="removeSubject(index)" class="text-gray-300 hover:text-red-500 p-1.5 transition">
+                                        <i class="fa-solid fa-circle-minus"></i>
+                                    </button>
+                                </li>
+                                <li class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                    <div class="relative flex-shrink-0">
+                                        <div class="w-8 h-8 rounded-full border-2 border-white shadow cursor-pointer hover:scale-110 transition"
+                                             :style="{ backgroundColor: subjectColor('休憩') }"
+                                             @click="$refs.breakColorPicker.click()"></div>
+                                        <input type="color" ref="breakColorPicker"
+                                               :value="subjectColor('休憩')"
+                                               @change="setSubjectColor('休憩', $event.target.value)"
+                                               class="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none">
+                                    </div>
+                                    <span class="flex-1 text-sm font-medium text-gray-500 dark:text-gray-400 px-3 py-2">休憩（固定）</span>
+                                    <button @click="resetSubjectColor('休憩')" class="text-gray-300 hover:text-gray-500 p-1.5 transition">
+                                        <i class="fa-solid fa-rotate-left text-xs"></i>
+                                    </button>
+                                    <div class="w-8"></div>
+                                </li>
+                            </ul>
+                            <div class="flex gap-2">
+                                <input type="text" v-model="newSubjectName" placeholder="新しい教科名を追加" class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800">
+                                <button @click="addSubject" class="bg-primary text-white px-4 rounded-lg text-sm font-bold shadow hover:bg-primary-hover">追加</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 3. 通知設定 -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
+                            <i class="fa-solid fa-bell mr-2 text-primary"></i>通知設定
+                        </div>
+                        <div class="p-6">
+                            <h4 class="font-bold text-sm mb-3">タイマー終了時の通知モード</h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button @click="setNotificationMode('sound_vibrate')"
+                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
+                                    :class="notificationMode === 'sound_vibrate' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
+                                    <i class="fa-solid fa-bell text-lg"></i>音 + 振動
+                                </button>
+                                <button @click="setNotificationMode('vibrate_only')"
+                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
+                                    :class="notificationMode === 'vibrate_only' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
+                                    <i class="fa-solid fa-mobile-screen-button text-lg"></i>振動のみ
+                                </button>
+                                <button @click="setNotificationMode('silent')"
+                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
+                                    :class="notificationMode === 'silent' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
+                                    <i class="fa-solid fa-bell-slash text-lg"></i>音無し
+                                </button>
+                                <button @click="setNotificationMode('flash')"
+                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
+                                    :class="notificationMode === 'flash' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
+                                    <i class="fa-solid fa-bolt text-lg"></i>音無し+フラッシュ
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 4. 通知音 -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
+                            <i class="fa-solid fa-music mr-2 text-primary"></i>通知音の設定
+                        </div>
+                        <div class="p-6">
+                            <p class="text-xs text-gray-500 mb-2">タイマー終了時の音を変更（mp3推奨）</p>
+                            <input type="file" accept="audio/*" @change="handleAudioUpload" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200">
+                            <button @click="testAudio" class="mt-2 text-xs text-primary hover:underline"><i class="fa-solid fa-play mr-1"></i>テスト再生</button>
+                        </div>
+                    </section>
+
+                    <!-- 5. アニメーション -->
                     <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
                         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
                             <i class="fa-solid fa-wand-magic-sparkles mr-2 text-primary"></i>アニメーション設定
@@ -734,134 +870,55 @@
                         </div>
                     </section>
 
-                    <!-- Timer Mode -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
-                            <i class="fa-solid fa-clock mr-2"></i>タイマー設定
+                    <!-- 6. アカウント設定 -->
+                    <section v-if="user && !isGuestMode" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between">
+                            <span><i class="fa-solid fa-user-gear mr-2 text-primary"></i>アカウント設定</span>
+                            <button @click="showAccountSettings = !showAccountSettings" class="text-xs text-primary hover:underline">
+                                {{ showAccountSettings ? '閉じる' : '開く' }}
+                            </button>
                         </div>
-                        <div class="p-6 flex items-center justify-between">
-                            <div>
-                                <h4 class="font-bold text-sm">タイマーモード</h4>
-                                <p class="text-xs text-gray-500">学習タイマーの動作方式</p>
-                            </div>
-                            <div class="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                                <button @click="changeTimerMode('countup')" class="px-3 py-1.5 rounded-md text-sm font-bold transition" :class="timerMode==='countup' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">アップ</button>
-                                <button @click="changeTimerMode('countdown')" class="px-3 py-1.5 rounded-md text-sm font-bold transition" :class="timerMode==='countdown' ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">ダウン</button>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Notification Settings -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
-                            <i class="fa-solid fa-bell mr-2 text-primary"></i>通知設定
-                        </div>
-                        <div class="p-6">
-                            <h4 class="font-bold text-sm mb-3">タイマー終了時の通知モード</h4>
-                            <div class="grid grid-cols-2 gap-3">
-                                <button @click="setNotificationMode('sound_vibrate')" 
-                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
-                                    :class="notificationMode === 'sound_vibrate' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
-                                    <i class="fa-solid fa-bell text-lg"></i>
-                                    音 + 振動
-                                </button>
-                                <button @click="setNotificationMode('vibrate_only')" 
-                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
-                                    :class="notificationMode === 'vibrate_only' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
-                                    <i class="fa-solid fa-mobile-screen-button text-lg"></i>
-                                    振動のみ
-                                </button>
-                                <button @click="setNotificationMode('silent')" 
-                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
-                                    :class="notificationMode === 'silent' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
-                                    <i class="fa-solid fa-bell-slash text-lg"></i>
-                                    音無し
-                                </button>
-                                <button @click="setNotificationMode('flash')" 
-                                    class="px-4 py-3 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-2"
-                                    :class="notificationMode === 'flash' ? 'bg-primary-light dark:bg-gray-700 border-primary text-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500'">
-                                    <i class="fa-solid fa-bolt text-lg"></i>
-                                    音無し + フラッシュ
-                                </button>
-                            </div>
-                            <p class="text-xs text-gray-400 mt-2">
-                                <span v-if="notificationMode==='sound_vibrate'">アラーム音と振動で通知します。</span>
-                                <span v-else-if="notificationMode==='vibrate_only'">音は鳴らさず、振動だけで通知します。</span>
-                                <span v-else-if="notificationMode==='silent'">音も振動もありません。「Time's Up」画面のみ表示されます。</span>
-                                <span v-else-if="notificationMode==='flash'">音も振動もありませんが、画面がゆっくりと明滅します。</span>
+                        <div v-if="showAccountSettings" class="p-6 space-y-5">
+                            <p class="text-xs text-gray-400">ログイン中: {{ user.email || user.displayName || user.uid.slice(0,8)+'...' }}</p>
+                            <p class="text-xs text-gray-400">連携済み: 
+                                <span v-for="p in linkedProviders" :key="p" class="inline-block bg-gray-100 dark:bg-gray-700 rounded px-1.5 py-0.5 text-[10px] font-mono mr-1">{{ p }}</span>
                             </p>
-                        </div>
-                    </section>
 
-                    <!-- Sound -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
-                            <i class="fa-solid fa-music mr-2 text-primary"></i>通知音の設定
-                        </div>
-                        <div class="p-6">
-                            <p class="text-xs text-gray-500 mb-2">タイマー終了時の音を変更（mp3推奨）</p>
-                            <input type="file" accept="audio/*" @change="handleAudioUpload" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200">
-                            <button @click="testAudio" class="mt-2 text-xs text-primary hover:underline"><i class="fa-solid fa-play mr-1"></i>テスト再生</button>
-                        </div>
-                    </section>
-
-                    <!-- Subjects + Colors (統合) -->
-                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center gap-2">
-                            <i class="fa-solid fa-pen-to-square text-primary"></i> 教科の編集・カラー設定
-                        </div>
-                        <div class="p-6">
-                            <p class="text-xs text-gray-400 mb-4">教科名の変更・色の設定ができます。色はレポートのタイムラインに使用されます。</p>
-                            <ul class="space-y-3 mb-4">
-                                <li v-for="(sub, index) in subjects" :key="index" class="flex items-center gap-2">
-                                    <!-- 色丸（クリックでカラーピッカー） -->
-                                    <div class="relative flex-shrink-0">
-                                        <div class="w-8 h-8 rounded-full border-2 border-white shadow cursor-pointer hover:scale-110 transition"
-                                             :style="{ backgroundColor: subjectColor(sub) }"
-                                             @click="$refs['colorPicker_'+index][0].click()"></div>
-                                        <input type="color" :ref="'colorPicker_'+index"
-                                               :value="subjectColor(sub)"
-                                               @change="setSubjectColor(sub, $event.target.value)"
-                                               class="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none">
-                                    </div>
-                                    <!-- 教科名 -->
-                                    <input type="text" v-model="subjects[index]" @change="saveSettings"
-                                           class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-primary outline-none bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 transition">
-                                    <!-- リセット -->
-                                    <button @click="resetSubjectColor(sub)" class="text-gray-300 hover:text-gray-500 p-1.5 transition" title="色をデフォルトに戻す">
-                                        <i class="fa-solid fa-rotate-left text-xs"></i>
-                                    </button>
-                                    <!-- 削除 -->
-                                    <button @click="removeSubject(index)" class="text-gray-300 hover:text-red-500 p-1.5 transition">
-                                        <i class="fa-solid fa-circle-minus"></i>
-                                    </button>
-                                </li>
-                                <!-- 休憩（削除不可） -->
-                                <li class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                                    <div class="relative flex-shrink-0">
-                                        <div class="w-8 h-8 rounded-full border-2 border-white shadow cursor-pointer hover:scale-110 transition"
-                                             :style="{ backgroundColor: subjectColor('休憩') }"
-                                             @click="$refs.breakColorPicker.click()"></div>
-                                        <input type="color" ref="breakColorPicker"
-                                               :value="subjectColor('休憩')"
-                                               @change="setSubjectColor('休憩', $event.target.value)"
-                                               class="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none">
-                                    </div>
-                                    <span class="flex-1 text-sm font-medium text-gray-500 dark:text-gray-400 px-3 py-2">休憩（固定）</span>
-                                    <button @click="resetSubjectColor('休憩')" class="text-gray-300 hover:text-gray-500 p-1.5 transition" title="色をデフォルトに戻す">
-                                        <i class="fa-solid fa-rotate-left text-xs"></i>
-                                    </button>
-                                    <div class="w-8"></div><!-- 削除ボタン分のスペース -->
-                                </li>
-                            </ul>
-                            <div class="flex gap-2">
-                                <input type="text" v-model="newSubjectName" placeholder="新しい教科名を追加" class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800">
-                                <button @click="addSubject" class="bg-primary text-white px-4 rounded-lg text-sm font-bold shadow hover:bg-primary-hover">追加</button>
+                            <!-- Google連携追加 -->
+                            <div v-if="!linkedProviders.includes('google.com')" class="border border-gray-100 dark:border-gray-700 rounded-xl p-4">
+                                <h5 class="font-bold text-sm mb-2"><i class="fa-brands fa-google mr-1.5 text-red-500"></i>Google連携を追加</h5>
+                                <p class="text-xs text-gray-400 mb-3">Googleアカウントを連携すると、Googleタスクも使えるようになります</p>
+                                <button @click="linkGoogle" class="w-full py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-bold text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4">Googleアカウントと連携
+                                </button>
                             </div>
+                            <div v-else class="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg">
+                                <i class="fa-solid fa-circle-check"></i> Google連携済み
+                            </div>
+
+                            <!-- メールアドレス追加 -->
+                            <div v-if="!linkedProviders.includes('password')" class="border border-gray-100 dark:border-gray-700 rounded-xl p-4">
+                                <h5 class="font-bold text-sm mb-3"><i class="fa-solid fa-envelope mr-1.5 text-primary"></i>メールアドレスを追加</h5>
+                                <div class="space-y-2">
+                                    <input type="email" v-model="linkEmailForm.email" placeholder="メールアドレス"
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <input type="password" v-model="linkEmailForm.password" placeholder="パスワード（6文字以上）"
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <input type="password" v-model="linkEmailForm.confirm" placeholder="パスワード確認"
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <p v-if="linkEmailError" class="text-xs text-red-500">{{ linkEmailError }}</p>
+                                    <button @click="linkEmail" class="w-full py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-hover transition">メールアドレスを追加</button>
+                                </div>
+                            </div>
+                            <div v-else class="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg">
+                                <i class="fa-solid fa-circle-check"></i> メール/パスワード設定済み
+                            </div>
+
+                            <p v-if="accountMessage" class="text-xs text-primary font-bold bg-primary-light dark:bg-primary/20 px-3 py-2 rounded-lg">{{ accountMessage }}</p>
                         </div>
                     </section>
 
-                    <!-- Links & Actions -->
+                    <!-- 7. Links & Actions -->
                     <section class="space-y-3">
                         <button @click="startTutorial" class="w-full bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                             <span class="font-bold text-sm text-gray-600 dark:text-gray-300"><i class="fa-regular fa-circle-question mr-2"></i>チュートリアルを見る</span>
@@ -872,20 +929,20 @@
                             <span class="font-bold text-sm text-gray-600 dark:text-gray-300"><i class="fa-regular fa-envelope mr-2"></i>開発者に連絡</span>
                             <i class="fa-solid fa-arrow-up-right-from-square text-gray-300"></i>
                         </a>
-                        
+
                         <button v-if="!isGuestMode" @click="logout" class="w-full bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900 p-4 rounded-xl text-red-500 font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition mt-8">ログアウト</button>
-                        
+
                         <div v-else class="text-center mt-8 p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800">
                             <p class="text-xs text-gray-400 mb-2">現在ゲストモードです</p>
                             <div class="flex flex-col gap-2">
-                                <button @click="login" class="text-primary font-bold text-sm py-2 hover:bg-primary-light dark:hover:bg-gray-700 rounded">ログインしてデータを保存</button>
+                                <button @click="showEmailAuth = true" class="text-primary font-bold text-sm py-2 hover:bg-primary-light dark:hover:bg-gray-700 rounded">メールで登録してデータを保存</button>
+                                <button @click="login" class="text-gray-500 text-sm py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center gap-1.5"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4">Googleでログイン</button>
                                 <button @click="guestLogout" class="text-red-500 text-xs py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded">データを削除して終了</button>
                             </div>
                         </div>
 
-                        <!-- Footer Links -->
                         <div class="mt-8 text-center text-xs text-gray-300 pb-8">
-                            Study Mate v3.9.1<br>
+                            Study Mate v3.9.2<br>
                             <span v-if="user">User: {{ user.uid.slice(0, 8) }}...</span>
                             <div class="flex gap-4 justify-center mt-2">
                                 <a href="https://nekomiyarion.github.io/studymate/terms.html" target="_blank" class="underline hover:text-gray-500">利用規約</a>
@@ -893,6 +950,7 @@
                             </div>
                         </div>
                     </section>
+                </div>
                 </div>
                 </div><!-- end key wrapper -->
                 </transition>
@@ -961,7 +1019,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, EmailAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, linkWithCredential, linkWithPopup, unlink, signOut, onAuthStateChanged, updateEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -999,9 +1057,16 @@
                 const TIMER_STATE_KEY = 'studyMate_timer_state'; 
 
                 // --- THEME & COLOR ---
-                const isDarkMode = ref(false);
+                const themeMode = ref('system'); // 'light' | 'dark' | 'system'
                 const themeColor = ref('#2563eb');
                 const tempThemeColor = ref('#2563eb');
+
+                const systemDarkMQ = window.matchMedia('(prefers-color-scheme: dark)');
+                const isDarkMode = computed(() => {
+                    if (themeMode.value === 'dark') return true;
+                    if (themeMode.value === 'light') return false;
+                    return systemDarkMQ.matches;
+                });
 
                 // 教科カラー
                 const DEFAULT_SUBJECT_COLORS = {
@@ -1042,15 +1107,15 @@
                     const root = document.documentElement;
                     if (isDarkMode.value) root.classList.add('dark');
                     else root.classList.remove('dark');
-                    
                     root.style.setProperty('--primary-color', themeColor.value);
                     root.style.setProperty('--primary-hover', adjustColor(themeColor.value, -20));
                     root.style.setProperty('--primary-light', adjustColor(themeColor.value, 180));
                 };
 
-                const toggleDarkMode = () => { isDarkMode.value = !isDarkMode.value; applyTheme(); saveSettings(); };
+                systemDarkMQ.addEventListener('change', () => { if (themeMode.value === 'system') applyTheme(); });
+                const setThemeMode = (mode) => { themeMode.value = mode; applyTheme(); saveSettings(); };
                 const changeThemeColor = () => { themeColor.value = tempThemeColor.value; applyTheme(); saveSettings(); };
-                const resetTheme = () => { themeColor.value = '#2563eb'; tempThemeColor.value = '#2563eb'; isDarkMode.value = false; applyTheme(); saveSettings(); };
+                const resetTheme = () => { themeColor.value = '#2563eb'; tempThemeColor.value = '#2563eb'; themeMode.value = 'system'; applyTheme(); saveSettings(); };
 
                 function adjustColor(color, amount) {
                     return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
@@ -1222,6 +1287,100 @@
                 };
 
                 const startGuest = () => { isGuestMode.value = true; localStorage.setItem('studyMate_isGuest', 'true'); loadTodayData(); loadLocalTasks(); };
+
+                // ── メール認証 ──
+                const emailLoginForm = ref({ email: '', password: '', confirm: '', mode: 'login' }); // mode: login | register
+                const emailAuthError = ref('');
+                const showEmailAuth = ref(false);
+                const showAccountSettings = ref(false);
+                const linkEmailForm = ref({ email: '', password: '', confirm: '' });
+                const linkEmailError = ref('');
+                const accountMessage = ref('');
+
+                const loginWithEmail = async () => {
+                    emailAuthError.value = '';
+                    try {
+                        if (emailLoginForm.value.mode === 'register') {
+                            if (emailLoginForm.value.password !== emailLoginForm.value.confirm) {
+                                emailAuthError.value = 'パスワードが一致しません'; return;
+                            }
+                            await createUserWithEmailAndPassword(auth, emailLoginForm.value.email, emailLoginForm.value.password);
+                        } else {
+                            await signInWithEmailAndPassword(auth, emailLoginForm.value.email, emailLoginForm.value.password);
+                        }
+                        showEmailAuth.value = false;
+                    } catch(e) {
+                        const msgs = {
+                            'auth/email-already-in-use': 'このメールアドレスは既に使用されています',
+                            'auth/invalid-email': 'メールアドレスの形式が正しくありません',
+                            'auth/weak-password': 'パスワードは6文字以上にしてください',
+                            'auth/user-not-found': 'アカウントが見つかりません',
+                            'auth/wrong-password': 'パスワードが正しくありません',
+                            'auth/invalid-credential': 'メールアドレスまたはパスワードが正しくありません',
+                        };
+                        emailAuthError.value = msgs[e.code] || e.message;
+                    }
+                };
+
+                const resetPassword = async () => {
+                    if (!emailLoginForm.value.email) { emailAuthError.value = 'メールアドレスを入力してください'; return; }
+                    try {
+                        await sendPasswordResetEmail(auth, emailLoginForm.value.email);
+                        emailAuthError.value = ''; 
+                        alert('パスワードリセットメールを送信しました');
+                    } catch(e) { emailAuthError.value = e.message; }
+                };
+
+                // アカウント設定：Google連携追加
+                const linkGoogle = async () => {
+                    accountMessage.value = '';
+                    try {
+                        const gp = new GoogleAuthProvider();
+                        gp.addScope('https://www.googleapis.com/auth/tasks');
+                        const r = await linkWithPopup(user.value, gp);
+                        const credential = GoogleAuthProvider.credentialFromResult(r);
+                        if (credential?.accessToken) {
+                            accessToken.value = credential.accessToken;
+                            localStorage.setItem('google_tasks_token', credential.accessToken);
+                            lastTokenRefresh.value = Date.now();
+                            fetchTasks();
+                        }
+                        accountMessage.value = 'Googleアカウントを連携しました！';
+                    } catch(e) {
+                        if (e.code === 'auth/credential-already-in-use') accountMessage.value = 'このGoogleアカウントは既に別のアカウントに連携されています';
+                        else if (e.code === 'auth/provider-already-linked') accountMessage.value = '既にGoogleアカウントが連携されています';
+                        else accountMessage.value = e.message;
+                    }
+                };
+
+                // アカウント設定：メールアドレス追加
+                const linkEmail = async () => {
+                    linkEmailError.value = '';
+                    if (linkEmailForm.value.password !== linkEmailForm.value.confirm) {
+                        linkEmailError.value = 'パスワードが一致しません'; return;
+                    }
+                    try {
+                        const credential = EmailAuthProvider.credential(linkEmailForm.value.email, linkEmailForm.value.password);
+                        await linkWithCredential(user.value, credential);
+                        linkEmailForm.value = { email: '', password: '', confirm: '' };
+                        accountMessage.value = 'メールアドレスを追加しました！';
+                    } catch(e) {
+                        const msgs = {
+                            'auth/email-already-in-use': 'このメールアドレスは既に使用されています',
+                            'auth/provider-already-linked': 'メールアドレスは既に登録されています',
+                            'auth/weak-password': 'パスワードは6文字以上にしてください',
+                            'auth/invalid-email': 'メールアドレスの形式が正しくありません',
+                        };
+                        linkEmailError.value = msgs[e.code] || e.message;
+                    }
+                };
+
+                // 連携済みプロバイダー一覧
+                const linkedProviders = computed(() => {
+                    if (!user.value) return [];
+                    return user.value.providerData.map(p => p.providerId);
+                });
+
                 
                 const login = async () => { 
                     try { 
@@ -1284,7 +1443,7 @@
                 };
                 
                 const loadSettings = async () => {
-                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', isDarkMode: false, notificationMode: 'sound_vibrate', tabAnimation: 'fade', subjectColors: {} };
+                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', themeMode: 'system', notificationMode: 'sound_vibrate', tabAnimation: 'fade', subjectColors: {} };
                     try {
                         if(isGuestMode.value) {
                             const s = localStorage.getItem('studyMate_settings');
@@ -1298,7 +1457,7 @@
                     timerMode.value = d.timerMode || 'countup';
                     themeColor.value = d.themeColor || '#2563eb';
                     tempThemeColor.value = themeColor.value;
-                    isDarkMode.value = d.isDarkMode || false;
+                    themeMode.value = d.themeMode || 'system';
                     notificationMode.value = d.notificationMode || 'sound_vibrate';
                     tabAnimation.value = d.tabAnimation || 'fade';
                     subjectColors.value = d.subjectColors || {};
@@ -1309,7 +1468,7 @@
                         subjects: subjects.value, 
                         timerMode: timerMode.value, 
                         themeColor: themeColor.value, 
-                        isDarkMode: isDarkMode.value,
+                        themeMode: themeMode.value,
                         notificationMode: notificationMode.value,
                         tabAnimation: tabAnimation.value,
                         subjectColors: subjectColors.value
@@ -2075,6 +2234,8 @@
 
                 return {
                     user, isGuestMode, isAuthLoading, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects, getTodayStr,
+                    loginWithEmail, resetPassword, emailLoginForm, emailAuthError, showEmailAuth,
+                    showAccountSettings, linkEmailForm, linkEmailError, linkGoogle, linkEmail, accountMessage, linkedProviders,
                     isTimerRunning, isPaused, timerMode, breakMode, handleSubjectClick, currentSubject, stopTimer, cancelSession, pauseTimer, resumeTimer, formattedTime, todayLog, formatSeconds,
                     showCountdownModal, targetSubject, customCountdownMin, setCountdown, adjustCustomTime, startCountdownSession, openCountdownModal,
                     isAlarmRinging, stopAlarm, notificationMode, setNotificationMode,
@@ -2091,7 +2252,7 @@
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
                     silentRefreshToken,
-                    isDarkMode, toggleDarkMode, themeColor, tempThemeColor, changeThemeColor, resetTheme,
+                    isDarkMode, themeMode, setThemeMode, themeColor, tempThemeColor, changeThemeColor, resetTheme,
                     tabAnimation, setTabAnimation,
                     currentTimeFormatted,
                     showTutorial, tutorialStep, tutorialSteps, 
