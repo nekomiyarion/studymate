@@ -1445,6 +1445,106 @@ window.saveSeason = async () => {
   });
   showToast(`「${name}」を保存しました（${selectedSids.size}教科）`, 'success');
   document.getElementById('season-name-input').value = '';
+
+  // アーカイブ保存後のクリア確認モーダルを表示
+  showArchiveCleanupModal(name, selectedSids);
+};
+
+function showArchiveCleanupModal(archivedName, selectedSids) {
+  // 既存モーダルがあれば削除
+  document.getElementById('archive-cleanup-modal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'archive-cleanup-modal';
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:900;
+    background:rgba(0,0,0,.55);
+    display:flex;align-items:center;justify-content:center;padding:16px;
+  `;
+  modal.innerHTML = `
+    <div style="
+      background:var(--surface);border:1px solid var(--border2);border-radius:14px;
+      padding:28px 24px;width:min(480px,100%);box-shadow:0 16px 48px rgba(0,0,0,.3);
+    ">
+      <div style="font-size:18px;font-weight:700;margin-bottom:6px">🗂 アーカイブ完了</div>
+      <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:20px;line-height:1.6">
+        「${archivedName}」を保存しました。<br>
+        現在のテストデータをリセットしますか？<br>
+        <span style="color:var(--danger);font-weight:600">削除されるもの：予想データ・結果データ・教科設定・フェーズ設定</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px">
+          <input type="checkbox" id="cleanup-predictions" checked style="width:15px;height:15px;accent-color:var(--accent)">
+          <span style="font-size:13px;font-weight:600">予想データを削除（predictions）</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px">
+          <input type="checkbox" id="cleanup-results" checked style="width:15px;height:15px;accent-color:var(--accent)">
+          <span style="font-size:13px;font-weight:600">結果データを削除（results）</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px">
+          <input type="checkbox" id="cleanup-subjects" checked style="width:15px;height:15px;accent-color:var(--accent)">
+          <span style="font-size:13px;font-weight:600">教科をすべて削除（subjects・subjectSettings）</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px">
+          <input type="checkbox" id="cleanup-settings" checked style="width:15px;height:15px;accent-color:var(--accent)">
+          <span style="font-size:13px;font-weight:600">フェーズ設定をリセット（testActive・開閉状態など）</span>
+        </label>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="document.getElementById('archive-cleanup-modal').remove()"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">
+          後でやる
+        </button>
+        <button onclick="executeArchiveCleanup()"
+          style="background:var(--danger);border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer">
+          🗑 リセット実行
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+window.executeArchiveCleanup = async () => {
+  const doPredict  = document.getElementById('cleanup-predictions')?.checked;
+  const doResults  = document.getElementById('cleanup-results')?.checked;
+  const doSubjects = document.getElementById('cleanup-subjects')?.checked;
+  const doSettings = document.getElementById('cleanup-settings')?.checked;
+
+  document.getElementById('archive-cleanup-modal')?.remove();
+
+  const upd = {};
+
+  if (doPredict)  upd['predictions']     = null;
+  if (doResults)  upd['results']         = null;
+  if (doSubjects) {
+    upd['subjects']        = null;
+    upd['subjectSettings'] = null;
+    upd['scoringRules/subjects'] = null;
+  }
+  if (doSettings) {
+    upd['settings/testActive']       = null;
+    upd['settings/predictionOpen']   = null;
+    upd['settings/resultInputOpen']  = null;
+    upd['settings/scoresReleased']   = null;
+    upd['settings/resultsPublic']    = null;
+    upd['settings/testParticipants'] = null;
+    upd['settings/totalMax']         = null;
+  }
+
+  try {
+    await update(ref(db), upd);
+    const cleared = [
+      doPredict  && '予想データ',
+      doResults  && '結果データ',
+      doSubjects && '教科設定',
+      doSettings && 'フェーズ設定',
+    ].filter(Boolean).join('・');
+    showToast(`リセット完了：${cleared}`, 'success');
+  } catch(e) {
+    showToast('リセット中にエラーが発生しました: ' + e.message, 'error');
+  }
 };
 
 // 選択教科のみでスコア計算（既存のcalcScoreForSeasonを教科フィルタ対応版に）
