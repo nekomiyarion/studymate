@@ -330,6 +330,10 @@
       <div class="sidebar-item" onclick="showPage('seasons')">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>過去テスト記録
       </div>
+      <div class="sidebar-group">クラス予想</div>
+      <div class="sidebar-item" onclick="showPage('classpred')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>クラス予想大会
+      </div>
       <div class="sidebar-group">お知らせ</div>
       <div class="sidebar-item" onclick="showPage('notices')">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>お知らせ管理
@@ -372,6 +376,16 @@
               <label class="toggle-switch"><input type="checkbox" id="toggle-test-active" onchange="toggleSetting('testActive',this.checked,this)"><span class="tslider"></span></label>
             </div>
           </div>
+        </div>
+
+        <div class="section-title">テストのカスタムルール</div>
+        <div class="card" style="max-width:640px;margin-bottom:28px">
+          <div class="card-label">ルール説明文</div>
+          <div class="card-desc">ユーザー側の「予想入力」タブ上部に表示されます。スコアボーダーの補足や特別ルールを記載できます。空白の場合は表示されません。</div>
+          <textarea id="test-custom-rules" class="field text" rows="5"
+            placeholder="例：&#10;・合計点の予想は±5点以内でボーナス獲得&#10;・全教科入力しないと教科別ボーナスが計算されません"
+            style="width:100%;resize:vertical;font-family:inherit;line-height:1.6"></textarea>
+          <button class="btn-primary" style="margin-top:10px;max-width:180px" onclick="saveTestCustomRules()">保存</button>
         </div>
 
         <div class="section-title">入力フェーズ</div>
@@ -540,6 +554,81 @@
         <div id="seasons-admin-list"><div style="color:var(--text2);font-size:13px">まだ保存されていません</div></div>
       </div>
 
+      <!-- CLASS PREDICTION -->
+      <div class="admin-page" id="page-classpred">
+        <div class="page-title">クラス予想大会</div>
+        <div class="page-sub">参加者のクラス予想大会を管理します。参加者は全員互いに予想し合います。</div>
+
+        <!-- 開催設定 -->
+        <div class="section-title">開催設定</div>
+        <div class="cards-grid" style="max-width:640px;margin-bottom:24px">
+          <div class="card">
+            <div class="card-label">大会ステータス</div>
+            <div class="card-desc">ONにするとユーザーのクラス予想タブが表示されます。</div>
+            <div class="toggle-row">
+              <div class="status-row"><span class="sdot" id="cp-active-dot"></span><span id="cp-active-label">—</span></div>
+              <label class="toggle-switch"><input type="checkbox" id="toggle-cp-active" onchange="toggleSetting('classPredActive',this.checked,this)"><span class="tslider"></span></label>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-label">予想入力フェーズ</div>
+            <div class="card-desc">ONにすると参加者が予想を入力できます。</div>
+            <div class="toggle-row">
+              <div class="status-row"><span class="sdot" id="cp-predict-dot"></span><span id="cp-predict-label">—</span></div>
+              <label class="toggle-switch"><input type="checkbox" id="toggle-cp-predict" onchange="toggleSetting('classPredOpen',this.checked,this)"><span class="tslider"></span></label>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-label">結果入力フェーズ</div>
+            <div class="card-desc">ONにすると参加者が実際のクラスを入力できます。</div>
+            <div class="toggle-row">
+              <div class="status-row"><span class="sdot" id="cp-result-dot"></span><span id="cp-result-label">—</span></div>
+              <label class="toggle-switch"><input type="checkbox" id="toggle-cp-result" onchange="toggleSetting('classPredResultOpen',this.checked,this)"><span class="tslider"></span></label>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-label">ランキング公開</div>
+            <div class="card-desc">ONにするとユーザーにランキングが表示されます。</div>
+            <div class="toggle-row">
+              <div class="status-row"><span class="sdot" id="cp-scores-dot"></span><span id="cp-scores-label">—</span></div>
+              <label class="toggle-switch"><input type="checkbox" id="toggle-cp-scores" onchange="toggleSetting('classPredScoresReleased',this.checked,this)"><span class="tslider"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 参加者設定 -->
+        <div class="section-title">参加者設定</div>
+        <div class="card" style="max-width:640px;margin-bottom:24px">
+          <div class="card-label">参加するユーザー（予想する側・される側ともに同じ）</div>
+          <div class="card-desc">チェックしたユーザーが参加者となります。参加者は全員互いに予想します。</div>
+          <div id="cp-users-list" style="margin-top:12px"><div style="color:var(--text2);font-size:13px">読み込み中...</div></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn-sm" onclick="selectAllCpUsers(true)">全員参加</button>
+            <button class="btn-sm" onclick="selectAllCpUsers(false)">全員除外</button>
+          </div>
+        </div>
+
+        <!-- 結果入力 -->
+        <div class="section-title">実際のクラス入力（管理者）</div>
+        <div class="card" style="max-width:640px;margin-bottom:24px">
+          <div class="card-label">参加者の実際のクラスを一括入力</div>
+          <div class="card-desc">管理者がここで入力することもできます。参加者本人でも入力可能です（結果入力フェーズがONのとき）。</div>
+          <div id="cp-admin-results" style="margin-top:12px"><div style="color:var(--text2);font-size:13px">参加者を設定してください</div></div>
+        </div>
+
+        <!-- アーカイブ -->
+        <div class="section-title">アーカイブ化</div>
+        <div class="card" style="max-width:640px;margin-bottom:24px">
+          <div class="card-label">現在の大会をアーカイブとして保存</div>
+          <input type="text" id="cp-season-name" class="field text" placeholder="例：2026年度 クラス予想大会" style="width:100%;margin-bottom:10px">
+          <button class="btn-primary" style="max-width:220px" onclick="saveCpSeason()">📦 アーカイブを保存</button>
+        </div>
+
+        <!-- アーカイブ一覧 -->
+        <div class="section-title">過去のアーカイブ</div>
+        <div id="cp-seasons-list"><div style="color:var(--text2);font-size:13px">まだ保存されていません</div></div>
+      </div>
+
       <!-- NOTICES -->
       <div class="admin-page" id="page-notices">
         <div class="page-title">お知らせ管理</div>
@@ -624,6 +713,10 @@
     <div class="bottom-nav-item" onclick="showPage('seasons');setBottomActive(this)">
       <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
       アーカイブ
+    </div>
+    <div class="bottom-nav-item" onclick="showPage('classpred');setBottomActive(this)">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      クラス
     </div>
     <div class="bottom-nav-item" onclick="showPage('notices');setBottomActive(this)">
       <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -849,7 +942,7 @@ window.showPage = page => {
   document.querySelectorAll('.admin-page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active');
-  const pages=['dashboard','controls','subjects','subject-controls','scoring','predictions','results','scores','seasons','notices'];
+  const pages=['dashboard','controls','subjects','subject-controls','scoring','predictions','results','scores','seasons','classpred','notices'];
   document.querySelectorAll('.sidebar-item')[pages.indexOf(page)]?.classList.add('active');
 };
 
@@ -1730,6 +1823,196 @@ window.setBottomActive = (el) => {
   document.querySelectorAll('.bottom-nav-item').forEach(x=>x.classList.remove('active'));
   el.classList.add('active');
 };
+
+// ── TEST CUSTOM RULES ────────────────────────────────
+onValue(ref(db,'settings/testCustomRules'), snap => {
+  const v = snap.val() || '';
+  const el = document.getElementById('test-custom-rules');
+  if (el && el !== document.activeElement) el.value = v;
+});
+window.saveTestCustomRules = async () => {
+  const v = document.getElementById('test-custom-rules')?.value || '';
+  await set(ref(db,'settings/testCustomRules'), v || null);
+  showToast('ルール説明文を保存しました','success');
+};
+
+// ── CLASS PREDICTION ──────────────────────────────────
+let allCpPredictions = {};  // {uid: {uid, predictions: {targetUid:[c1,c2,c3]}, updatedAt}}
+let allCpResults     = {};  // {uid: {uid, class: N, updatedAt}}
+let cpParticipants   = {};  // {uid: true/false}  settings/cpParticipants
+let cpSeasons        = {};
+
+onValue(ref(db,'cpPredictions'), snap => {
+  allCpPredictions = snap.val() || {};
+  renderCpAdminResults();
+});
+onValue(ref(db,'cpResults'), snap => {
+  allCpResults = snap.val() || {};
+  renderCpAdminResults();
+});
+onValue(ref(db,'cpSeasons'), snap => {
+  cpSeasons = snap.val() || {};
+  renderCpSeasonsAdmin();
+});
+onValue(ref(db,'settings/cpParticipants'), snap => {
+  cpParticipants = snap.val() || {};
+  renderCpUsersList();
+  renderCpAdminResults();
+});
+onValue(ref(db,'settings'), snap => {
+  const s = snap.val() || {};
+  setDot('cp-active-dot','cp-active-label',    s.classPredActive,         '開催中','未開催');
+  setDot('cp-predict-dot','cp-predict-label',  s.classPredOpen,            '受付中','締め切り');
+  setDot('cp-result-dot','cp-result-label',    s.classPredResultOpen,      '受付中','締め切り');
+  setDot('cp-scores-dot','cp-scores-label',    s.classPredScoresReleased,  '公開中','非公開');
+  const ids = ['toggle-cp-active','toggle-cp-predict','toggle-cp-result','toggle-cp-scores'];
+  const keys = ['classPredActive','classPredOpen','classPredResultOpen','classPredScoresReleased'];
+  ids.forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (el && !el.disabled) el.checked = !!s[keys[i]];
+  });
+});
+
+function renderCpUsersList() {
+  const el = document.getElementById('cp-users-list');
+  if (!el) return;
+  const users = Object.entries(allUsers);
+  if (users.length === 0) { el.innerHTML='<div style="color:var(--text2);font-size:13px">ユーザーなし</div>'; return; }
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
+    ${users.map(([uid,u]) => {
+      const joined = cpParticipants[uid] !== false;
+      return `<label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);user-select:none">
+        <input type="checkbox" class="cp-user-chk" data-uid="${uid}" ${joined?'checked':''}
+          style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0"
+          onchange="setCpParticipant('${uid}',this.checked)">
+        <span>
+          <span style="font-size:13px;font-weight:700;color:var(--text);display:block">${u.displayName||u.email||uid}</span>
+          <span style="font-size:11px;color:var(--text3)">${u.email||''}</span>
+        </span>
+      </label>`;
+    }).join('')}
+  </div>`;
+}
+window.setCpParticipant = async (uid, val) => {
+  await set(ref(db,`settings/cpParticipants/${uid}`), val ? null : false);
+};
+window.selectAllCpUsers = async (val) => {
+  document.querySelectorAll('.cp-user-chk').forEach(c => c.checked = val);
+  const upd = {};
+  Object.keys(allUsers).forEach(uid => { upd[`settings/cpParticipants/${uid}`] = val ? null : false; });
+  await update(ref(db), upd);
+  showToast(val?'全員参加にしました':'全員除外しました','success');
+};
+
+function getCpParticipantList() {
+  return Object.entries(allUsers)
+    .filter(([uid]) => cpParticipants[uid] !== false)
+    .sort((a,b) => (a[1].displayName||'').localeCompare(b[1].displayName||''));
+}
+
+function renderCpAdminResults() {
+  const el = document.getElementById('cp-admin-results');
+  if (!el) return;
+  const participants = getCpParticipantList();
+  if (participants.length === 0) { el.innerHTML='<div style="color:var(--text2);font-size:13px">参加者を設定してください</div>'; return; }
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+    ${participants.map(([uid,u]) => {
+      const cur = allCpResults[uid]?.class || '';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px;font-weight:700;flex:1">${u.displayName||u.email||uid}</span>
+        <select class="field" style="width:100px" onchange="setCpResult('${uid}',parseInt(this.value))">
+          <option value="">未入力</option>
+          ${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${cur==n?'selected':''}>${n}組</option>`).join('')}
+        </select>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+window.setCpResult = async (uid, cls) => {
+  if (!cls) { await remove(ref(db,`cpResults/${uid}`)); return; }
+  const snap = await get(ref(db,`users/${uid}`));
+  const displayName = snap.val()?.displayName || '';
+  await set(ref(db,`cpResults/${uid}`), { uid, class: cls, displayName, updatedAt: Date.now() });
+  showToast(`${displayName||uid} → ${cls}組 を入力しました`,'success');
+};
+
+// スコア計算
+function calcCpScores() {
+  const participants = getCpParticipantList();
+  const scores = {};
+  participants.forEach(([uid, u]) => {
+    scores[uid] = { uid, displayName: u.displayName||u.email||uid, totalPts: 0, breakdown: {} };
+  });
+  // 各予想者のスコアを計算
+  Object.entries(allCpPredictions).forEach(([predUid, pd]) => {
+    if (!scores[predUid]) return;
+    const preds = pd.predictions || {};
+    Object.entries(preds).forEach(([targetUid, choices]) => {
+      const actual = allCpResults[targetUid]?.class;
+      if (!actual || !Array.isArray(choices)) return;
+      let pts = 0;
+      if (choices[0] == actual) pts += 3;
+      if (choices[1] == actual) pts += 2;
+      if (choices[2] == actual) pts += 1;
+      scores[predUid].totalPts += pts;
+      scores[predUid].breakdown[targetUid] = pts;
+    });
+  });
+  return Object.values(scores).sort((a,b) => b.totalPts - a.totalPts);
+}
+
+window.saveCpSeason = async () => {
+  const name = document.getElementById('cp-season-name')?.value?.trim();
+  if (!name) { showToast('アーカイブ名を入力してください','error'); return; }
+  const rankings = calcCpScores();
+  const sid = `cpseason_${Date.now()}`;
+  await set(ref(db,`cpSeasons/${sid}`), { name, createdAt: Date.now(), rankings });
+  showToast(`「${name}」を保存しました`,'success');
+  document.getElementById('cp-season-name').value = '';
+  // クリア確認
+  if (confirm('アーカイブ保存完了。予想データ・結果データをリセットしますか？')) {
+    await update(ref(db), { cpPredictions: null, cpResults: null });
+    showToast('クリアしました','success');
+  }
+};
+
+window.deleteCpSeason = async (sid, name) => {
+  if (!confirm(`「${name}」を削除しますか？`)) return;
+  await remove(ref(db,`cpSeasons/${sid}`));
+  showToast('削除しました','success');
+};
+
+function renderCpSeasonsAdmin() {
+  const el = document.getElementById('cp-seasons-list');
+  if (!el) return;
+  const list = Object.entries(cpSeasons).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  if (list.length === 0) { el.innerHTML='<div style="color:var(--text2);font-size:13px">まだ保存されていません</div>'; return; }
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = list.map(([sid,s]) => {
+    const rnk = s.rankings || [];
+    return `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px">
+        <div>
+          <div style="font-size:15px;font-weight:700">${s.name||'無題'}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${new Date(s.createdAt||0).toLocaleDateString('ja')} · ${rnk.length}人参加</div>
+        </div>
+        <button class="btn-sm danger" onclick="deleteCpSeason('${sid}','${(s.name||'').replace(/'/g,"\\'")}')">削除</button>
+      </div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:280px">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="padding:6px 10px;font-size:10px;color:var(--text2);text-align:left">順位</th>
+          <th style="padding:6px 10px;font-size:10px;color:var(--text2);text-align:left">名前</th>
+          <th style="padding:6px 10px;font-size:10px;color:var(--accent);text-align:right">ポイント</th>
+        </tr></thead>
+        <tbody>${rnk.map((r,i)=>`<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:7px 10px;font-size:13px;font-weight:700">${medals[i]||'#'+(i+1)}</td>
+          <td style="padding:7px 10px;font-size:13px;font-weight:600">${r.displayName||'不明'}</td>
+          <td style="padding:7px 10px;font-size:13px;font-family:monospace;text-align:right;color:var(--accent);font-weight:700">${r.totalPts} pt</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>`;
+  }).join('');
+}
 
 // ── THEME ─────────────────────────────────────────
 window.toggleAdminTheme = () => {
