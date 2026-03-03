@@ -1880,17 +1880,15 @@ function renderCpUsersList() {
   if (!el) return;
   const users = Object.entries(allUsers);
   if (users.length === 0) { el.innerHTML='<div style="color:var(--text2);font-size:13px">ユーザーなし</div>'; return; }
-  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px">
     ${users.map(([uid,u]) => {
       const joined = cpParticipants[uid] !== false;
-      return `<label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);user-select:none">
+      const name = u.displayName || uid.slice(0,8);
+      return `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:8px;background:var(--surface2);border:1px solid ${joined?'var(--accent-border)':'var(--border)'};user-select:none;transition:border-color .15s">
         <input type="checkbox" class="cp-user-chk" data-uid="${uid}" ${joined?'checked':''}
-          style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0"
+          style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0"
           onchange="setCpParticipant('${uid}',this.checked)">
-        <span>
-          <span style="font-size:13px;font-weight:700;color:var(--text);display:block">${u.displayName||u.email||uid}</span>
-          <span style="font-size:11px;color:var(--text3)">${u.email||''}</span>
-        </span>
+        <span style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
       </label>`;
     }).join('')}
   </div>`;

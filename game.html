@@ -2558,7 +2558,7 @@ function renderCpTab() {
   if (!appSettings.classPredActive) { el.innerHTML = ''; return; }
 
   const uid           = currentUser ? currentUser.uid : null;
-  const isParticipant = uid && Object.prototype.hasOwnProperty.call(cpParticipants, uid) && cpParticipants[uid] !== false;
+  const isParticipant = uid && cpParticipants[uid] !== false;
   const participantUids = Object.keys(cpParticipants).filter(u => cpParticipants[u] !== false);
   const predOpen      = !!appSettings.classPredOpen;
   const resultOpen    = !!appSettings.classPredResultOpen;
