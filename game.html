@@ -2611,7 +2611,7 @@ function renderCpTab() {
       ).join('');
       return '<div class="cp-pick-group">'
         + '<div class="cp-pick-label ' + cls[i] + '">' + labels[i] + '</div>'
-        + '<select class="cp-select" ' + disabled + ' onchange="setCpPick('' + targetUid + '',' + i + ',parseInt(this.value)||null)">'
+        + '<select class="cp-select" ' + disabled + ' onchange="setCpPick(\'' + targetUid + '\',' + i + ',parseInt(this.value)||null)">'
         + '<option value="">&#8212;</option>' + opts + '</select></div>';
     }).join('');
     return '<div class="cp-person-card">'
@@ -2663,7 +2663,7 @@ function renderCpTab() {
             + '<div class="sr-score">' + r.totalPts + ' pt</div></div>'
           ).join('');
           return '<div class="cp-archive-card">'
-            + '<div class="cp-archive-header" onclick="toggleCpArchive('' + sid + '')">'
+            + '<div class="cp-archive-header" onclick="toggleCpArchive(\'' + sid + '\')">'
             + '<div><div style="font-size:15px;font-weight:700">' + (s.name||'&#28961;&#39898;') + '</div>'
             + '<div style="font-size:12px;color:var(--text2);margin-top:2px">'
             + new Date(s.createdAt||0).toLocaleDateString('ja')
@@ -2748,7 +2748,7 @@ function renderCpRanking() {
       const actual=allCpResults[tUid]&&allCpResults[tUid].class;
       return '<div class="brow"><span class="bl">'+tName+(actual?' ('+actual+'組)':'')+'</span><span class="bv '+(pts>0?'pos':'')+'">'+(pts>0?'+':'')+pts+' pt</span></div>';
     }).join('');
-    return '<div class="cp-rank-row '+(isMe?'is-me':'')+'" onclick="toggleCpDetail(''+s.uid+'')"><div class="sr-rank '+(i<3?rc[i]:'')+'">'+(i<3?medals[i]:'#'+(i+1))+'</div><div class="sr-name">'+s.displayName+(isMe?'<span class="badge-you">YOU</span>':'')+'</div><div class="sr-score">'+s.totalPts+' pt</div><div class="sr-arrow" id="cp-arr-'+s.uid+'">&#9662;</div></div><div class="cp-rank-detail" id="cp-det-'+s.uid+'">'+(bRows||'<div style="color:var(--text2);font-size:12px">内訳なし</div>')+'</div>';
+    return '<div class="cp-rank-row '+(isMe?'is-me':'')+'" onclick="toggleCpDetail(\'' + s.uid + '\')"><div class="sr-rank '+(i<3?rc[i]:'')+'">'+(i<3?medals[i]:'#'+(i+1))+'</div><div class="sr-name">'+s.displayName+(isMe?'<span class="badge-you">YOU</span>':'')+'</div><div class="sr-score">'+s.totalPts+' pt</div><div class="sr-arrow" id="cp-arr-'+s.uid+'">&#9662;</div></div><div class="cp-rank-detail" id="cp-det-'+s.uid+'">'+(bRows||'<div style="color:var(--text2);font-size:12px">内訳なし</div>')+'</div>';
   }).join('');
 }
 
