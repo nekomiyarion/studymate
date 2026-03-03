@@ -1693,6 +1693,7 @@ let noticePopupQueue = [];  // ポップアップ表示待ちキュー
 let noticePopupIdx   = 0;   // 現在表示中の番号
 let distChartInst     = null; // ⑥分布グラフインスタンス
 let cpParticipants   = {};  // settings/cpParticipants
+let allUsers         = {};  // users/ (クラス予想の参加者表示用)
 let allCpPredictions = {};  // cpPredictions
 let allCpResults     = {};  // cpResults
 let cpSeasons        = {};  // cpSeasons
@@ -1910,6 +1911,12 @@ async function initApp() {
     allNotices = snap.val() || {};
     renderNoticesTab();
     checkNewNotices();
+  });
+
+  // ユーザー一覧リスナー（クラス予想の参加者名表示用）
+  onValue(ref(db, 'users'), (snap) => {
+    allUsers = snap.val() || {};
+    renderCpTab();
   });
 
   // クラス予想リスナー
@@ -2548,7 +2555,11 @@ function renderDistChart() {
 function updateCpTabVisibility() {
   const tab = document.getElementById('classpred-tab');
   if (!tab) return;
-  tab.style.display = !!appSettings.classPredActive ? '' : 'none';
+  const uid = currentUser ? currentUser.uid : null;
+  // 大会がactiveかつ自分が参加者（cpParticipants[uid]がfalseでない）のときだけ表示
+  const active = !!appSettings.classPredActive;
+  const isParticipant = uid && cpParticipants[uid] !== false;
+  tab.style.display = (active && isParticipant) ? '' : 'none';
 }
 
 function renderCpTab() {
@@ -2559,7 +2570,8 @@ function renderCpTab() {
 
   const uid           = currentUser ? currentUser.uid : null;
   const isParticipant = uid && cpParticipants[uid] !== false;
-  const participantUids = Object.keys(cpParticipants).filter(u => cpParticipants[u] !== false);
+  // 参加者＝全ユーザーのうちcpParticipants[uid]がfalseでない人（nullや未設定は参加扱い）
+  const participantUids = Object.keys(allUsers).filter(u => cpParticipants[u] !== false);
   const predOpen      = !!appSettings.classPredOpen;
   const resultOpen    = !!appSettings.classPredResultOpen;
   const scoresRel     = !!appSettings.classPredScoresReleased;
@@ -2593,7 +2605,8 @@ function renderCpTab() {
   const myPreds = (allCpPredictions[uid] && allCpPredictions[uid].predictions) || {};
 
   const buildPersonCard = (targetUid) => {
-    const name = (allCpResults[targetUid] && allCpResults[targetUid].displayName)
+    const name = (allUsers[targetUid] && allUsers[targetUid].displayName)
+               || (allCpResults[targetUid] && allCpResults[targetUid].displayName)
                || (allCpPredictions[targetUid] && allCpPredictions[targetUid].displayName)
                || (targetUid === uid ? '（自分）' : targetUid.slice(0,8)+'...');
     const isSelf = targetUid === uid;
@@ -2710,7 +2723,7 @@ window.saveMyCpResult = async () => {
 };
 
 function calcCpScores() {
-  const participantUids = Object.keys(cpParticipants).filter(u => cpParticipants[u] !== false);
+  const participantUids = Object.keys(allUsers).filter(u => cpParticipants[u] !== false);
   const scores = {};
   participantUids.forEach(uid => {
     const name = (allCpResults[uid]&&allCpResults[uid].displayName)||(allCpPredictions[uid]&&allCpPredictions[uid].displayName)||uid.slice(0,8);
