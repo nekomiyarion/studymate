@@ -2686,11 +2686,75 @@ function renderCpTab() {
         }).join('');
   }
 
-  el.innerHTML = rulesHtml + phaseBanner
-    + '<div class="section-title">&#21442;&#21152;&#32773;&#12398;&#20104;&#24819;&#20837;&#21147;</div>'
-    + personCardsHtml + saveBtnHtml + myResultHtml + rankingHtml + archHtml;
+  // ── 予想入力受付中 ──────────────────────────────────────
+  if (predOpen) {
+    el.innerHTML = rulesHtml + phaseBanner
+      + '<div class="section-title">参加者の予想入力</div>'
+      + personCardsHtml + saveBtnHtml + myResultHtml + archHtml;
+    return;
+  }
 
-  if (scoresRel) renderCpRanking();
+  // ── ランキング公開中（最優先で上に表示）──────────────
+  if (scoresRel) {
+    // 自分の予想サマリー（コンパクト）
+    const mySummary = buildMyPredSummary(uid, myPreds, participantUids);
+    el.innerHTML = rulesHtml
+      + '<div class="section-title" style="margin-top:4px">&#127942; ランキング</div>'
+      + '<div id="cp-ranking-list"></div>'
+      + mySummary + myResultHtml + archHtml;
+    renderCpRanking();
+    return;
+  }
+
+  // ── 予想入力締め切り後（結果入力中 or 待機中）────────
+  // コンパクトな自分の予想表示
+  const mySummary = buildMyPredSummary(uid, myPreds, participantUids);
+  el.innerHTML = rulesHtml + phaseBanner + mySummary + myResultHtml + archHtml;
+}
+
+// 自分の予想サマリー（コンパクトリスト表示）
+function buildMyPredSummary(uid, myPreds, participantUids) {
+  const hasPreds = Object.keys(myPreds).length > 0;
+  if (!hasPreds) {
+    return '<div class="card" style="margin-top:8px">'
+      + '<div class="card-label">あなたの予想</div>'
+      + '<div style="color:var(--text2);font-size:13px">予想が保存されていません</div>'
+      + '</div>';
+  }
+  const clsLabel = ['第1','第2','第3'];
+  const clsColor = ['#e0a030','#8aabdf','#a07c60'];
+  const rows = participantUids.map(targetUid => {
+    const name = (allUsers[targetUid] && allUsers[targetUid].displayName)
+               || (allCpResults[targetUid] && allCpResults[targetUid].displayName)
+               || (targetUid === uid ? '自分' : targetUid.slice(0,8));
+    const picks = myPreds[targetUid] || [null, null, null];
+    const actualCls = allCpResults[targetUid] && allCpResults[targetUid].class;
+    // ポイント計算
+    let pts = null;
+    if (actualCls) {
+      pts = 0;
+      if (picks[0] == actualCls) pts += 3;
+      if (picks[1] == actualCls) pts += 2;
+      if (picks[2] == actualCls) pts += 1;
+    }
+    const pickTags = [0,1,2].map(i => {
+      const v = picks[i];
+      const hit = actualCls && v == actualCls;
+      return '<span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--surface2);border:1px solid var(--border2);color:' + clsColor[i] + (hit ? ';outline:1px solid var(--success)' : '') + '">'
+        + clsLabel[i] + ':' + (v != null ? v+'組' : '—') + (hit ? '✓' : '') + '</span>';
+    }).join(' ');
+    const ptsTag = pts !== null
+      ? '<span style="font-size:12px;font-weight:700;color:' + (pts>0?'var(--success)':'var(--text3)') + ';margin-left:auto">' + (pts>0?'+':'') + pts + 'pt</span>'
+      : '';
+    const actualTag = actualCls
+      ? '<span style="font-size:11px;background:var(--success);color:#fff;border-radius:5px;padding:1px 6px;font-weight:700">実際:' + actualCls + '組</span>'
+      : '';
+    return '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--border)">'
+      + '<span style="font-size:13px;font-weight:700;min-width:72px">' + name + '</span>'
+      + pickTags + actualTag + ptsTag + '</div>';
+  }).join('');
+  return '<div class="section-title" style="margin-top:16px">あなたの予想</div>'
+    + '<div class="card" style="padding:14px 16px">' + rows + '</div>';
 }
 
 window.setCpPick = (targetUid, pickIdx, val) => {
