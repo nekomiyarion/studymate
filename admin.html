@@ -832,12 +832,13 @@ function initAdmin() {
     renderSeasonSubjectCheckboxes();
     renderMissingLists(allUsers);
   });
-  let allUsers = {};
   onValue(ref(db,'users'), snap => {
     allUsers = snap.val() || {};
     document.getElementById('dash-users').textContent = Object.keys(allUsers).length;
     renderTestUsersList(allUsers);
     renderMissingLists(allUsers);
+    renderCpUsersList();       // allUsers確定後にクラス予想参加者リストも更新
+    renderCpAdminResults();    // 管理者結果入力も更新
   });
 
   // 参加ユーザー管理
@@ -1436,6 +1437,7 @@ function renderScoresPreview() {
 
 // ── SEASONS ───────────────────────────────────────
 let allSeasons = {};
+let allUsers   = {};  // モジュールスコープ（クラス予想リスナーから参照可能）
 
 onValue(ref(db,'seasons'), snap => {
   allSeasons = snap.val() || {};

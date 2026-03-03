@@ -1637,13 +1637,14 @@
                 // セッション開始壁時計（実際の時刻記録用）
                 const sessionWallStart = ref(null);
 
-                const startSession = (sub, mode, durationSec = 0) => {
+                const startSession = (sub, mode, durationSec = 0, wallStartOverride = null) => {
                     currentSubject.value = sub;
                     breakMode.value = (sub === '休憩');
                     countdownDuration.value = durationSec;
                     
                     if (!startTime.value) startTime.value = Date.now();
-                    sessionWallStart.value = new Date().toISOString(); // 壁時計の開始時刻
+                    // wallStartOverride が渡された場合（復元時）はそちらを使う
+                    sessionWallStart.value = wallStartOverride || new Date().toISOString();
                     elapsedTime.value = 0;
                     isTimerRunning.value = true;
                     isPaused.value = false;
@@ -1723,10 +1724,14 @@
 
                     const sub = currentSubject.value;
                     if(sub) {
-                        const wallEnd = new Date();
+                        // wallStartは記録開始の実時刻
+                        const now = new Date();
                         const wallStart = sessionWallStart.value 
                             ? new Date(sessionWallStart.value) 
-                            : new Date(wallEnd.getTime() - addedTime * 1000);
+                            : new Date(now.getTime() - addedTime * 1000);
+                        // wallEndはwallStart + 実際に記録する秒数（ポーズ中を除く）
+                        // これによりstart/end/durationが必ず整合する
+                        const wallEnd = new Date(wallStart.getTime() + addedTime * 1000);
                         
                         // 日をまたいでいるか確認
                         const startDateStr = wallStart.toLocaleDateString('en-CA');
@@ -1829,8 +1834,8 @@
                                 stopTimer(true);
                             } else {
                                 startTime.value = state.startTime;
-                                sessionWallStart.value = state.wallStart || new Date(state.startTime).toISOString();
-                                startSession(state.subject, state.mode, state.duration);
+                                const restoredWallStart = state.wallStart || new Date(state.startTime).toISOString();
+                                startSession(state.subject, state.mode, state.duration, restoredWallStart);
                             }
                         }
                     } catch (e) {
