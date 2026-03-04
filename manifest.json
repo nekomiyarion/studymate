@@ -1,0 +1,27 @@
+{
+    "name": "Study Mate",
+    "short_name": "StudyMate",
+    "description": "勉強も、休憩も、これひとつで。",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#f3f4f6",
+    "theme_color": "#2563eb",
+    "orientation": "any",
+    "lang": "ja",
+    "icons": [
+        {
+            "src": "./studymate.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./studymate.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["education", "productivity"],
+    "screenshots": []
+}

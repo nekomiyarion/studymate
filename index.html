@@ -147,6 +147,74 @@
         }
         /* ============================================ */
     </style>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Study Mate">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2563eb">
+
+    <!-- Service Worker 登録 + アップデート通知 UI -->
+    <script>
+    (function() {
+        if (!('serviceWorker' in navigator)) return;
+
+        navigator.serviceWorker.register('./service-worker.js').then((reg) => {
+            console.log('[PWA] Service Worker registered:', reg.scope);
+            setTimeout(() => checkForUpdate(reg), 3000);
+            reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        showUpdateBanner();
+                    }
+                });
+            });
+        }).catch(err => console.warn('[PWA] SW registration failed:', err));
+
+        function checkForUpdate(reg) {
+            if (!navigator.onLine) return;
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'CHECK_UPDATE' });
+            }
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'UPDATE_RESULT') {
+                    if (event.data.hasUpdate) showUpdateBanner();
+                }
+            });
+        }
+
+        function showUpdateBanner() {
+            if (document.getElementById('pwa-update-banner')) return;
+            const banner = document.createElement('div');
+            banner.id = 'pwa-update-banner';
+            banner.style.cssText = `
+                position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+                background: #1e40af; color: white; padding: 12px 20px;
+                border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                display: flex; align-items: center; gap: 12px;
+                z-index: 9999; font-family: sans-serif; font-size: 14px;
+                max-width: 90vw;
+            `;
+            banner.innerHTML = `
+                <span>🎉 アップデートがあります！</span>
+                <button onclick="location.reload()" style="
+                    background: white; color: #1e40af; border: none;
+                    padding: 6px 14px; border-radius: 8px; font-weight: bold;
+                    cursor: pointer; font-size: 13px;
+                ">今すぐ更新</button>
+                <button onclick="this.parentElement.remove()" style="
+                    background: transparent; color: rgba(255,255,255,0.7);
+                    border: none; cursor: pointer; font-size: 18px; line-height: 1;
+                ">×</button>
+            `;
+            document.body.appendChild(banner);
+            setTimeout(() => banner && banner.remove(), 10000);
+        }
+    })();
+    <\/script>
+
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans h-screen overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
     <div id="app" v-cloak class="h-full flex flex-col md:flex-row relative">
