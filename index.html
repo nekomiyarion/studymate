@@ -296,7 +296,13 @@
                 <!-- PCサイドバーロゴ -->
                 <div class="hidden md:flex items-center gap-3 p-6 border-b border-gray-100 dark:border-gray-700">
                     <img src="./studymate.png" onerror="this.style.display='none'" class="w-8 h-8 rounded-lg">
-                    <span class="font-bold text-xl tracking-tight">Study Mate</span>
+                    <div class="flex-1 min-w-0">
+                        <span class="font-bold text-xl tracking-tight">Study Mate</span>
+                        <div v-if="!isOnline" class="flex items-center gap-1 mt-0.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
+                            <span class="text-xs text-orange-500 font-medium">オフライン</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- スマホ横画面：縦アイコンナビ -->
@@ -345,6 +351,15 @@
             </nav>
 
             <!-- Content Area -->
+            <!-- オフラインバナー（スマホ縦向きのみ、ナビバーの上） -->
+            <div v-if="!isOnline && isMobile && !isLandscape"
+                 class="fixed bottom-20 left-0 right-0 z-30 flex justify-center pointer-events-none"
+                 style="bottom: calc(5rem + env(safe-area-inset-bottom, 0px));">
+                <div class="flex items-center gap-2 bg-orange-500 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
+                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                    オフライン — データはローカルに保存中
+                </div>
+            </div>
             <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 order-1 md:order-2 relative transition-colors duration-300"
                   :class="[
                       isStandbyMode ? '!p-0 !pb-0 !overflow-hidden' : '',
@@ -1157,6 +1172,64 @@
             setup() {
                 const user = ref(null);
                 const isGuestMode = ref(false);
+                const isOnline = ref(navigator.onLine);
+
+                // ── オフライン同期キュー ──
+                const SYNC_QUEUE_KEY = 'studymate_sync_queue';
+
+                const addToSyncQueue = (dateStr, data) => {
+                    try {
+                        const q = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
+                        // 同じ日付のエントリは上書き
+                        const idx = q.findIndex(e => e.dateStr === dateStr);
+                        if (idx >= 0) q[idx] = { dateStr, data, ts: Date.now() };
+                        else q.push({ dateStr, data, ts: Date.now() });
+                        localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(q));
+                        console.log('[Offline] Queued:', dateStr);
+                    } catch(e) {}
+                };
+
+                const flushSyncQueue = async () => {
+                    if (!user.value || isGuestMode.value || !isOnline.value) return;
+                    try {
+                        const q = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
+                        if (q.length === 0) return;
+                        console.log('[Sync] Flushing', q.length, 'items...');
+                        const done = [];
+                        for (const entry of q) {
+                            try {
+                                await setDoc(doc(db, "users", user.value.uid, "logs", entry.dateStr), entry.data, {merge:true});
+                                done.push(entry.dateStr);
+                            } catch(e) {
+                                console.warn('[Sync] Failed for', entry.dateStr, e);
+                            }
+                        }
+                        // 成功分を削除
+                        const remaining = q.filter(e => !done.includes(e.dateStr));
+                        localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(remaining));
+                        if (done.length > 0) {
+                            console.log('[Sync] Synced:', done);
+                            // 設定もFirebaseに同期
+                            const settingsRaw = localStorage.getItem('studyMate_settings');
+                            if (settingsRaw) {
+                                await setDoc(doc(db, "users", user.value.uid, "settings", "config"), JSON.parse(settingsRaw), {merge:true}).catch(()=>{});
+                            }
+                            showSyncBanner(done.length);
+                        }
+                    } catch(e) {}
+                };
+
+                const showSyncBanner = (count) => {
+                    // 同期完了バナー（2秒で自動消去）
+                    const existing = document.getElementById('sync-banner');
+                    if (existing) existing.remove();
+                    const el = document.createElement('div');
+                    el.id = 'sync-banner';
+                    el.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:8px 16px;border-radius:10px;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);white-space:nowrap;';
+                    el.textContent = '✓ オフラインデータを同期しました';
+                    document.body.appendChild(el);
+                    setTimeout(() => el.remove(), 3000);
+                };
                 const isAuthLoading = ref(true); 
                 const accessToken = ref(null);
                 const currentTab = ref('timer');
@@ -1348,6 +1421,36 @@
                     checkOrientation();
                     window.addEventListener('resize', checkOrientation); // リサイズで向き検知
                     document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+                    // ── オンライン/オフライン検知 ──
+                    window.addEventListener('online', () => {
+                        isOnline.value = true;
+                        console.log('[Network] Back online → syncing...');
+                        // Service Worker にバックグラウンド同期を登録
+                        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                            navigator.serviceWorker.ready.then(reg => {
+                                reg.sync.register('studymate-sync').catch(()=>{});
+                            });
+                        }
+                        // 同期キューをフラッシュ
+                        setTimeout(() => flushSyncQueue(), 1000);
+                    });
+                    window.addEventListener('offline', () => {
+                        isOnline.value = false;
+                        console.log('[Network] Gone offline');
+                    });
+
+                    // Service Worker からの同期指示を受信
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.addEventListener('message', (event) => {
+                            if (event.data && event.data.type === 'DO_SYNC') {
+                                flushSyncQueue();
+                            }
+                        });
+                    }
+
+                    // 起動時にも同期（前回オフラインだったかもしれない）
+                    if (isOnline.value) setTimeout(() => flushSyncQueue(), 3000);
                     document.addEventListener('visibilitychange', handleVisibilityChange);
 
                     const seen = localStorage.getItem('studyMate_seenTutorial');
@@ -1559,10 +1662,28 @@
                             const raw = localStorage.getItem(`studyMate_log_${d}`);
                             todayLog.value = raw ? JSON.parse(raw) : {total:0, subjects:{}, sessions:[]};
                         } else if(user.value) {
-                            const s = await getDoc(doc(db, "users", user.value.uid, "logs", d));
-                            todayLog.value = s.exists() ? s.data() : {total:0, subjects:{}, sessions:[]};
+                            // まずlocalStorageから即表示（高速）
+                            const cached = localStorage.getItem(`studyMate_log_${d}`);
+                            if (cached) todayLog.value = JSON.parse(cached);
+                            // オンラインならFirebaseから最新取得
+                            if (isOnline.value) {
+                                const s = await getDoc(doc(db, "users", user.value.uid, "logs", d));
+                                if (s.exists()) {
+                                    todayLog.value = s.data();
+                                    // localStorageも更新
+                                    localStorage.setItem(`studyMate_log_${d}`, JSON.stringify(s.data()));
+                                } else if (!cached) {
+                                    todayLog.value = {total:0, subjects:{}, sessions:[]};
+                                }
+                            } else if (!cached) {
+                                todayLog.value = {total:0, subjects:{}, sessions:[]};
+                            }
                         }
-                    } catch(e) { todayLog.value = {total:0, subjects:{}, sessions:[]}; }
+                    } catch(e) {
+                        // オフライン時はlocalStorageにフォールバック
+                        const cached = localStorage.getItem(`studyMate_log_${d}`);
+                        todayLog.value = cached ? JSON.parse(cached) : {total:0, subjects:{}, sessions:[]};
+                    }
                 };
                 const saveDataForDate = async (dateStr, logData) => {
                     let realTotal = 0;
@@ -1571,11 +1692,22 @@
                     }
                     logData.total = realTotal;
                     const data = JSON.parse(JSON.stringify(logData));
+                    // 常にlocalStorageにも保存（オフライン対応・キャッシュ）
+                    localStorage.setItem(`studyMate_log_${dateStr}`, JSON.stringify(data));
                     if(isGuestMode.value) {
-                        localStorage.setItem(`studyMate_log_${dateStr}`, JSON.stringify(data));
                         localStorage.setItem('studyMate_guest_todayLog', 'true');
                     } else if(user.value) {
-                        await setDoc(doc(db, "users", user.value.uid, "logs", dateStr), data, {merge:true});
+                        if (isOnline.value) {
+                            try {
+                                await setDoc(doc(db, "users", user.value.uid, "logs", dateStr), data, {merge:true});
+                            } catch(e) {
+                                // オフラインまたは失敗 → 同期キューに追加
+                                addToSyncQueue(dateStr, data);
+                            }
+                        } else {
+                            // オフライン → 同期キューに追加
+                            addToSyncQueue(dateStr, data);
+                        }
                     }
                 };
 
@@ -1620,8 +1752,16 @@
                         tabAnimation: tabAnimation.value,
                         subjectColors: subjectColors.value
                     };
-                    if(isGuestMode.value) localStorage.setItem('studyMate_settings', JSON.stringify(d));
-                    else if(user.value) await setDoc(doc(db, "users", user.value.uid, "settings", "config"), d, {merge:true});
+                    localStorage.setItem('studyMate_settings', JSON.stringify(d)); // 常にローカルにも保存
+                    if(!isGuestMode.value && user.value) {
+                        if (isOnline.value) {
+                            try {
+                                await setDoc(doc(db, "users", user.value.uid, "settings", "config"), d, {merge:true});
+                            } catch(e) {
+                                // オフライン時はlocalStorageのみ（次回起動時に自動反映）
+                            }
+                        }
+                    }
                 };
 
                 const mergeGuestData = async (uid) => {
@@ -2378,7 +2518,7 @@
                 const formatHours = (sec) => (sec/3600).toFixed(1);
 
                 return {
-                    user, isGuestMode, isAuthLoading, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects, getTodayStr,
+                    user, isGuestMode, isAuthLoading, isOnline, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects, getTodayStr,
                     loginWithEmail, resetPassword, emailLoginForm, emailAuthError, showEmailAuth,
                     showAccountSettings, linkEmailForm, linkEmailError, linkGoogle, linkEmail, accountMessage, linkedProviders,
                     isTimerRunning, isPaused, timerMode, breakMode, handleSubjectClick, currentSubject, stopTimer, cancelSession, pauseTimer, resumeTimer, formattedTime, todayLog, formatSeconds,
