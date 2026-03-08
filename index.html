@@ -784,28 +784,51 @@
 
                 <!-- セッション編集モーダル -->
                 <transition name="modal">
-                <div v-if="editingSession" class="fixed inset-0 z-50 bg-black/60 flex items-end md:items-center justify-center p-4">
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-                        <h3 class="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
-                            <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: subjectColor(editingSession.subject) }"></div>
+                <div v-if="editingSession" class="fixed inset-0 z-50 bg-black/60 flex items-end md:items-center justify-center p-4" @click.self="editingSession = null; reportMode = 'edit'">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 max-w-sm w-full shadow-2xl">
+                        <!-- タイトル -->
+                        <h3 class="text-base font-bold mb-4 dark:text-white flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full flex-shrink-0" :style="{ backgroundColor: subjectColor(editingSession.subject) }"></div>
                             {{ editingSession.subject }} を編集
                         </h3>
-                        <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-sm text-gray-500 dark:text-gray-400 font-mono">
-                            {{ fmtTime(editingSession.start) }} 〜 {{ fmtTime(editingSession.end) }}
+
+                        <!-- スタート時刻 -->
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5">スタート時刻</label>
+                            <input type="time" v-model="editingStartTime"
+                                   @change="onEditTimeChange"
+                                   class="w-full border dark:border-gray-600 rounded-xl px-4 py-2.5 text-lg font-mono font-bold text-center outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
                         </div>
-                        <label class="block text-xs font-bold text-gray-500 mb-2">時間（分）</label>
-                        <div class="flex items-center gap-2 mb-6">
-                            <button @click="editingDurationMin = Math.max(1, editingDurationMin - 5)" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-sm text-gray-700 dark:text-white">-5</button>
-                            <button @click="editingDurationMin = Math.max(1, editingDurationMin - 1)" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-sm text-gray-700 dark:text-white">-1</button>
-                            <input type="number" v-model.number="editingDurationMin" min="1"
-                                class="flex-1 text-center border-b-2 border-primary text-xl font-bold outline-none bg-transparent dark:text-white py-1">
-                            <span class="text-xs text-gray-400">分</span>
-                            <button @click="editingDurationMin = editingDurationMin + 1" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-sm text-gray-700 dark:text-white">+1</button>
-                            <button @click="editingDurationMin = editingDurationMin + 5" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-sm text-gray-700 dark:text-white">+5</button>
+
+                        <!-- 終了時刻 -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5">終了時刻</label>
+                            <input type="time" v-model="editingEndTime"
+                                   @change="onEditTimeChange"
+                                   class="w-full border dark:border-gray-600 rounded-xl px-4 py-2.5 text-lg font-mono font-bold text-center outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
                         </div>
+
+                        <!-- 計算後の時間（表示のみ） -->
+                        <div class="mb-5 flex items-center justify-center gap-2 py-2 px-4 rounded-xl"
+                             :class="editingDurationMin >= 1 ? 'bg-primary-light dark:bg-primary/20' : 'bg-red-50 dark:bg-red-900/20'">
+                            <i class="fa-regular fa-clock text-xs" :class="editingDurationMin >= 1 ? 'text-primary' : 'text-red-400'"></i>
+                            <span class="font-bold text-sm" :class="editingDurationMin >= 1 ? 'text-primary' : 'text-red-500'">
+                                {{ editingDurationMin >= 1 ? editingDurationMin + ' 分' : '終了時刻がスタートより前です' }}
+                            </span>
+                        </div>
+
+                        <!-- ボタン -->
                         <div class="flex gap-2">
-                            <button @click="editingSession = null; reportMode = 'edit'" class="flex-1 py-2 text-gray-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">戻る</button>
-                            <button @click="confirmEditSession" class="flex-1 py-2 bg-primary text-white rounded-lg font-bold shadow hover:bg-primary-hover text-sm">保存</button>
+                            <button @click="editingSession = null; reportMode = 'edit'"
+                                    class="flex-1 py-2.5 text-gray-500 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition">
+                                キャンセル
+                            </button>
+                            <button @click="confirmEditSession"
+                                    :disabled="editingDurationMin < 1"
+                                    class="flex-1 py-2.5 rounded-xl font-bold text-sm transition"
+                                    :class="editingDurationMin >= 1 ? 'bg-primary text-white shadow hover:bg-primary-hover' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'">
+                                保存
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2204,15 +2227,42 @@
 
                 // ── セッション編集モーダル ──
                 const editingSession = ref(null);
-                const editingDurationMin = ref(0);
+                const editingStartTime = ref('');  // "HH:MM"
+                const editingEndTime = ref('');    // "HH:MM"
+                const editingDurationMin = ref(0); // 表示・バリデーション用
                 let editingDateStr = null;
                 let editingDayIdx = null;
                 let editingSessionIdx = null;
+
+                // ISO文字列 → "HH:MM" 文字列
+                const isoToHHMM = (iso) => {
+                    const d = new Date(iso);
+                    return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+                };
+
+                // "HH:MM" + 基準日付のISO → 同日のISO文字列を返す
+                const hhmmToIso = (hhmm, baseDateIso) => {
+                    const base = new Date(baseDateIso);
+                    const [h, m] = hhmm.split(':').map(Number);
+                    base.setHours(h, m, 0, 0);
+                    return base.toISOString();
+                };
+
+                // 時刻変更時にdurationを再計算
+                const onEditTimeChange = () => {
+                    if (!editingStartTime.value || !editingEndTime.value) return;
+                    const [sh, sm] = editingStartTime.value.split(':').map(Number);
+                    const [eh, em] = editingEndTime.value.split(':').map(Number);
+                    const diffMin = (eh * 60 + em) - (sh * 60 + sm);
+                    editingDurationMin.value = diffMin; // 負ならバリデーションエラー表示
+                };
 
                 const editSessionFromReport = (dateStr, dayIdx, sessionIdx) => {
                     const s = weeklyData.value[dayIdx]?.sessions?.[sessionIdx];
                     if (!s) return;
                     editingSession.value = { ...s };
+                    editingStartTime.value = isoToHHMM(s.start);
+                    editingEndTime.value   = isoToHHMM(s.end);
                     editingDurationMin.value = Math.round(s.duration / 60);
                     editingDateStr = dateStr;
                     editingDayIdx = dayIdx;
@@ -2221,19 +2271,24 @@
 
                 const confirmEditSession = async () => {
                     if (!editingSession.value) return;
+                    if (editingDurationMin.value < 1) return;
+
+                    const newStartIso = hhmmToIso(editingStartTime.value, editingSession.value.start);
+                    const newEndIso   = hhmmToIso(editingEndTime.value,   editingSession.value.start);
                     const newDuration = editingDurationMin.value * 60;
-                    if (newDuration < 60) { alert('1分以上に設定してください'); return; }
+
                     const dayData = JSON.parse(JSON.stringify(weeklyData.value[editingDayIdx]));
+                    dayData.sessions[editingSessionIdx].start    = newStartIso;
+                    dayData.sessions[editingSessionIdx].end      = newEndIso;
                     dayData.sessions[editingSessionIdx].duration = newDuration;
-                    // endをstartから再計算
-                    const startMs = new Date(dayData.sessions[editingSessionIdx].start).getTime();
-                    dayData.sessions[editingSessionIdx].end = new Date(startMs + newDuration * 1000).toISOString();
-                    // subjects再計算
+
+                    // subjects 合計を再計算
                     const newSubjects = {};
                     for (const s of dayData.sessions) {
                         newSubjects[s.subject] = (newSubjects[s.subject] || 0) + s.duration;
                     }
                     dayData.subjects = newSubjects;
+
                     await saveDataForDate(editingDateStr, dayData);
                     if (editingDateStr === getTodayStr()) {
                         todayLog.value = JSON.parse(JSON.stringify(dayData));
@@ -2533,7 +2588,7 @@
                     sessionBlockStylePct, fmtTime, fmtTimeFull, allWeekSubjects,
                     subjectColor, setSubjectColor, resetSubjectColor,
                     reportMode, sessionDetailPopup, onSessionClick, selectedDayDetail,
-                    deleteSessionFromReport, editSessionFromReport, confirmEditSession, editingSession, editingDurationMin,
+                    deleteSessionFromReport, editSessionFromReport, confirmEditSession, editingSession, editingStartTime, editingEndTime, editingDurationMin, onEditTimeChange,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
                     showSubjectEditor, subjectDragStart, subjectDragOver, subjectDrop, subjectDragEnd,
