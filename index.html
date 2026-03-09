@@ -120,7 +120,7 @@
         .tab-none-enter-active, .tab-none-leave-active { transition: none; }
         .tab-none-enter-from, .tab-none-leave-to { opacity: 1; }
 
-        .tab-wrapper { position: relative; width: 100%; height: 100%; }
+        .tab-wrapper { position: relative; width: 100%; }
         /* ================================================= */
 
         /* ========== スマホ横画面レイアウト ========== */
@@ -217,7 +217,7 @@
 
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans h-screen overflow-hidden dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <div id="app" v-cloak class="h-full flex flex-col md:flex-row relative">
+    <div id="app" v-cloak class="h-full flex relative" :class="(isMobile && isLandscape) ? 'flex-row' : 'flex-col md:flex-row'">
         
         <!-- ================= LOADING SCREEN ================= -->
         <div v-if="isAuthLoading" class="fixed inset-0 z-[100] bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -305,47 +305,24 @@
                     </div>
                 </div>
 
-                <!-- スマホ横画面：縦アイコンナビ -->
+                <!-- スマホ横画面：縦アイコンナビ（動的） -->
                 <div v-if="isMobile && isLandscape" class="landscape-mobile-nav flex-1">
-                    <button @click="currentTab = 'timer'" class="nav-icon-btn w-full"
-                        :class="currentTab === 'timer' ? 'text-primary bg-primary-light dark:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
-                        <i class="fa-solid fa-stopwatch"></i>
-                    </button>
-                    <button @click="currentTab = 'tasks'" class="nav-icon-btn w-full"
-                        :class="currentTab === 'tasks' ? 'text-primary bg-primary-light dark:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
-                        <i class="fa-solid fa-list-check"></i>
-                    </button>
-                    <button @click="loadWeeklyReport(); currentTab = 'report'" class="nav-icon-btn w-full"
-                        :class="currentTab === 'report' ? 'text-primary bg-primary-light dark:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
-                        <i class="fa-solid fa-chart-simple"></i>
-                    </button>
-                    <button @click="currentTab = 'settings'" class="nav-icon-btn w-full"
-                        :class="currentTab === 'settings' ? 'text-primary bg-primary-light dark:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
-                        <i class="fa-solid fa-gear"></i>
+                    <button v-for="tab in visibleTabs" :key="tab.id"
+                        @click="tab.id === 'report' ? (loadWeeklyReport(), currentTab = 'report') : currentTab = tab.id"
+                        class="nav-icon-btn w-full"
+                        :class="currentTab === tab.id ? 'text-primary bg-primary-light dark:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
+                        <i :class="'fa-solid ' + tab.icon"></i>
                     </button>
                 </div>
 
-                <!-- 通常モード（スマホ縦 or PC）ナビ -->
+                <!-- 通常モード（スマホ縦 or PC）ナビ（動的） -->
                 <div v-else class="flex md:flex-col justify-around md:justify-start h-full md:p-4 md:gap-2 items-center md:items-stretch">
-                    <button @click="currentTab = 'timer'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" 
-                        :class="currentTab === 'timer' ? 'text-primary md:bg-primary-light dark:md:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
-                        <i class="fa-solid fa-stopwatch text-xl md:text-lg"></i>
-                        <span class="text-[10px] md:text-sm font-bold">記録</span>
-                    </button>
-                    <button @click="currentTab = 'tasks'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" 
-                        :class="currentTab === 'tasks' ? 'text-primary md:bg-primary-light dark:md:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
-                        <i class="fa-solid fa-list-check text-xl md:text-lg"></i>
-                        <span class="text-[10px] md:text-sm font-bold">Todo</span>
-                    </button>
-                    <button @click="loadWeeklyReport(); currentTab = 'report'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" 
-                        :class="currentTab === 'report' ? 'text-primary md:bg-primary-light dark:md:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
-                        <i class="fa-solid fa-chart-simple text-xl md:text-lg"></i>
-                        <span class="text-[10px] md:text-sm font-bold">レポート</span>
-                    </button>
-                    <button @click="currentTab = 'settings'" class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition" 
-                        :class="currentTab === 'settings' ? 'text-primary md:bg-primary-light dark:md:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
-                        <i class="fa-solid fa-gear text-xl md:text-lg"></i>
-                        <span class="text-[10px] md:text-sm font-bold">設定</span>
+                    <button v-for="tab in visibleTabs" :key="tab.id"
+                        @click="tab.id === 'report' ? (loadWeeklyReport(), currentTab = 'report') : currentTab = tab.id"
+                        class="nav-btn p-2 rounded-xl flex flex-col md:flex-row items-center gap-1 md:gap-3 md:px-4 md:py-3 transition"
+                        :class="currentTab === tab.id ? 'text-primary md:bg-primary-light dark:md:bg-gray-700' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
+                        <i :class="'fa-solid ' + tab.icon + ' text-xl md:text-lg'"></i>
+                        <span class="text-[10px] md:text-sm font-bold">{{ tab.label }}</span>
                     </button>
                 </div>
             </nav>
@@ -360,27 +337,27 @@
                     オフライン — データはローカルに保存中
                 </div>
             </div>
-            <main class="flex-1 h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 order-1 md:order-2 relative transition-colors duration-300"
+            <main class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 md:p-8 order-1 md:order-2 relative transition-colors duration-300"
                   :class="[
                       isStandbyMode ? '!p-0 !pb-0 !overflow-hidden' : '',
                       isMobile && isLandscape ? 'pb-4 pt-3 px-3' : 'md:pb-8'
                   ]"
-                  :style="!isStandbyMode && !(isMobile && isLandscape) && !isLandscape ? { paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px) + 8px)' } : {}">
+                  :style="!isStandbyMode && !(isMobile && isLandscape) ? { paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px) + 8px)' } : {}">
                 <div class="tab-wrapper">
                 <transition :name="'tab-' + tabAnimation">
                 <div :key="currentTab" class="w-full">
                 
                 <!-- 1. TIMER TAB (Modified for Standby Mode) -->
                 <div v-if="currentTab === 'timer'" 
-                     class="mx-auto min-h-full flex flex-col transition-all duration-500"
+                     class="mx-auto flex flex-col transition-all duration-500"
                      :class="isStandbyMode ? 'fixed inset-0 z-[200] bg-black text-white p-0 justify-center' : 'max-w-4xl pb-8'">
                     
                     <!-- Header (通常時のみ表示) -->
                     <header v-if="!isStandbyMode" class="mb-4 md:mb-10 flex items-center gap-2 min-w-0">
                         <!-- タイトル（スマホでは小さめ） -->
                         <h2 class="text-lg md:text-2xl font-bold whitespace-nowrap flex-shrink-0">今日の学習</h2>
-                        <!-- タイマーモード切り替え（アイコン+短ラベル、小さく） -->
-                        <div class="flex bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-full p-0.5 shadow-sm flex-shrink-0">
+                        <!-- タイマーモード切り替え（タイマー停止中のみ表示） -->
+                        <div v-if="!isTimerRunning && !isPaused" class="flex bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-full p-0.5 shadow-sm flex-shrink-0">
                             <button @click="changeTimerMode('countup')"
                                 class="flex items-center gap-0.5 px-2 py-1 rounded-full font-bold transition"
                                 :class="timerMode==='countup' ? 'bg-primary text-white shadow-sm text-[11px]' : 'text-gray-400 hover:text-gray-600 text-[11px]'">
@@ -412,12 +389,14 @@
                         </div>
                     </header>
 
-                    <div class="flex-1 flex flex-col gap-6 md:gap-12 items-center justify-center"
-                         :class="!isStandbyMode ? 'md:flex-row md:items-start' : 'w-full h-full'">
+                    <div class="flex-1 flex flex-col items-center justify-center"
+                         :class="isStandbyMode ? 'w-full h-full gap-0' : (isMobile && isLandscape) ? 'gap-3 overflow-y-auto' : 'gap-6 md:gap-12 md:flex-row md:items-start'">
                         
                         <!-- Left: Display Area -->
                         <div class="flex flex-col items-center justify-center relative transition-all duration-500"
-                             :class="isStandbyMode ? 'w-full h-full' : 'w-full md:w-1/2 py-6 bg-white dark:bg-gray-800 md:bg-transparent md:dark:bg-transparent rounded-3xl md:rounded-none shadow-sm md:shadow-none border md:border-none border-gray-100 dark:border-gray-700'">
+                             :class="isStandbyMode ? 'w-full h-full' :
+                                     (isMobile && isLandscape) ? 'w-full py-2 px-2' :
+                                     'w-full md:w-1/2 py-6 bg-white dark:bg-gray-800 md:bg-transparent md:dark:bg-transparent rounded-3xl md:rounded-none shadow-sm md:shadow-none border md:border-none border-gray-100 dark:border-gray-700'">
                             
                             <!-- Status Indicators -->
                             <div v-if="breakMode && isTimerRunning" 
@@ -446,7 +425,7 @@
                             <div class="font-mono font-bold font-standby tracking-tighter transition-all duration-300 leading-none select-none" 
                                  :class="[
                                     breakMode ? 'text-green-500' : (isPaused ? 'text-yellow-500' : (isStandbyMode ? 'text-white' : 'text-primary')),
-                                    isStandbyMode ? 'text-[25vw]' : 'text-7xl md:text-8xl mb-2'
+                                    isStandbyMode ? 'text-[25vw]' : (isMobile && isLandscape) ? 'text-5xl mb-1' : 'text-7xl md:text-8xl mb-2'
                                  ]">
                                 {{ formattedTime }}
                             </div>
@@ -461,17 +440,22 @@
                             
                             <!-- Controls (Standby時は下部に薄く表示) -->
                             <div v-if="isTimerRunning || isPaused" class="w-full max-w-sm flex flex-col gap-2 z-10"
-                                 :class="isStandbyMode ? 'absolute bottom-8 px-12 opacity-30 hover:opacity-100 transition-opacity' : 'mt-6'">
+                                 :class="isStandbyMode ? 'absolute bottom-8 px-12 opacity-30 hover:opacity-100 transition-opacity' : (isMobile && isLandscape) ? 'mt-2' : 'mt-6'">
                                 <!-- STOP / PAUSE / RESUME -->
                                 <div class="flex gap-3">
-                                    <button @click="stopTimer(false)" class="flex-1 py-5 text-white text-xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
-                                        :class="breakMode ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'">
+                                    <button @click="stopTimer(false)"
+                                        class="flex-1 text-white font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
+                                        :class="[(breakMode ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'), (isMobile && isLandscape) ? 'py-3 text-base' : 'py-5 text-xl']">
                                         <i class="fa-solid fa-stop"></i><span v-if="!isStandbyMode">STOP</span>
                                     </button>
-                                    <button v-if="!isPaused" @click="pauseTimer" class="flex-1 py-5 bg-yellow-400 hover:bg-yellow-500 text-white text-xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                                    <button v-if="!isPaused" @click="pauseTimer"
+                                        class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-white font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
+                                        :class="(isMobile && isLandscape) ? 'py-3 text-base' : 'py-5 text-xl'">
                                         <i class="fa-solid fa-pause"></i><span v-if="!isStandbyMode">PAUSE</span>
                                     </button>
-                                    <button v-else @click="resumeTimer" class="flex-1 py-5 bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                                    <button v-else @click="resumeTimer"
+                                        class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2"
+                                        :class="(isMobile && isLandscape) ? 'py-3 text-base' : 'py-5 text-xl'">
                                         <i class="fa-solid fa-play"></i><span v-if="!isStandbyMode">RESUME</span>
                                     </button>
                                 </div>
@@ -480,37 +464,54 @@
                             <p v-if="isTimerRunning && !isStandbyMode" class="text-center mt-3 text-gray-400 text-sm animate-pulse">{{ breakMode ? 'リラックス中...' : (timerMode === 'countdown' ? '集中...' : 'Focus...') }}</p>
                         </div>
 
-                        <!-- Right: Buttons (スタンバイ時は非表示) -->
-                        <div class="w-full md:w-1/2" v-if="!isStandbyMode && !isTimerRunning && !isPaused">
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4">
-                                <button v-for="sub in subjects" :key="sub" @click="handleSubjectClick(sub)"
-                                    class="h-16 md:h-24 bg-white dark:bg-gray-800 border-2 border-primary-light dark:border-gray-600 hover:border-primary dark:hover:border-primary rounded-2xl font-bold text-gray-700 dark:text-gray-200 shadow-sm transition active:scale-95 flex flex-col items-center justify-center">
-                                    <span class="text-lg">{{ sub }}</span>
-                                    <span class="text-[10px] text-gray-400 font-normal md:mt-1">{{ timerMode === 'countdown' ? 'SET' : 'START' }}</span>
-                                </button>
+                        <!-- Right: Buttons（スタンバイ時は非表示・横向きはコンパクト版） -->
+                        <div v-if="!isStandbyMode && !isTimerRunning && !isPaused"
+                            :class="(isMobile && isLandscape) ? 'w-full' : 'w-full md:w-1/2'">
+
+                            <!-- 横向きコンパクト：教科ボタン横並び + 休憩ボタン -->
+                            <div v-if="isMobile && isLandscape" class="flex flex-col gap-2 overflow-y-auto" style="max-height: calc(100vh - 120px);">
+                                <div class="grid gap-1.5" :style="{ gridTemplateColumns: 'repeat(' + Math.min(subjects.length, 4) + ', 1fr)' }">
+                                    <button v-for="sub in subjects" :key="sub" @click="handleSubjectClick(sub)"
+                                        class="py-2 px-1 bg-white dark:bg-gray-800 border-2 border-primary-light dark:border-gray-600 hover:border-primary rounded-xl font-bold text-gray-700 dark:text-gray-200 shadow-sm transition active:scale-95 flex flex-col items-center justify-center text-center">
+                                        <span class="text-xs leading-tight">{{ sub }}</span>
+                                    </button>
+                                    <button @click="openCountdownModal('休憩')"
+                                        class="py-2 px-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 hover:bg-green-100 text-green-600 dark:text-green-400 font-bold rounded-xl flex flex-col items-center justify-center transition text-xs">
+                                        <i class="fa-solid fa-mug-hot text-xs mb-0.5"></i>休憩
+                                    </button>
+                                </div>
                             </div>
 
-                            <button @click="openCountdownModal('休憩')" class="w-full mb-8 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold rounded-xl flex items-center justify-center gap-2 transition">
-                                <i class="fa-solid fa-mug-hot"></i> 休憩タイマーをセット
-                            </button>
-
-                            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                                <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-3 border-b border-gray-100 dark:border-gray-700 text-xs font-bold text-gray-400 uppercase">
-                                    <span>本日の内訳</span>
+                            <!-- 通常（縦向き / PC） -->
+                            <template v-else>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4">
+                                    <button v-for="sub in subjects" :key="sub" @click="handleSubjectClick(sub)"
+                                        class="h-16 md:h-24 bg-white dark:bg-gray-800 border-2 border-primary-light dark:border-gray-600 hover:border-primary dark:hover:border-primary rounded-2xl font-bold text-gray-700 dark:text-gray-200 shadow-sm transition active:scale-95 flex flex-col items-center justify-center">
+                                        <span class="text-lg">{{ sub }}</span>
+                                        <span class="text-[10px] text-gray-400 font-normal md:mt-1">{{ timerMode === 'countdown' ? 'SET' : 'START' }}</span>
+                                    </button>
                                 </div>
-                                <div class="p-2 max-h-60 overflow-y-auto">
-                                    <div v-if="Object.keys(todayLog.subjects).length === 0" class="text-center py-6 text-gray-400 text-sm">記録なし</div>
-                                    <div v-for="(time, sub) in todayLog.subjects" :key="sub">
-                                        <div v-if="time > 0" class="flex justify-between items-center text-sm border-b border-gray-100 dark:border-gray-700 last:border-0 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">{{ sub }}</span>
-                                            <span class="font-mono font-bold px-2 py-0.5 rounded text-gray-800 dark:text-gray-100" 
-                                                  :class="sub==='休憩'?'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400':'bg-primary-light dark:bg-primary/20 text-primary dark:text-primary'">
-                                                {{ formatSeconds(time) }}
-                                            </span>
+                                <button @click="openCountdownModal('休憩')" class="w-full mb-8 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold rounded-xl flex items-center justify-center gap-2 transition">
+                                    <i class="fa-solid fa-mug-hot"></i> 休憩タイマーをセット
+                                </button>
+                                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                                    <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-3 border-b border-gray-100 dark:border-gray-700 text-xs font-bold text-gray-400 uppercase">
+                                        <span>本日の内訳</span>
+                                    </div>
+                                    <div class="p-2 max-h-60 overflow-y-auto">
+                                        <div v-if="Object.keys(todayLog.subjects).length === 0" class="text-center py-6 text-gray-400 text-sm">記録なし</div>
+                                        <div v-for="(time, sub) in todayLog.subjects" :key="sub">
+                                            <div v-if="time > 0" class="flex justify-between items-center text-sm border-b border-gray-100 dark:border-gray-700 last:border-0 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                                <span class="font-medium text-gray-700 dark:text-gray-300">{{ sub }}</span>
+                                                <span class="font-mono font-bold px-2 py-0.5 rounded text-gray-800 dark:text-gray-100"
+                                                    :class="sub==='休憩'?'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400':'bg-primary-light dark:bg-primary/20 text-primary dark:text-primary'">
+                                                    {{ formatSeconds(time) }}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </template>
                         </div>
                     </div>
 
@@ -665,15 +666,50 @@
                         </div>
                     </div>
 
-                    <!-- ═══ タイムライングリッド（時間幅が長い場合はy方向スクロール） ═══ -->
+                    <!-- ═══ タイムライングリッド：ヘッダー固定 + 本体のみスクロール ═══ -->
                     <div class="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col min-h-0">
-                        <div class="flex-1 overflow-x-auto min-h-0" :class="reportVisibleHours > 10 ? 'overflow-y-auto' : 'overflow-y-hidden'">
-                            <div class="flex" :style="{ minWidth: '480px', height: reportVisibleHours > 10 ? (reportVisibleHours * 52) + 'px' : '100%', minHeight: '100%' }">
+                        <!-- 横スクロール共有コンテナ（ヘッダーと本体を同じ横スクロールに載せる） -->
+                        <div class="flex-1 flex flex-col overflow-hidden min-h-0">
 
-                                <!-- 時刻ラベル列：幅・文字サイズをレスポンシブ対応 -->
-                                <div class="flex-shrink-0 relative border-r border-gray-100 dark:border-gray-700"
-                                     style="width: clamp(28px, 4vw, 52px); padding-top: clamp(44px, 7vw, 64px);">
-                                    <div class="absolute inset-x-0" :style="{ top: 'clamp(44px, 7vw, 64px)', bottom: 0 }">
+                            <!-- ★ ヘッダー行（固定・横スクロールは同期） -->
+                            <div class="flex-shrink-0 flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                                 id="timeline-header" style="overflow-x: hidden;">
+                                <!-- 時刻ラベル列の空白 -->
+                                <div class="flex-shrink-0 border-r border-gray-100 dark:border-gray-700"
+                                     style="width: clamp(28px, 4vw, 52px);"></div>
+                                <!-- 7日分ヘッダー -->
+                                <div v-for="(dateStr, idx) in weeklyDates" :key="'h-'+dateStr"
+                                     class="flex-1 text-center cursor-pointer select-none transition hover:brightness-95 active:brightness-90 flex flex-col items-center justify-center border-r border-gray-100 dark:border-gray-700 last:border-r-0"
+                                     style="min-width: clamp(52px, 10vw, 120px); height: clamp(44px, 7vw, 64px); padding: clamp(2px, 0.5vw, 6px) 0;"
+                                     :class="dateStr === getTodayStr() ? 'bg-primary-light dark:bg-primary/20' : ''"
+                                     @click="selectedDayDetail = { dateStr, subjects: weeklyData[idx]?.subjects || {} }">
+                                    <div class="font-bold leading-tight"
+                                         style="font-size: clamp(11px, 1.4vw, 16px);"
+                                         :class="dateStr === getTodayStr() ? 'text-primary' :
+                                                 new Date(dateStr+'T12:00:00').getDay()===0 ? 'text-red-400' :
+                                                 new Date(dateStr+'T12:00:00').getDay()===6 ? 'text-blue-400' : 'text-gray-600 dark:text-gray-300'">
+                                        {{ ['日','月','火','水','木','金','土'][new Date(dateStr+'T12:00:00').getDay()] }}
+                                    </div>
+                                    <div class="text-gray-400 leading-tight" style="font-size: clamp(9px, 1.1vw, 13px);">
+                                        {{ dateStr.slice(5).replace('-','/') }}
+                                    </div>
+                                    <div class="font-mono font-bold leading-tight" style="font-size: clamp(9px, 1.1vw, 13px);"
+                                         :class="calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? 'text-primary' : 'text-gray-300 dark:text-gray-600'">
+                                        {{ calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? formatHours(calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}))+'h' : '—' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ★ 本体（縦＋横スクロール、ヘッダーは含まない） -->
+                            <div class="flex-1 overflow-x-auto min-h-0"
+                                 :class="reportVisibleHours > 10 ? 'overflow-y-auto' : 'overflow-y-hidden'"
+                                 @scroll="syncHeaderScroll">
+                                <div class="flex"
+                                     :style="{ minWidth: '480px', height: reportVisibleHours > 10 ? (reportVisibleHours * 52) + 'px' : '100%', minHeight: '100%' }">
+
+                                    <!-- 時刻ラベル列 -->
+                                    <div class="flex-shrink-0 relative border-r border-gray-100 dark:border-gray-700"
+                                         style="width: clamp(28px, 4vw, 52px);">
                                         <div v-for="h in visibleHourTicks" :key="'lbl-'+h"
                                              class="absolute w-full text-right font-mono font-bold text-gray-500 dark:text-gray-400 leading-none"
                                              style="font-size: clamp(9px, 1.1vw, 13px); padding-right: clamp(3px, 0.4vw, 6px);"
@@ -681,46 +717,17 @@
                                             {{ String(h).padStart(2,'0') }}
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- 7日分の列 -->
-                                <div v-for="(dateStr, idx) in weeklyDates" :key="dateStr"
-                                     class="flex-1 border-r border-gray-100 dark:border-gray-700 last:border-r-0 flex flex-col min-w-0"
-                                     style="min-width: clamp(52px, 10vw, 120px);">
-
-                                    <!-- 日付ヘッダー：高さ・文字もclampでスケール -->
-                                    <div class="flex-shrink-0 text-center border-b border-gray-100 dark:border-gray-700 cursor-pointer select-none transition hover:brightness-95 active:brightness-90 flex flex-col items-center justify-center"
-                                         style="height: clamp(44px, 7vw, 64px); padding: clamp(2px, 0.5vw, 6px) 0;"
-                                         :class="dateStr === getTodayStr() ? 'bg-primary-light dark:bg-primary/20' : 'bg-white dark:bg-gray-800'"
-                                         @click="selectedDayDetail = { dateStr, subjects: weeklyData[idx]?.subjects || {} }">
-                                        <!-- 曜日 -->
-                                        <div class="font-bold leading-tight"
-                                             style="font-size: clamp(11px, 1.4vw, 16px);"
-                                             :class="dateStr === getTodayStr() ? 'text-primary' :
-                                                     new Date(dateStr+'T12:00:00').getDay()===0 ? 'text-red-400' :
-                                                     new Date(dateStr+'T12:00:00').getDay()===6 ? 'text-blue-400' : 'text-gray-600 dark:text-gray-300'">
-                                            {{ ['日','月','火','水','木','金','土'][new Date(dateStr+'T12:00:00').getDay()] }}
-                                        </div>
-                                        <!-- 日付 -->
-                                        <div class="text-gray-400 leading-tight" style="font-size: clamp(9px, 1.1vw, 13px);">
-                                            {{ dateStr.slice(5).replace('-','/') }}
-                                        </div>
-                                        <!-- 勉強時間 -->
-                                        <div class="font-mono font-bold leading-tight" style="font-size: clamp(9px, 1.1vw, 13px);"
-                                             :class="calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? 'text-primary' : 'text-gray-300 dark:text-gray-600'">
-                                            {{ calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}) > 0 ? formatHours(calculateDailyStudyTotal(weeklyData[idx]?.subjects || {}))+'h' : '—' }}
-                                        </div>
-                                    </div>
-
-                                    <!-- タイムライン本体 -->
-                                    <div class="flex-1 relative min-h-0">
+                                    <!-- 7日分の列（本体のみ） -->
+                                    <div v-for="(dateStr, idx) in weeklyDates" :key="dateStr"
+                                         class="flex-1 border-r border-gray-100 dark:border-gray-700 last:border-r-0 relative"
+                                         style="min-width: clamp(52px, 10vw, 120px);">
                                         <!-- 時間グリッド線 -->
                                         <div v-for="h in visibleHourTicks" :key="'grid-'+dateStr+h"
                                              class="absolute w-full pointer-events-none"
                                              :class="h % 3 === 0 ? 'border-t border-gray-300 dark:border-gray-500' : 'border-t border-gray-200 dark:border-gray-600/70'"
                                              :style="{ top: ((h - reportStartHour) / reportVisibleHours * 100) + '%' }">
                                         </div>
-
                                         <!-- セッションブロック -->
                                         <template v-if="weeklyData[idx]?.sessions?.length > 0">
                                             <div v-for="(session, si) in weeklyData[idx].sessions" :key="si"
@@ -732,7 +739,15 @@
                                                  ]"
                                                  :style="sessionBlockStylePct(session)"
                                                  @click="onSessionClick(dateStr, idx, si, session)">
-                                                <div class="px-0.5 py-0.5 h-full flex flex-col justify-start overflow-hidden"
+                                                <!-- 一時停止セグメント -->
+                                                <div v-if="session.isPause || session.subject === '__pause__'"
+                                                     class="px-0.5 py-0.5 h-full flex flex-col justify-start overflow-hidden bg-repeating-diagonal"
+                                                     style="background: repeating-linear-gradient(45deg, #9ca3af22, #9ca3af22 3px, transparent 3px, transparent 8px); background-color: #e5e7eb;">
+                                                    <div class="text-gray-500 font-bold truncate leading-tight"
+                                                         style="font-size: clamp(7px, 0.9vw, 11px);">⏸</div>
+                                                </div>
+                                                <!-- 通常セグメント -->
+                                                <div v-else class="px-0.5 py-0.5 h-full flex flex-col justify-start overflow-hidden"
                                                      :style="{ backgroundColor: subjectColor(session.subject), opacity: 0.92 }">
                                                     <div class="text-white font-bold truncate leading-tight drop-shadow-sm"
                                                          style="font-size: clamp(8px, 1vw, 12px);">{{ session.subject }}</div>
@@ -740,7 +755,6 @@
                                                          class="text-white/80 font-mono truncate leading-tight"
                                                          style="font-size: clamp(7px, 0.85vw, 11px);">{{ fmtTime(session.start) }}-{{ fmtTime(session.end) }}</div>
                                                 </div>
-                                                <!-- 削除モード時のオーバーレイ -->
                                                 <div v-if="reportMode==='delete'" class="absolute inset-0 bg-red-500/20 flex items-center justify-center">
                                                     <i class="fa-solid fa-xmark text-white drop-shadow" style="font-size: clamp(9px, 1vw, 13px);"></i>
                                                 </div>
@@ -748,7 +762,6 @@
                                         </template>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -834,16 +847,556 @@
                 </div>
                 </transition>
 
+
+                <!-- 5. EXAM TAB -->
+                <div v-if="currentTab === 'exam'" class="max-w-3xl mx-auto w-full pb-8">
+
+                    <!-- ヘッダー -->
+                    <header class="mb-4 flex items-center justify-between gap-2 flex-wrap">
+                        <h2 class="text-xl font-bold">テスト記録</h2>
+                        <button @click="showExamForm = !showExamForm"
+                            class="flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold shadow hover:bg-primary-hover transition active:scale-95">
+                            <i class="fa-solid fa-plus text-xs"></i> 記録を追加
+                        </button>
+                    </header>
+
+                    <!-- ══ 追加フォーム ══ -->
+                    <transition name="tab-fade">
+                    <div v-if="showExamForm" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 mb-4">
+                        <h3 class="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">新しいテスト結果を追加</h3>
+
+                        <!-- 共通：日付・年度・種別・テスト名・満点 -->
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">実施日</label>
+                                <input type="date" v-model="examForm.date" :max="getTodayStr()" @change="onExamDateChange"
+                                    class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">
+                                    年度
+                                    <span class="font-normal opacity-60 ml-1">（任意）</span>
+                                </label>
+                                <div class="flex gap-1">
+                                    <input type="number" v-model.number="examForm.nendo" min="2000" max="2100"
+                                        @input="examForm.nendoCustom = true"
+                                        class="flex-1 border dark:border-gray-600 rounded-lg px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <span class="self-center text-xs text-gray-400 flex-shrink-0">年度</span>
+                                    <button v-if="examForm.nendoCustom"
+                                        @click="examForm.nendoCustom = false; examForm.nendo = String(dateToNendo(examForm.date))"
+                                        class="text-[10px] text-gray-400 hover:text-primary px-1.5 py-1 border border-gray-200 dark:border-gray-600 rounded-md flex-shrink-0" title="日付から自動">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">種別</label>
+                                <div class="flex bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg gap-0.5">
+                                    <button v-for="t in examTypes" :key="t.id"
+                                        @click="examForm.type = t.id; examForm.bulkMode = false; examForm.bulkEntries = []"
+                                        class="flex-1 py-1.5 rounded-md text-xs font-bold transition truncate px-1"
+                                        :class="examForm.type === t.id ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">
+                                        {{ t.label }}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">テスト名</label>
+                                <div class="flex gap-1.5">
+                                    <select v-if="!examForm.customName" v-model="examForm.name"
+                                        class="flex-1 border dark:border-gray-600 rounded-lg px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                        <option value="">選択...</option>
+                                        <option v-for="n in examNameList" :key="n" :value="n">{{ n }}</option>
+                                    </select>
+                                    <input v-else type="text" v-model="examForm.name" placeholder="例：中間テスト"
+                                        class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <button @click="examForm.customName = !examForm.customName; examForm.name = ''"
+                                        class="px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600 text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0">
+                                        <i :class="examForm.customName ? 'fa-solid fa-list' : 'fa-solid fa-pen'"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">満点</label>
+                                <input type="number" v-model.number="examForm.maxScore" min="1" max="1000"
+                                    class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                            </div>
+                        </div>
+
+                        <!-- 大テスト：一括登録モード切替 -->
+                        <div v-if="examForm.type === 'major'" class="mb-3">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <button @click="examForm.bulkMode = !examForm.bulkMode; initBulkMode()"
+                                    class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+                                    :class="examForm.bulkMode ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'">
+                                    <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition"
+                                        :class="examForm.bulkMode ? 'translate-x-4' : 'translate-x-1'"></span>
+                                </button>
+                                <span class="text-xs font-bold text-gray-600 dark:text-gray-300">複数教科をまとめて登録</span>
+                            </label>
+                        </div>
+
+                        <!-- ★ 一括登録モード -->
+                        <div v-if="examForm.bulkMode" class="mb-4">
+                            <div class="text-xs font-bold text-gray-400 mb-2 flex items-center justify-between">
+                                <span>教科ごとに入力</span>
+                                <button @click="addBulkEntry" class="text-primary hover:underline text-xs">
+                                    <i class="fa-solid fa-plus mr-0.5"></i>行を追加
+                                </button>
+                            </div>
+                            <!-- ヘッダー -->
+                            <div class="grid gap-1 text-[10px] text-gray-400 font-bold mb-1 px-1"
+                                style="grid-template-columns: 1fr 3rem 3rem 3rem 3rem 1.5rem;">
+                                <span>教科</span><span class="text-center">点数</span><span class="text-center">満点</span><span class="text-center">平均</span><span class="text-center">順位</span><span></span>
+                            </div>
+                            <div v-for="(entry, i) in examForm.bulkEntries" :key="i"
+                                class="grid gap-1 mb-1.5 items-center"
+                                style="grid-template-columns: 1fr 3rem 3rem 3rem 3rem 1.5rem;">
+                                <!-- 教科 -->
+                                <select v-model="entry.subject"
+                                    class="border dark:border-gray-600 rounded-md px-1.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <option value="">教科...</option>
+                                    <option v-for="s in examSubjects" :key="s" :value="s">{{ s }}</option>
+                                </select>
+                                <input type="number" v-model.number="entry.score" :min="0" :max="entry.maxScore || examForm.maxScore" placeholder="点"
+                                    class="border dark:border-gray-600 rounded-md px-1 py-1.5 text-xs text-center outline-none focus:ring-1 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                <input type="number" v-model.number="entry.maxScore" min="1" :placeholder="examForm.maxScore"
+                                    class="border dark:border-gray-600 rounded-md px-1 py-1.5 text-xs text-center outline-none focus:ring-1 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                <input type="number" v-model.number="entry.avg" :min="0" :max="entry.maxScore || examForm.maxScore" placeholder="—"
+                                    class="border dark:border-gray-600 rounded-md px-1 py-1.5 text-xs text-center outline-none focus:ring-1 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                <input type="number" v-model.number="entry.rank" min="1" placeholder="—"
+                                    class="border dark:border-gray-600 rounded-md px-1 py-1.5 text-xs text-center outline-none focus:ring-1 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                <button @click="removeBulkEntry(i)" class="text-gray-300 hover:text-red-400 transition text-xs">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ★ 通常モード（教科・点数など） -->
+                        <div v-else class="grid grid-cols-2 gap-3 mb-3">
+                            <!-- 教科 -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">教科</label>
+                                <div class="flex gap-1.5">
+                                    <select v-model="examForm.subject" v-if="!examForm.customSubject"
+                                        class="flex-1 border dark:border-gray-600 rounded-lg px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                        <option value="">選択...</option>
+                                        <option v-for="s in examSubjects" :key="s" :value="s">{{ s }}</option>
+                                    </select>
+                                    <input v-else type="text" v-model="examForm.subject" placeholder="教科名"
+                                        class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <button @click="examForm.customSubject = !examForm.customSubject; examForm.subject = ''"
+                                        class="px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600 text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0">
+                                        <i :class="examForm.customSubject ? 'fa-solid fa-list' : 'fa-solid fa-pen'"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- 単元名（小テスト時のみ） -->
+                            <div v-if="examForm.type === 'minor'">
+                                <label class="block text-xs font-bold text-gray-500 mb-1">単元名 <span class="font-normal opacity-60">（任意）</span></label>
+                                <input type="text" v-model="examForm.unitName" placeholder="例：二次方程式"
+                                    class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <!-- 自分の点数 -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">自分の点数</label>
+                                <input type="number" v-model.number="examForm.score" min="0" :max="examForm.maxScore"
+                                    class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <!-- 平均点（任意） -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">平均点 <span class="font-normal opacity-60">（任意）</span></label>
+                                <input type="number" v-model.number="examForm.avg" min="0" :max="examForm.maxScore" placeholder="—"
+                                    class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <!-- 順位（任意） -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">順位 <span class="font-normal opacity-60">（任意）</span></label>
+                                <div class="flex items-center gap-1">
+                                    <input type="number" v-model.number="examForm.rank" min="1" placeholder="—"
+                                        class="w-16 border dark:border-gray-600 rounded-lg px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <span class="text-xs text-gray-400">位 /</span>
+                                    <input type="number" v-model.number="examForm.rankOf" min="1" placeholder="人数"
+                                        class="w-16 border dark:border-gray-600 rounded-lg px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <span class="text-xs text-gray-400">人</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- メモ -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">メモ <span class="font-normal opacity-60">（任意）</span></label>
+                            <textarea v-model="examForm.memo" rows="2" placeholder="自由記述..."
+                                class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white resize-none"></textarea>
+                        </div>
+                        <div class="flex gap-2">
+                            <button @click="showExamForm = false; resetExamForm()"
+                                class="flex-1 py-2 text-gray-500 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition">
+                                キャンセル
+                            </button>
+                            <button @click="saveExamRecord"
+                                :disabled="examForm.bulkMode ? (!examForm.name || !examForm.date) : (!examForm.subject || examForm.score === '' || !examForm.date)"
+                                class="flex-1 py-2 rounded-xl font-bold text-sm transition"
+                                :class="(examForm.bulkMode ? (examForm.name && examForm.date) : (examForm.subject && examForm.score !== '' && examForm.date)) ? 'bg-primary text-white shadow hover:bg-primary-hover' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'">
+                                {{ examForm.bulkMode ? '一括保存' : '保存' }}
+                            </button>
+                        </div>
+                    </div>
+                    </transition>
+
+                    <!-- ══ 絞り込みフィルター（教科 + 種別 + テスト名） ══ -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-3 mb-4">
+                        <!-- 行1：種別フィルター -->
+                        <div class="flex items-center gap-2 mb-2 flex-wrap">
+                            <span class="text-[10px] font-bold text-gray-400 w-12 flex-shrink-0">種別</span>
+                            <button @click="examFilterType = ''"
+                                class="px-2.5 py-1 rounded-full text-xs font-bold transition border"
+                                :class="examFilterType === '' ? 'bg-primary text-white border-primary' : 'bg-gray-50 dark:bg-gray-700 text-gray-500 border-gray-200 dark:border-gray-600'">すべて</button>
+                            <button v-for="t in examTypes" :key="t.id"
+                                @click="examFilterType = examFilterType === t.id ? '' : t.id"
+                                class="px-2.5 py-1 rounded-full text-xs font-bold transition border"
+                                :class="examFilterType === t.id ? 'border-primary text-white' : 'bg-gray-50 dark:bg-gray-700 text-gray-500 border-gray-200 dark:border-gray-600'"
+                                :style="examFilterType === t.id ? { backgroundColor: t.color, borderColor: t.color } : {}">
+                                {{ t.label }}
+                            </button>
+                        </div>
+                        <!-- 行2：教科フィルター -->
+                        <div class="flex items-center gap-2 mb-2 flex-wrap">
+                            <span class="text-[10px] font-bold text-gray-400 w-12 flex-shrink-0">教科</span>
+                            <button @click="examFilterSubject = ''"
+                                class="px-2.5 py-1 rounded-full text-xs font-bold transition border"
+                                :class="examFilterSubject === '' ? 'bg-primary text-white border-primary' : 'bg-gray-50 dark:bg-gray-700 text-gray-500 border-gray-200 dark:border-gray-600'">すべて</button>
+                            <button v-for="s in examRecordSubjects" :key="s"
+                                @click="examFilterSubject = examFilterSubject === s ? '' : s"
+                                class="px-2.5 py-1 rounded-full text-xs font-bold transition border"
+                                :class="examFilterSubject === s ? 'bg-primary text-white border-primary' : 'bg-gray-50 dark:bg-gray-700 text-gray-500 border-gray-200 dark:border-gray-600'">
+                                {{ s }}
+                            </button>
+                        </div>
+                        <!-- 行3：テスト名フィルター -->
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-[10px] font-bold text-gray-400 w-12 flex-shrink-0">テスト名</span>
+                            <button @click="examFilterName = ''"
+                                class="px-2.5 py-1 rounded-full text-xs font-bold transition border"
+                                :class="examFilterName === '' ? 'bg-primary text-white border-primary' : 'bg-gray-50 dark:bg-gray-700 text-gray-500 border-gray-200 dark:border-gray-600'">すべて</button>
+                            <button v-for="n in examRecordNames" :key="n"
+                                @click="examFilterName = examFilterName === n ? '' : n"
+                                class="px-2.5 py-1 rounded-full text-xs font-bold transition border"
+                                :class="examFilterName === n ? 'bg-primary text-white border-primary' : 'bg-gray-50 dark:bg-gray-700 text-gray-500 border-gray-200 dark:border-gray-600'">
+                                {{ n }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ══ 種別ごとのグラフパネル ══ -->
+                    <template v-if="filteredExamRecords.length >= 1">
+                        <div v-for="typeObj in examTypesWithData" :key="typeObj.id" class="mb-4">
+                            <!-- 種別ヘッダー -->
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: typeObj.color }"></span>
+                                <span class="text-sm font-bold text-gray-700 dark:text-gray-200">{{ typeObj.label }}</span>
+                                <span class="text-xs text-gray-400">（{{ typeObj.records.length }}件）</span>
+                            </div>
+                            <!-- グラフ -->
+                            <div v-if="typeObj.records.length >= 2" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+                                <div class="flex items-end gap-1.5 border-b border-l border-gray-200 dark:border-gray-600 relative pl-5 pb-1" style="height: 140px;">
+                                    <!-- Y軸ラベル -->
+                                    <div class="absolute left-0 inset-y-0 flex flex-col justify-between text-[9px] text-gray-400 font-mono pr-1">
+                                        <span>100</span>
+                                        <span>50</span>
+                                        <span>0</span>
+                                    </div>
+                                    <!-- 50%グリッド線 -->
+                                    <div class="absolute inset-x-5 border-t border-dashed border-gray-200 dark:border-gray-700 pointer-events-none" style="bottom: 50%;"></div>
+                                    <!-- クラス平均ライン -->
+                                    <div v-if="typeObj.avgLinePct !== null"
+                                        class="absolute border-t-2 border-dashed border-orange-400 pointer-events-none z-10"
+                                        style="left: 20px; right: 0;"
+                                        :style="{ bottom: typeObj.avgLinePct + '%' }">
+                                        <span class="absolute right-0 top-0 -translate-y-full text-[9px] font-bold text-orange-400 bg-white dark:bg-gray-800 px-0.5">平均</span>
+                                    </div>
+                                    <!-- バー -->
+                                    <div v-for="(rec, i) in typeObj.records.slice(-14)" :key="i"
+                                        class="flex-1 flex flex-col items-center justify-end h-full min-w-0 group">
+                                        <div class="w-full rounded-t-sm transition-all relative cursor-default"
+                                            :style="{ height: (rec.score / rec.maxScore * 100) + '%', minHeight: '4px', backgroundColor: examBarColor(rec, typeObj.color) }"
+                                            :title="rec.subject + ' ' + rec.name + ': ' + rec.score + '/' + rec.maxScore">
+                                            <div class="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition bg-gray-800 text-white px-1 py-0.5 rounded z-20 pointer-events-none">
+                                                {{ rec.score }}/{{ rec.maxScore }}
+                                            </div>
+                                        </div>
+                                        <div class="text-[8px] text-gray-400 truncate w-full text-center leading-tight mt-0.5" :title="rec.subject">{{ rec.subject.slice(0,2) }}</div>
+                                        <div class="text-[7px] text-gray-300 dark:text-gray-600 truncate w-full text-center leading-none">{{ rec.date.slice(5).replace('-','/') }}</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 flex items-center gap-3 flex-wrap text-[10px] text-gray-400">
+                                    <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm inline-block" :style="{ backgroundColor: typeObj.color }"></span>自分</div>
+                                    <div v-if="typeObj.avgLinePct !== null" class="flex items-center gap-1"><span class="inline-block border-t-2 border-dashed border-orange-400" style="width:14px"></span>クラス平均</div>
+                                    <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm inline-block bg-green-400"></span>平均以上</div>
+                                    <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm inline-block bg-red-400"></span>平均以下</div>
+                                </div>
+                            </div>
+                            <!-- 1件のみの場合（グラフ不要） -->
+                            <div v-else class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 py-3 text-xs text-gray-400">
+                                グラフはデータが2件以上で表示されます
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ══ 記録一覧（折りたたみ可能） ══ -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-4">
+                        <!-- ヘッダー（折りたたみ） -->
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between cursor-pointer"
+                            @click="showExamRecordList = !showExamRecordList">
+                            <span class="text-xs font-bold text-gray-500">
+                                <i class="fa-solid fa-list-ul mr-1.5"></i>記録一覧
+                                <span class="ml-1 text-gray-400">（{{ filteredExamRecords.length }}件）</span>
+                            </span>
+                            <i class="fa-solid text-gray-400 text-xs" :class="showExamRecordList ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </div>
+                        <!-- 中身 -->
+                        <div v-if="showExamRecordList">
+                            <div v-if="filteredExamRecords.length === 0" class="text-center py-12 text-gray-400">
+                                <i class="fa-solid fa-file-pen text-3xl mb-2 opacity-30"></i>
+                                <p class="text-sm">記録なし</p>
+                            </div>
+                            <div v-else class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                                <div v-for="(rec, i) in filteredExamRecords.slice().reverse()" :key="i"
+                                    class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
+                                    <!-- 左：カラーバー + 教科 -->
+                                    <div class="w-1 self-stretch rounded-full flex-shrink-0" :style="{ backgroundColor: examSubjectColor(rec.subject) }"></div>
+                                    <!-- 中央：メイン情報 -->
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-1 flex-wrap">
+                                            <span class="text-[9px] font-bold px-1 py-0.5 rounded text-white leading-tight flex-shrink-0"
+                                                :style="{ backgroundColor: examTypeColor(rec.type) }">{{ examTypeLabel(rec.type) }}</span>
+                                            <span class="text-xs font-bold leading-tight truncate" :style="{ color: examSubjectColor(rec.subject) }">{{ rec.subject }}</span>
+                                            <span v-if="rec.name" class="text-[10px] text-gray-400 truncate max-w-[80px]">{{ rec.name }}</span>
+                                            <span v-if="rec.unitName" class="text-[10px] text-purple-500 dark:text-purple-400 truncate max-w-[60px]">{{ rec.unitName }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 mt-0.5">
+                                            <span class="text-[10px] text-gray-400 font-mono">{{ rec.date.slice(5).replace('-','/') }}</span>
+                                            <span v-if="rec.nendo" class="text-[10px] text-gray-300 dark:text-gray-600">{{ rec.nendo }}年度</span>
+                                            <span v-if="rec.rank" class="text-[10px] text-gray-400">{{ rec.rank }}{{ rec.rankOf ? '/'+rec.rankOf : '' }}位</span>
+                                        </div>
+                                    </div>
+                                    <!-- 右：スコア -->
+                                    <div class="flex flex-col items-end flex-shrink-0">
+                                        <div class="flex items-baseline gap-0.5 leading-none">
+                                            <span class="text-base font-bold tabular-nums leading-none"
+                                                :class="(rec.avg !== undefined && rec.avg !== '') ? (rec.score >= rec.avg ? 'text-green-600 dark:text-green-400' : 'text-red-500') : 'text-gray-800 dark:text-gray-100'">
+                                                {{ rec.score }}</span>
+                                            <span class="text-[10px] text-gray-400 self-end">/{{ rec.maxScore }}</span>
+                                        </div>
+                                        <div v-if="rec.avg !== undefined && rec.avg !== ''" class="text-[10px] font-bold tabular-nums"
+                                            :class="rec.score - rec.avg >= 0 ? 'text-green-500' : 'text-red-400'">
+                                            {{ rec.score - rec.avg >= 0 ? '+' : '' }}{{ (rec.score - rec.avg).toFixed(1) }}
+                                        </div>
+                                    </div>
+                                    <!-- 操作ボタン -->
+                                    <div class="flex gap-0.5 flex-shrink-0">
+                                        <button @click="openEditExam(i)" class="text-gray-300 hover:text-primary transition p-1.5 rounded">
+                                            <i class="fa-solid fa-pen text-[10px]"></i>
+                                        </button>
+                                        <button @click="deleteExamRecord(filteredExamRecords.length - 1 - i)" class="text-gray-200 hover:text-red-400 transition p-1.5 rounded">
+                                            <i class="fa-solid fa-trash text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ══ 編集モーダル ══ -->
+                    <div v-if="editExamModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div class="absolute inset-0 bg-black/50" @click="editExamModal = false"></div>
+                        <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-5">
+                            <h3 class="font-bold text-sm mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                                <i class="fa-solid fa-pen text-primary"></i>記録を編集
+                            </h3>
+                            <div v-if="editExamForm" class="grid grid-cols-2 gap-3">
+                                <!-- 日付 -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">実施日</label>
+                                    <input type="date" v-model="editExamForm.date"
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <!-- 年度 -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">年度</label>
+                                    <div class="flex gap-1 items-center">
+                                        <input type="number" v-model.number="editExamForm.nendo" min="2000" max="2100"
+                                            class="flex-1 border dark:border-gray-600 rounded-lg px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                        <span class="text-xs text-gray-400 flex-shrink-0">年度</span>
+                                    </div>
+                                </div>
+                                <!-- 種別 -->
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">種別</label>
+                                    <div class="flex bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg gap-0.5">
+                                        <button v-for="t in examTypes" :key="t.id"
+                                            @click="editExamForm.type = t.id"
+                                            class="flex-1 py-1.5 rounded-md text-xs font-bold transition truncate px-1"
+                                            :class="editExamForm.type === t.id ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">
+                                            {{ t.label }}
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- テスト名 -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">テスト名</label>
+                                    <input type="text" v-model="editExamForm.name" placeholder="テスト名"
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <!-- 教科 -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">教科</label>
+                                    <input type="text" v-model="editExamForm.subject" placeholder="教科"
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <!-- 単元名 -->
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">単元名 <span class="font-normal opacity-60">（任意）</span></label>
+                                    <input type="text" v-model="editExamForm.unitName" placeholder="例：二次方程式"
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <!-- 満点 -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">満点</label>
+                                    <input type="number" v-model.number="editExamForm.maxScore" min="1"
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <!-- 点数 -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">点数</label>
+                                    <input type="number" v-model.number="editExamForm.score" min="0" :max="editExamForm.maxScore"
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <!-- 平均点 -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">平均点 <span class="font-normal opacity-60">（任意）</span></label>
+                                    <input type="number" v-model.number="editExamForm.avg" min="0" :max="editExamForm.maxScore" placeholder="—"
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <!-- 順位 -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">順位 <span class="font-normal opacity-60">（任意）</span></label>
+                                    <div class="flex items-center gap-1">
+                                        <input type="number" v-model.number="editExamForm.rank" min="1" placeholder="—"
+                                            class="w-16 border dark:border-gray-600 rounded-lg px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                        <span class="text-xs text-gray-400">位 /</span>
+                                        <input type="number" v-model.number="editExamForm.rankOf" min="1" placeholder="人数"
+                                            class="w-16 border dark:border-gray-600 rounded-lg px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                        <span class="text-xs text-gray-400">人</span>
+                                    </div>
+                                </div>
+                                <!-- メモ -->
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">メモ</label>
+                                    <textarea v-model="editExamForm.memo" rows="2" placeholder="自由記述..."
+                                        class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white resize-none"></textarea>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 mt-4">
+                                <button @click="editExamModal = false"
+                                    class="flex-1 py-2 text-gray-500 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition">
+                                    キャンセル
+                                </button>
+                                <button @click="saveEditExam"
+                                    class="flex-1 py-2 bg-primary text-white rounded-xl font-bold text-sm shadow hover:bg-primary-hover transition">
+                                    保存
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ══ 設定パネル（テスト種別・教科・テスト名の管理） ══ -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between cursor-pointer"
+                             @click="showExamSettings = !showExamSettings">
+                            <span class="text-xs font-bold text-gray-500"><i class="fa-solid fa-sliders mr-1.5"></i>テスト設定（種別・教科・テスト名の管理）</span>
+                            <i class="fa-solid text-gray-400 text-xs" :class="showExamSettings ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </div>
+                        <div v-if="showExamSettings" class="p-4 space-y-5">
+
+                            <!-- テスト種別の管理 -->
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-500 mb-2">テスト種別</h4>
+                                <div class="space-y-2 mb-3">
+                                    <div v-for="(t, i) in examTypes" :key="t.id"
+                                        class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2">
+                                        <span class="w-3 h-3 rounded-full flex-shrink-0" :style="{ backgroundColor: t.color }"></span>
+                                        <span class="text-sm font-medium flex-1">{{ t.label }}</span>
+                                        <button v-if="!t.builtin" @click="removeExamType(i)"
+                                            class="text-gray-300 hover:text-red-400 transition text-xs">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                        <span v-else class="text-[10px] text-gray-300">固定</span>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" v-model="newExamTypeName" placeholder="種別名（例：補講テスト）"
+                                        @keyup.enter="addExamType"
+                                        class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <button @click="addExamType" class="bg-primary text-white px-3 rounded-lg text-sm font-bold shadow hover:bg-primary-hover transition">追加</button>
+                                </div>
+                            </div>
+
+                            <!-- 教科の管理 -->
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-500 mb-2">テスト教科 <span class="font-normal opacity-60">（タイマーの教科とは独立）</span></h4>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <div v-for="(s, i) in examSubjects" :key="s"
+                                        class="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
+                                        <span class="text-xs font-medium">{{ s }}</span>
+                                        <button @click="removeExamSubject(i)" class="text-gray-400 hover:text-red-400 transition ml-0.5">
+                                            <i class="fa-solid fa-xmark text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" v-model="newExamSubjectName" placeholder="新しい教科名"
+                                        @keyup.enter="addExamSubject"
+                                        class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <button @click="addExamSubject" class="bg-primary text-white px-3 rounded-lg text-sm font-bold shadow hover:bg-primary-hover transition">追加</button>
+                                </div>
+                            </div>
+
+                            <!-- テスト名の管理 -->
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-500 mb-2">テスト名プリセット</h4>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <div v-for="(n, i) in examNamePresets" :key="n"
+                                        class="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
+                                        <span class="text-xs font-medium">{{ n }}</span>
+                                        <button @click="removeExamNamePreset(i)" class="text-gray-400 hover:text-red-400 transition ml-0.5">
+                                            <i class="fa-solid fa-xmark text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" v-model="newExamNamePreset" placeholder="例：学期末テスト"
+                                        @keyup.enter="addExamNamePreset"
+                                        class="flex-1 border dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 dark:text-white">
+                                    <button @click="addExamNamePreset" class="bg-primary text-white px-3 rounded-lg text-sm font-bold shadow hover:bg-primary-hover transition">追加</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 4. SETTINGS TAB -->
                 <div v-if="currentTab === 'settings'" class="max-w-xl mx-auto pb-8 w-full">
                     <header class="mb-6"><h2 class="text-2xl font-bold">設定</h2></header>
 
                     <!-- 1. 外観設定 -->
                     <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-4">
-                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
-                            <i class="fa-solid fa-palette mr-1.5 text-primary"></i>外観設定
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between cursor-pointer"
+                            @click="showSettingAppearance = !showSettingAppearance">
+                            <span><i class="fa-solid fa-palette mr-1.5 text-primary"></i>外観設定</span>
+                            <i class="fa-solid text-gray-400 text-xs" :class="showSettingAppearance ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                         </div>
-                        <div class="px-4 py-3 space-y-3">
+                        <div v-show="showSettingAppearance" class="px-4 py-3 space-y-3">
                             <!-- テーマモード：横1行セグメント -->
                             <div class="flex items-center justify-between gap-2">
                                 <span class="text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">テーマ</span>
@@ -947,10 +1500,12 @@
 
                     <!-- 3. 通知設定（スイッチ方式 + 通知音統合） -->
                     <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-4">
-                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
-                            <i class="fa-solid fa-bell mr-1.5 text-primary"></i>通知設定
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between cursor-pointer"
+                            @click="showSettingNotif = !showSettingNotif">
+                            <span><i class="fa-solid fa-bell mr-1.5 text-primary"></i>通知設定</span>
+                            <i class="fa-solid text-gray-400 text-xs" :class="showSettingNotif ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                         </div>
-                        <div class="px-4 py-3 space-y-0 divide-y divide-gray-100 dark:divide-gray-700">
+                        <div v-show="showSettingNotif" class="px-4 py-3 space-y-0 divide-y divide-gray-100 dark:divide-gray-700">
                             <!-- 音 -->
                             <div class="flex items-center justify-between py-2.5">
                                 <div class="flex items-center gap-2">
@@ -1003,10 +1558,12 @@
 
                     <!-- 4. アニメーション設定 -->
                     <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-4">
-                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50">
-                            <i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-primary"></i>アニメーション設定
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between cursor-pointer"
+                            @click="showSettingAnimation = !showSettingAnimation">
+                            <span><i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-primary"></i>アニメーション設定</span>
+                            <i class="fa-solid text-gray-400 text-xs" :class="showSettingAnimation ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                         </div>
-                        <div class="px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+                        <div v-show="showSettingAnimation" class="px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
                             <div class="flex-shrink-0">
                                 <h4 class="font-bold text-sm">タブ切り替え</h4>
                                 <p class="text-xs text-gray-400">画面切り替え時のエフェクト</p>
@@ -1020,15 +1577,79 @@
                         </div>
                     </section>
 
+                    <!-- 4c. タブ管理 -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-4">
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between cursor-pointer"
+                            @click="showSettingTabs = !showSettingTabs">
+                            <span><i class="fa-solid fa-table-columns mr-1.5 text-primary"></i>タブの表示・順番</span>
+                            <i class="fa-solid text-gray-400 text-xs" :class="showSettingTabs ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </div>
+                        <div v-show="showSettingTabs" class="p-4">
+                            <p class="text-xs text-gray-400 mb-3">ドラッグで並び替え、トグルで表示/非表示を切り替えられます。非表示タブは「開く」から直接アクセスできます。</p>
+                            <div class="space-y-2">
+                                <div v-for="(tc, i) in tabConfig" :key="tc.id"
+                                    class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"
+                                    :class="[tabDragIdx === i ? 'ring-2 ring-primary' : '', getTabInfo(tc.id)?.required ? '' : 'cursor-grab active:cursor-grabbing']"
+                                    :draggable="!getTabInfo(tc.id)?.required"
+                                    @dragstart="tabDragStart(i)"
+                                    @dragover="tabDragOver(i, $event)"
+                                    @drop="tabDrop(i)">
+                                    <i class="fa-solid fa-grip-vertical text-gray-300 dark:text-gray-600 text-xs flex-shrink-0"></i>
+                                    <i :class="'fa-solid ' + (getTabInfo(tc.id)?.icon || 'fa-circle') + ' text-primary text-sm w-4 text-center flex-shrink-0'"></i>
+                                    <span class="text-sm font-medium flex-1">{{ getTabInfo(tc.id)?.label || tc.id }}</span>
+                                    <!-- 非表示タブに「開く」ボタン -->
+                                    <button v-if="!tc.visible" @click.stop="openHiddenTab(tc.id)"
+                                        class="flex items-center gap-1 text-xs font-bold text-primary bg-primary-light dark:bg-primary/20 px-2.5 py-1 rounded-lg hover:bg-primary hover:text-white transition flex-shrink-0 mr-1">
+                                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> 開く
+                                    </button>
+                                    <span v-if="getTabInfo(tc.id)?.required" class="text-[10px] text-gray-300 dark:text-gray-600 flex-shrink-0">固定</span>
+                                    <!-- トグル -->
+                                    <button v-else @click="toggleTabVisible(tc.id)"
+                                        class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0"
+                                        :class="tc.visible ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'">
+                                        <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition"
+                                            :class="tc.visible ? 'translate-x-4' : 'translate-x-1'"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 4b. 週開始曜日設定 -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-4">
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between cursor-pointer"
+                            @click="showSettingWeek = !showSettingWeek">
+                            <span><i class="fa-solid fa-calendar-week mr-1.5 text-primary"></i>週レポートの表示</span>
+                            <i class="fa-solid text-gray-400 text-xs" :class="showSettingWeek ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </div>
+                        <div v-show="showSettingWeek" class="px-4 py-3 flex items-center justify-between gap-3">
+                            <div>
+                                <h4 class="font-bold text-sm">週の始まり</h4>
+                                <p class="text-xs text-gray-400">レポートタブに反映されます</p>
+                            </div>
+                            <div class="flex bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg gap-0.5 flex-shrink-0">
+                                <button @click="weekStartDay = 0; saveSettings(); loadWeeklyReport()"
+                                    class="px-3 py-1.5 rounded-md text-xs font-bold transition"
+                                    :class="weekStartDay === 0 ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">
+                                    <span class="text-red-400">日</span>曜
+                                </button>
+                                <button @click="weekStartDay = 1; saveSettings(); loadWeeklyReport()"
+                                    class="px-3 py-1.5 rounded-md text-xs font-bold transition"
+                                    :class="weekStartDay === 1 ? 'bg-white dark:bg-gray-600 shadow text-primary' : 'text-gray-400'">
+                                    月曜
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- 6. アカウント設定 -->
                     <section v-if="user && !isGuestMode" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 font-bold text-sm bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between cursor-pointer"
+                            @click="showSettingAccount = !showSettingAccount">
                             <span><i class="fa-solid fa-user-gear mr-2 text-primary"></i>アカウント設定</span>
-                            <button @click="showAccountSettings = !showAccountSettings" class="text-xs text-primary hover:underline">
-                                {{ showAccountSettings ? '閉じる' : '開く' }}
-                            </button>
+                            <i class="fa-solid text-gray-400 text-xs" :class="showSettingAccount ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                         </div>
-                        <div v-if="showAccountSettings" class="p-6 space-y-5">
+                        <div v-show="showSettingAccount" class="p-6 space-y-5">
                             <p class="text-xs text-gray-400">ログイン中: {{ user.email || user.displayName || user.uid.slice(0,8)+'...' }}</p>
                             <p class="text-xs text-gray-400">連携済み: 
                                 <span v-for="p in linkedProviders" :key="p" class="inline-block bg-gray-100 dark:bg-gray-700 rounded px-1.5 py-0.5 text-[10px] font-mono mr-1">{{ p }}</span>
@@ -1196,6 +1817,64 @@
                 const user = ref(null);
                 const isGuestMode = ref(false);
                 const isOnline = ref(navigator.onLine);
+                const weekStartDay = ref(1);
+
+                // ── タブ設定 ──
+                const ALL_TABS = [
+                    { id: 'timer',    label: '記録',      icon: 'fa-stopwatch',    required: true  },
+                    { id: 'tasks',    label: 'Todo',      icon: 'fa-list-check',   required: false },
+                    { id: 'report',   label: 'レポート',  icon: 'fa-chart-simple', required: true  },
+                    { id: 'exam',     label: 'テスト',    icon: 'fa-file-pen',     required: false },
+                    { id: 'settings', label: '設定',      icon: 'fa-gear',         required: true  },
+                ];
+                // tabConfig: [{ id, visible }] の順番付きリスト
+                const tabConfig = ref(ALL_TABS.map(t => ({ id: t.id, visible: true })));
+
+                const visibleTabs = computed(() =>
+                    tabConfig.value
+                        .filter(c => c.visible)
+                        .map(c => ALL_TABS.find(t => t.id === c.id))
+                        .filter(Boolean)
+                );
+                const hiddenTabs = computed(() =>
+                    tabConfig.value
+                        .filter(c => !c.visible)
+                        .map(c => ALL_TABS.find(t => t.id === c.id))
+                        .filter(Boolean)
+                );
+                const getTabInfo = (id) => ALL_TABS.find(t => t.id === id);
+
+                const openHiddenTab = (id) => { currentTab.value = id; };
+
+                const moveTab = (fromIdx, toIdx) => {
+                    if (toIdx < 0 || toIdx >= tabConfig.value.length) return;
+                    const arr = [...tabConfig.value];
+                    const [item] = arr.splice(fromIdx, 1);
+                    arr.splice(toIdx, 0, item);
+                    tabConfig.value = arr;
+                    saveSettings();
+                };
+                const toggleTabVisible = (id) => {
+                    const info = ALL_TABS.find(t => t.id === id);
+                    if (info?.required) return; // required タブは非表示にできない
+                    const idx = tabConfig.value.findIndex(c => c.id === id);
+                    if (idx >= 0) {
+                        tabConfig.value[idx] = { ...tabConfig.value[idx], visible: !tabConfig.value[idx].visible };
+                        // 非表示タブを表示中なら別タブに切り替え
+                        if (!tabConfig.value[idx].visible && currentTab.value === id) {
+                            currentTab.value = visibleTabs.value[0]?.id || 'timer';
+                        }
+                        saveSettings();
+                    }
+                };
+                // tabDrag
+                const tabDragIdx = ref(null);
+                const tabDragStart = (i) => { tabDragIdx.value = i; };
+                const tabDragOver = (i, e) => { e.preventDefault(); };
+                const tabDrop = (i) => {
+                    if (tabDragIdx.value !== null && tabDragIdx.value !== i) moveTab(tabDragIdx.value, i);
+                    tabDragIdx.value = null;
+                }; // 0=日曜始まり, 1=月曜始まり
 
                 // ── オフライン同期キュー ──
                 const SYNC_QUEUE_KEY = 'studymate_sync_queue';
@@ -1347,6 +2026,7 @@
                 const elapsedTime = ref(0);
                 const countdownDuration = ref(0);
                 const pauseStartTime = ref(0);
+                const pauseWallStart  = ref(null); // 一時停止が始まった実時刻
                 let timerInterval = null;
                 const breakMode = ref(false);
                 
@@ -1474,6 +2154,9 @@
 
                     // 起動時にも同期（前回オフラインだったかもしれない）
                     if (isOnline.value) setTimeout(() => flushSyncQueue(), 3000);
+                    // テスト記録読み込み
+                    loadExamData();
+                    if (isOnline.value) setTimeout(() => loadExamFromFirebase(), 2000);
                     document.addEventListener('visibilitychange', handleVisibilityChange);
 
                     const seen = localStorage.getItem('studyMate_seenTutorial');
@@ -1739,7 +2422,7 @@
                 };
                 
                 const loadSettings = async () => {
-                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', themeMode: 'system', notificationMode: 'sound_vibrate', notifSound: true, notifVibrate: true, notifFlash: false, tabAnimation: 'fade', subjectColors: {} };
+                    let d = { subjects: subjects.value, timerMode: 'countup', themeColor: '#2563eb', themeMode: 'system', notificationMode: 'sound_vibrate', notifSound: true, notifVibrate: true, notifFlash: false, tabAnimation: 'fade', weekStartDay: 1, subjectColors: {} };
                     try {
                         if(isGuestMode.value) {
                             const s = localStorage.getItem('studyMate_settings');
@@ -1759,6 +2442,14 @@
                     notifVibrate.value = d.notifVibrate !== undefined ? d.notifVibrate : true;
                     notifFlash.value = d.notifFlash !== undefined ? d.notifFlash : false;
                     tabAnimation.value = d.tabAnimation || 'fade';
+                    weekStartDay.value = d.weekStartDay !== undefined ? d.weekStartDay : 1;
+                    if (d.tabConfig) {
+                        // 新しく追加されたタブを末尾に補完
+                        const existingIds = d.tabConfig.map(c => c.id);
+                        const merged = [...d.tabConfig];
+                        ALL_TABS.forEach(t => { if (!existingIds.includes(t.id)) merged.push({ id: t.id, visible: true }); });
+                        tabConfig.value = merged;
+                    }
                     subjectColors.value = d.subjectColors || {};
                     applyTheme();
                 };
@@ -1766,6 +2457,8 @@
                     const d = { 
                         subjects: subjects.value, 
                         timerMode: timerMode.value, 
+                        weekStartDay: weekStartDay.value,
+                        tabConfig: tabConfig.value,
                         themeColor: themeColor.value, 
                         themeMode: themeMode.value,
                         notificationMode: notificationMode.value,
@@ -1903,12 +2596,16 @@
                     isPaused.value = true;
                     isTimerRunning.value = false;
                     pauseStartTime.value = Date.now();
-                    releaseWakeLock(); // ★停止中はスリープ許可
+                    releaseWakeLock();
 
-                    // ★一時停止状態保存
+                    // 一時停止前の勉強セグメントを中間記録（まだ保存しない・後で上書き）
+                    // pauseWallStart: 一時停止が始まった実時刻（resume 時に休憩セグメントを確定するために使う）
+                    pauseWallStart.value = new Date().toISOString();
+
                     const saved = JSON.parse(localStorage.getItem(TIMER_STATE_KEY) || '{}');
                     saved.isPaused = true;
                     saved.pauseStartTime = pauseStartTime.value;
+                    saved.pauseWallStart = pauseWallStart.value;
                     localStorage.setItem(TIMER_STATE_KEY, JSON.stringify(saved));
                 };
 
@@ -1918,14 +2615,36 @@
                     startTime.value += pausedDuration;
                     isPaused.value = false;
                     isTimerRunning.value = true;
-                    
-                    requestWakeLock(); // ★スリープ防止
 
-                    // ★再開状態保存
+                    // ── 一時停止セグメントをセッションリストに記録 ──
+                    if (pauseWallStart.value) {
+                        const pStart = new Date(pauseWallStart.value);
+                        const pEnd   = new Date(); // resume した実時刻
+                        const pDur   = Math.round((pEnd - pStart) / 1000);
+                        if (pDur > 0) {
+                            if (!todayLog.value.sessions) todayLog.value.sessions = [];
+                            todayLog.value.sessions.push({
+                                subject:   '__pause__',
+                                start:     pStart.toISOString(),
+                                end:       pEnd.toISOString(),
+                                duration:  pDur,
+                                isPause:   true,
+                            });
+                            saveData(); // fire-and-forget
+                        }
+                        pauseWallStart.value = null;
+                    }
+                    // 再開後の新 wallStart を記録（このセグメントは stop 時に確定する）
+                    sessionWallStart.value = new Date().toISOString();
+
+                    requestWakeLock();
+
                     const saved = JSON.parse(localStorage.getItem(TIMER_STATE_KEY) || '{}');
                     saved.isPaused = false;
                     saved.startTime = startTime.value;
+                    saved.wallStart = sessionWallStart.value;
                     delete saved.pauseStartTime;
+                    delete saved.pauseWallStart;
                     localStorage.setItem(TIMER_STATE_KEY, JSON.stringify(saved));
 
                     timerInterval = setInterval(() => {
@@ -2195,6 +2914,7 @@
 
                 // セッションクリック処理（モードによって動作が変わる）
                 const onSessionClick = (dateStr, dayIdx, sessionIdx, session) => {
+                    if (session.isPause || session.subject === '__pause__') return; // 一時停止セグメントはクリック無効
                     if (reportMode.value === 'view') {
                         sessionDetailPopup.value = { ...session };
                     } else if (reportMode.value === 'edit') {
@@ -2501,21 +3221,405 @@
                 const shiftWeek = (d) => { 
                     const n=new Date(reportWeekStart.value); 
                     n.setDate(n.getDate()+d); 
-                    // 未来週への移動を禁止
                     if(d > 0) {
                         const today = new Date();
-                        const weekStart = new Date(n);
-                        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-                        if(weekStart > today) return;
+                        if(n > today) return;
                     }
                     reportWeekStart.value=n; 
                     loadWeeklyReport(); 
                 };
+                // ══════════════════════════════════════════════
+                // テスト記録機能 v2
+                // ══════════════════════════════════════════════
+                const EXAM_KEY = 'studyMate_examRecords';
+                const EXAM_META_KEY = 'studyMate_examMeta';
+
+                // デフォルト種別（builtin=trueは削除不可）
+                const defaultExamTypes = [
+                    { id: 'major', label: '大テスト', color: '#2563eb', builtin: true },
+                    { id: 'minor', label: '小テスト', color: '#7c3aed', builtin: true },
+                ];
+                const defaultExamSubjects = ['国語','数学','英語','理科','社会','保健体育','音楽','美術','技術'];
+                const defaultExamNamePresets = ['前期中間','前期期末','後期中間','後期期末','単元末テスト','小テスト'];
+
+                const examRecords    = ref([]);
+                const examTypes      = ref(defaultExamTypes.map(t => ({ ...t })));
+                const examSubjects   = ref([...defaultExamSubjects]);
+                const examNamePresets = ref([...defaultExamNamePresets]);
+
+                const showExamForm     = ref(false);
+                const showExamSettings   = ref(false);
+                const showExamRecordList = ref(true);
+                // 設定セクション折り畳み（すべてデフォルトで開く）
+                const showSettingAppearance   = ref(true);
+                const showSettingNotif        = ref(true);
+                const showSettingAnimation    = ref(true);
+                const showSettingTabs         = ref(true);
+                const showSettingWeek         = ref(true);
+                const showSettingAccount      = ref(true);
+                const examFilterType    = ref('');
+                const examFilterSubject = ref('');
+                const examFilterName    = ref('');
+
+                const newExamTypeName    = ref('');
+                const newExamSubjectName = ref('');
+                const newExamNamePreset  = ref('');
+
+                // フォーム初期値
+                // 日付→年度を計算（4月始まり）
+                const dateToNendo = (dateStr) => {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr + 'T12:00:00');
+                    return d.getMonth() < 3 ? d.getFullYear() - 1 : d.getFullYear();
+                };
+
+                const makeEmptyExamForm = () => {
+                    const today = new Date().toLocaleDateString('en-CA');
+                    return {
+                        date: today,
+                        nendo: String(dateToNendo(today)), // 年度（手動変更可）
+                        nendoCustom: false,                // 手動変更フラグ
+                        type: 'major',
+                        name: '',
+                        unitName: '',   // 単元名（小テスト時）
+                        subject: '',
+                        maxScore: 100,
+                        score: '',
+                        avg: '',
+                        rank: '',
+                        rankOf: '',
+                        memo: '',
+                        customName: false,
+                        customSubject: false,
+                        bulkMode: false,
+                        bulkEntries: [], // [{ subject, score, maxScore, avg, rank, rankOf }]
+                    };
+                };
+                const examForm = ref(makeEmptyExamForm());
+                const resetExamForm = () => { examForm.value = makeEmptyExamForm(); };
+
+                // テスト名ドロップダウン = プリセット + 過去に使った名前（重複なし）
+                const examNameList = computed(() => {
+                    const used = [...new Set(examRecords.value.map(r => r.name).filter(Boolean))];
+                    const merged = [...examNamePresets.value];
+                    used.forEach(u => { if (!merged.includes(u)) merged.push(u); });
+                    return merged;
+                });
+
+                // フィルター後の記録
+                const filteredExamRecords = computed(() => {
+                    return examRecords.value.filter(r => {
+                        if (examFilterType.value    && r.type    !== examFilterType.value)    return false;
+                        if (examFilterSubject.value && r.subject !== examFilterSubject.value) return false;
+                        if (examFilterName.value    && r.name    !== examFilterName.value)    return false;
+                        return true;
+                    });
+                });
+
+                // フィルター後に存在する教科一覧
+                const examRecordSubjects = computed(() =>
+                    [...new Set(examRecords.value.map(r => r.subject))]
+                );
+                // フィルター後に存在するテスト名一覧
+                const examRecordNames = computed(() =>
+                    [...new Set(examRecords.value.map(r => r.name).filter(Boolean))]
+                );
+
+                // 種別ごとにグラフデータを作成（フィルター適用済み）
+                const examTypesWithData = computed(() => {
+                    return examTypes.value
+                        .map(t => {
+                            const recs = filteredExamRecords.value.filter(r => r.type === t.id);
+                            const withAvg = recs.filter(r => r.avg !== undefined && r.avg !== '');
+                            const avgLinePct = withAvg.length > 0
+                                ? withAvg.reduce((s, r) => s + (Number(r.avg) / r.maxScore), 0) / withAvg.length * 100
+                                : null;
+                            return { ...t, records: recs, avgLinePct };
+                        })
+                        .filter(t => t.records.length > 0);
+                });
+
+                // バー色：平均との比較で色分け、平均なしは種別色
+                const examBarColor = (rec, fallbackColor) => {
+                    if (rec.avg !== undefined && rec.avg !== '') {
+                        return Number(rec.score) >= Number(rec.avg) ? '#4ade80' : '#f87171';
+                    }
+                    return fallbackColor || '#2563eb';
+                };
+
+                // 教科カラー（ハッシュベース）
+                const examSubjectColor = (sub) => {
+                    const colors = ['#2563eb','#7c3aed','#db2777','#059669','#d97706','#dc2626','#0284c7','#65a30d'];
+                    let h = 0;
+                    for (let i = 0; i < (sub||'').length; i++) h = (h * 31 + sub.charCodeAt(i)) % colors.length;
+                    return colors[h];
+                };
+
+                // 種別のcolor/labelをidから取得
+                const examTypeColor = (id) => {
+                    const t = examTypes.value.find(x => x.id === id);
+                    return t ? t.color : '#9ca3af';
+                };
+                const examTypeLabel = (id) => {
+                    const t = examTypes.value.find(x => x.id === id);
+                    return t ? t.label : id || '—';
+                };
+
+                // ──────── 永続化 ────────
+                const loadExamData = () => {
+                    try {
+                        const raw = localStorage.getItem(EXAM_KEY);
+                        if (raw) examRecords.value = JSON.parse(raw);
+                        const meta = localStorage.getItem(EXAM_META_KEY);
+                        if (meta) {
+                            const m = JSON.parse(meta);
+                            if (m.types)        examTypes.value        = m.types;
+                            if (m.subjects)     examSubjects.value     = m.subjects;
+                            if (m.namePresets)  examNamePresets.value  = m.namePresets;
+                        }
+                    } catch(e) {}
+                };
+
+                const saveMeta = () => {
+                    localStorage.setItem(EXAM_META_KEY, JSON.stringify({
+                        types: examTypes.value,
+                        subjects: examSubjects.value,
+                        namePresets: examNamePresets.value,
+                    }));
+                };
+
+                const saveExamData = async () => {
+                    localStorage.setItem(EXAM_KEY, JSON.stringify(examRecords.value));
+                    saveMeta();
+                    if (!isGuestMode.value && user.value && isOnline.value) {
+                        try {
+                            await setDoc(doc(db, 'users', user.value.uid, 'settings', 'examData'), {
+                                records: examRecords.value,
+                                types: examTypes.value,
+                                subjects: examSubjects.value,
+                                namePresets: examNamePresets.value,
+                            }, { merge: true });
+                        } catch(e) {}
+                    }
+                };
+
+                const saveExamRecord = async () => {
+                    const f = examForm.value;
+                    if (!f.date) return;
+
+                    const addSubjectAuto = (subj) => {
+                        if (subj && !examSubjects.value.includes(subj)) examSubjects.value.push(subj);
+                    };
+
+                    if (f.bulkMode && f.bulkEntries.length > 0) {
+                        // 大テスト一括登録
+                        if (!f.name) return;
+                        for (const entry of f.bulkEntries) {
+                            if (!entry.subject || entry.score === '') continue;
+                            examRecords.value.push({
+                                date: f.date,
+                                nendo: f.nendo || String(dateToNendo(f.date)),
+                                type: f.type || 'major',
+                                name: f.name,
+                                unitName: '',
+                                subject: entry.subject,
+                                score: Number(entry.score),
+                                maxScore: entry.maxScore !== '' && entry.maxScore !== undefined ? Number(entry.maxScore) : Number(f.maxScore) || 100,
+                                avg: entry.avg !== '' ? Number(entry.avg) : undefined,
+                                rank: entry.rank !== '' ? Number(entry.rank) : undefined,
+                                rankOf: entry.rankOf !== '' ? Number(entry.rankOf) : undefined,
+                                memo: f.memo,
+                            });
+                            addSubjectAuto(entry.subject);
+                        }
+                    } else {
+                        // 通常登録
+                        if (!f.subject || f.score === '') return;
+                        examRecords.value.push({
+                            date: f.date,
+                            nendo: f.nendo || String(dateToNendo(f.date)),
+                            type: f.type || 'major',
+                            name: f.name,
+                            unitName: f.unitName || '',
+                            subject: f.subject,
+                            score: Number(f.score),
+                            maxScore: Number(f.maxScore) || 100,
+                            avg: f.avg !== '' ? Number(f.avg) : undefined,
+                            rank: f.rank !== '' ? Number(f.rank) : undefined,
+                            rankOf: f.rankOf !== '' ? Number(f.rankOf) : undefined,
+                            memo: f.memo,
+                        });
+                        addSubjectAuto(f.subject);
+                    }
+                    examRecords.value.sort((a, b) => a.date.localeCompare(b.date));
+                    await saveExamData();
+                    showExamForm.value = false;
+                    resetExamForm();
+                };
+
+                // 日付変更時に年度を自動更新（手動変更していない場合）
+                const onExamDateChange = () => {
+                    if (!examForm.value.nendoCustom) {
+                        examForm.value.nendo = String(dateToNendo(examForm.value.date));
+                    }
+                };
+
+                // 一括登録用：行を追加
+                const addBulkEntry = () => {
+                    examForm.value.bulkEntries.push({ subject: '', score: '', maxScore: '', avg: '', rank: '', rankOf: '' });
+                };
+                const removeBulkEntry = (i) => {
+                    examForm.value.bulkEntries.splice(i, 1);
+                };
+                // 大テストモード初期化：教科リストから自動補完
+                const initBulkMode = () => {
+                    if (examForm.value.bulkMode && examForm.value.bulkEntries.length === 0) {
+                        examSubjects.value.forEach(s => {
+                            examForm.value.bulkEntries.push({ subject: s, score: '', maxScore: '', avg: '', rank: '', rankOf: '' });
+                        });
+                        if (examForm.value.bulkEntries.length === 0) {
+                            examForm.value.bulkEntries.push({ subject: '', score: '', maxScore: '', avg: '', rank: '', rankOf: '' });
+                        }
+                    }
+                };
+
+                // ── 編集モーダル ──
+                const editExamModal = ref(false);
+                const editExamIdx   = ref(null); // examRecords 内の index
+                const editExamForm  = ref(null); // 編集中のコピー
+
+                const openEditExam = (filteredIdx) => {
+                    // filteredIdx は filteredExamRecords 内（新→旧順なので逆算）
+                    const actualFilteredIdx = filteredExamRecords.value.length - 1 - filteredIdx;
+                    const rec = filteredExamRecords.value[actualFilteredIdx];
+                    const origIdx = examRecords.value.findIndex(r =>
+                        r.date === rec.date && r.subject === rec.subject &&
+                        r.score === rec.score && r.name === rec.name && r.type === rec.type);
+                    if (origIdx < 0) return;
+                    editExamIdx.value = origIdx;
+                    editExamForm.value = { ...JSON.parse(JSON.stringify(rec)) };
+                    // avg/rank/rankOf が undefined → ''
+                    if (editExamForm.value.avg === undefined) editExamForm.value.avg = '';
+                    if (editExamForm.value.rank === undefined) editExamForm.value.rank = '';
+                    if (editExamForm.value.rankOf === undefined) editExamForm.value.rankOf = '';
+                    if (!editExamForm.value.nendo) editExamForm.value.nendo = String(dateToNendo(editExamForm.value.date));
+                    editExamModal.value = true;
+                };
+
+                const saveEditExam = async () => {
+                    if (editExamIdx.value === null) return;
+                    const f = editExamForm.value;
+                    examRecords.value[editExamIdx.value] = {
+                        ...examRecords.value[editExamIdx.value],
+                        date:     f.date,
+                        nendo:    f.nendo || String(dateToNendo(f.date)),
+                        type:     f.type,
+                        name:     f.name,
+                        unitName: f.unitName || '',
+                        subject:  f.subject,
+                        score:    Number(f.score),
+                        maxScore: Number(f.maxScore) || 100,
+                        avg:      f.avg !== '' ? Number(f.avg) : undefined,
+                        rank:     f.rank !== '' ? Number(f.rank) : undefined,
+                        rankOf:   f.rankOf !== '' ? Number(f.rankOf) : undefined,
+                        memo:     f.memo,
+                    };
+                    examRecords.value.sort((a, b) => a.date.localeCompare(b.date));
+                    await saveExamData();
+                    editExamModal.value = false;
+                    editExamIdx.value   = null;
+                    editExamForm.value  = null;
+                };
+
+                const deleteExamRecord = async (idx) => {
+                    if (!confirm('この記録を削除しますか？')) return;
+                    // filteredExamRecords 内の idx → examRecords 内の実際のインデックスを特定
+                    const rec = filteredExamRecords.value[idx];
+                    const origIdx = examRecords.value.findIndex(r =>
+                        r.date === rec.date && r.subject === rec.subject &&
+                        r.score === rec.score && r.name === rec.name && r.type === rec.type);
+                    if (origIdx >= 0) examRecords.value.splice(origIdx, 1);
+                    await saveExamData();
+                };
+
+                // 種別管理
+                const addExamType = () => {
+                    const name = newExamTypeName.value.trim();
+                    if (!name) return;
+                    const id = 'custom_' + Date.now();
+                    const colors = ['#0891b2','#ca8a04','#15803d','#be123c','#6d28d9'];
+                    const color = colors[examTypes.value.length % colors.length];
+                    examTypes.value.push({ id, label: name, color, builtin: false });
+                    newExamTypeName.value = '';
+                    saveMeta();
+                };
+                const removeExamType = (i) => {
+                    if (examTypes.value[i].builtin) return;
+                    examTypes.value.splice(i, 1);
+                    saveMeta();
+                };
+
+                // 教科管理
+                const addExamSubject = () => {
+                    const name = newExamSubjectName.value.trim();
+                    if (!name || examSubjects.value.includes(name)) return;
+                    examSubjects.value.push(name);
+                    newExamSubjectName.value = '';
+                    saveMeta();
+                };
+                const removeExamSubject = (i) => {
+                    examSubjects.value.splice(i, 1);
+                    saveMeta();
+                };
+
+                // テスト名プリセット管理
+                const addExamNamePreset = () => {
+                    const name = newExamNamePreset.value.trim();
+                    if (!name || examNamePresets.value.includes(name)) return;
+                    examNamePresets.value.push(name);
+                    newExamNamePreset.value = '';
+                    saveMeta();
+                };
+                const removeExamNamePreset = (i) => {
+                    examNamePresets.value.splice(i, 1);
+                    saveMeta();
+                };
+
+                const loadExamFromFirebase = async () => {
+                    if (!user.value || isGuestMode.value || !isOnline.value) return;
+                    try {
+                        const s = await getDoc(doc(db, 'users', user.value.uid, 'settings', 'examData'));
+                        if (s.exists()) {
+                            const d = s.data();
+                            if (d.records)      examRecords.value     = d.records;
+                            if (d.types)        examTypes.value       = d.types;
+                            if (d.subjects)     examSubjects.value    = d.subjects;
+                            if (d.namePresets)  examNamePresets.value = d.namePresets;
+                            localStorage.setItem(EXAM_KEY, JSON.stringify(examRecords.value));
+                            saveMeta();
+                        }
+                    } catch(e) {}
+                };
+
+
+                // タイムライン：本体スクロール時にヘッダーの横位置を同期
+                const syncHeaderScroll = (e) => {
+                    const header = document.getElementById('timeline-header');
+                    if (header) header.scrollLeft = e.target.scrollLeft;
+                };
+
                 const calculateDailyStudyTotal = (subs) => {
                     return Object.entries(subs || {}).reduce((acc, [k, v]) => k !== '休憩' ? acc + v : acc, 0);
                 };
                 const loadWeeklyReport = async () => {
-                    const start=new Date(reportWeekStart.value); start.setDate(start.getDate()-start.getDay()); reportWeekStart.value=new Date(start);
+                    const start=new Date(reportWeekStart.value);
+                    // 週開始曜日に合わせてずらす (0=日, 1=月)
+                    const dow = start.getDay(); // 0=日〜6=土
+                    const offset = weekStartDay.value === 1
+                        ? (dow === 0 ? -6 : 1 - dow)   // 月曜始まり
+                        : -dow;                           // 日曜始まり
+                    start.setDate(start.getDate() + offset);
+                    reportWeekStart.value=new Date(start);
                     const dates=[]; const promises=[];
                     for(let i=0;i<7;i++){
                         const d=new Date(start); d.setDate(start.getDate()+i); const s=d.toLocaleDateString('en-CA'); dates.push(s);
@@ -2573,15 +3677,26 @@
                 const formatHours = (sec) => (sec/3600).toFixed(1);
 
                 return {
-                    user, isGuestMode, isAuthLoading, isOnline, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects, getTodayStr,
+                    user, isGuestMode, isAuthLoading, isOnline, weekStartDay, hardReset, login, startGuest, logout, guestLogout, currentTab, subjects, getTodayStr,
                     loginWithEmail, resetPassword, emailLoginForm, emailAuthError, showEmailAuth,
                     showAccountSettings, linkEmailForm, linkEmailError, linkGoogle, linkEmail, accountMessage, linkedProviders,
-                    isTimerRunning, isPaused, timerMode, breakMode, handleSubjectClick, currentSubject, stopTimer, cancelSession, pauseTimer, resumeTimer, formattedTime, todayLog, formatSeconds,
+                    isTimerRunning, isPaused, timerMode, breakMode, handleSubjectClick, currentSubject, stopTimer, cancelSession, pauseTimer, resumeTimer, formattedTime, todayLog, formatSeconds, pauseWallStart,
                     showCountdownModal, targetSubject, customCountdownMin, setCountdown, adjustCustomTime, startCountdownSession, openCountdownModal,
                     isAlarmRinging, stopAlarm, notificationMode, setNotificationMode,
                     tasks, newTaskTitle, showCompletedTasks, filteredTasks, createTask, deleteTask, toggleTaskStatus, updateTaskTitle,
                     tokenExpired, refreshToken,
-                    weekRangeLabel, shiftWeek, loadWeeklyReport, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
+                    weekRangeLabel, shiftWeek, loadWeeklyReport, syncHeaderScroll,
+                    examRecords, examTypes, examSubjects, examNamePresets, examNameList,
+                    examForm, showExamForm, showExamSettings, showExamRecordList, resetExamForm, onExamDateChange,
+                    editExamModal, editExamIdx, editExamForm, openEditExam, saveEditExam,
+                    dateToNendo,
+                    examFilterType, examFilterSubject, examFilterName,
+                    filteredExamRecords, examRecordSubjects, examRecordNames, examTypesWithData,
+                    newExamTypeName, newExamSubjectName, newExamNamePreset,
+                    saveExamRecord, deleteExamRecord, addBulkEntry, removeBulkEntry, initBulkMode,
+                    addExamType, removeExamType, addExamSubject, removeExamSubject,
+                    addExamNamePreset, removeExamNamePreset,
+                    examBarColor, examSubjectColor, examTypeColor, examTypeLabel, weeklyTotal, formatHours, selectedReportDate, selectedReportDetail, calculateDailyStudyTotal,
                     selectedReportSessions, weeklyDates, weeklyData, selectReportDay, deleteSession,
                     isCurrentWeek, reportMonthValue, todayMonthValue, jumpToMonth,
                     reportStartHour, reportEndHour, reportVisibleHours, visibleHourTicks,
@@ -2591,6 +3706,7 @@
                     deleteSessionFromReport, editSessionFromReport, confirmEditSession, editingSession, editingStartTime, editingEndTime, editingDurationMin, onEditTimeChange,
                     newSubjectName, addSubject, removeSubject, saveSettings, handleAudioUpload, testAudio, changeTimerMode,
                     showEditLog, updateSubjectTime,
+                    showSettingAppearance, showSettingNotif, showSettingAnimation, showSettingTabs, showSettingWeek, showSettingAccount,
                     showSubjectEditor, subjectDragStart, subjectDragOver, subjectDrop, subjectDragEnd,
                     notifSound, notifVibrate, notifFlash,
                     silentRefreshToken,
@@ -2600,7 +3716,9 @@
                     showTutorial, tutorialStep, tutorialSteps, 
                     nextTutorial:()=>{if(tutorialStep.value<tutorialSteps.length-1)tutorialStep.value++;else{showTutorial.value=false;localStorage.setItem('studyMate_seenTutorial','true');}}, 
                     startTutorial:()=>{showTutorial.value=true;tutorialStep.value=0;},
-                    isMobile, isFullscreen, toggleFullscreen, isLandscape, isStandbyMode, currentTotalTimeFormatted
+                    isMobile, isFullscreen, toggleFullscreen, isLandscape, isStandbyMode, currentTotalTimeFormatted,
+                    tabConfig, visibleTabs, hiddenTabs, getTabInfo, openHiddenTab,
+                    toggleTabVisible, moveTab, tabDragIdx, tabDragStart, tabDragOver, tabDrop, ALL_TABS
                 };
             }
         }).mount('#app');
